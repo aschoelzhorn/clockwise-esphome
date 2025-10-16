@@ -1,6 +1,10 @@
 #include "mario_Clockface.h"
+#include "mario_goomba.h"
+#include "esphome/core/log.h"
 
 const char* FORMAT_TWO_DIGITS = "%02d";
+
+static const char *const TAG = "mario_Clockface";
 
 namespace mario {
 Clockface::Clockface(Adafruit_GFX* display) {
@@ -14,6 +18,7 @@ Clockface::Clockface(Adafruit_GFX* display) {
   cloud2 = nullptr;
   hill = nullptr;
   mario = nullptr;
+  goomba = nullptr;
   hourBlock = nullptr;
   minuteBlock = nullptr;
 
@@ -28,6 +33,7 @@ Clockface::~Clockface() {
   delete cloud2;
   delete hill;
   delete mario;
+  delete goomba;
   delete hourBlock;
   delete minuteBlock;
 }
@@ -43,6 +49,7 @@ void Clockface::setup(CWDateTime *dateTime) {
   cloud2 = new Object(CLOUD2, 13, 12);
   hill = new Object(HILL, 20, 22);
   mario = new Mario(23, 40);
+  goomba = new Goomba(-8, 48);
   hourBlock = new Block(13, 8);
   minuteBlock = new Block(32, 8);
 
@@ -64,6 +71,7 @@ void Clockface::setup(CWDateTime *dateTime) {
   hourBlock->init();
   minuteBlock->init();
   mario->init();
+  goomba->init(_dateTime);
 }
 
 void Clockface::update() {
@@ -71,24 +79,27 @@ void Clockface::update() {
   hourBlock->update();
   minuteBlock->update();
   mario->update();
+  goomba->update();
 
   if (_dateTime->getSecond() == 0 && millis() - lastMillis > 1000) {
-    mario->jump();
+    ESP_LOGD(TAG, "Time-based jump and TIME_UPDATE broadcast");
+    mario->jump(true);  // Time-based jump - should hit blocks
     updateTime();
     lastMillis = millis();
   }
 }  
 
 void Clockface::updateTime() {
+  ESP_LOGD(TAG, "updateTime() called - Hour: %d, Minute: %02d", _dateTime->getHour(), _dateTime->getMinute());
   hourBlock->setText(String(_dateTime->getHour()));
   minuteBlock->setText(String(_dateTime->getMinute(FORMAT_TWO_DIGITS)));
 }
 
 void Clockface::externalEvent(int type) {
   if (type == 0) {  //TODO create an enum
-    mario->jump();
+    mario->jump(true);  // External event jump - should hit blocks
     updateTime();
-  }  
+  }
 }
 
 }  // namespace mario

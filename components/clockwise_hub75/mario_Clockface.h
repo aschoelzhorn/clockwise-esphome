@@ -8,12 +8,14 @@
 #include "Game.h"
 #include "Object.h"
 #include "ImageUtils.h"
+#include "EventBus.h"
 // Commons
 #include "IClockface.h"
 #include "CWDateTime.h"
 
 #include "mario_assets.h"
 #include "mario.h"
+#include "mario_goomba.h"
 #include "mario_block.h"
 
 namespace mario {
@@ -32,6 +34,7 @@ class Clockface : public IClockface {
     Object* cloud2;
     Object* hill;
     Mario* mario;
+    Goomba* goomba;
     Block* hourBlock;
     Block* minuteBlock;
 

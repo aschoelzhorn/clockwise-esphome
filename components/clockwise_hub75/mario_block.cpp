@@ -1,6 +1,7 @@
 #include "mario_block.h"
+#include "esphome/core/log.h"
 
-//String &Block::_text;
+static const char *TAG = "block";
 
 Block::Block(int x, int y) {
   _x = x;
@@ -12,7 +13,6 @@ Block::Block(int x, int y) {
 
 void Block::idle() {
   if (_state != IDLE) {
-    // Serial.println("Block - Idle - Start");
 
     _lastState = _state;
     _state = IDLE;
@@ -23,7 +23,6 @@ void Block::idle() {
 
 void Block::hit() {
   if (_state != HIT) {
-    // Serial.println("Hit - Start");
 
     _lastState = _state;
     _state = HIT;
@@ -39,15 +38,16 @@ void Block::setTextBlock() {
   
   
   if (_text.length() == 1) {
-    Locator::getDisplay()->setCursor(_x+6, _y+12);
+    Locator::getDisplay()->setCursor(_x + 6, _y + 12);
   }  else {
-    Locator::getDisplay()->setCursor(_x+2, _y+12);
+    Locator::getDisplay()->setCursor(_x + 2, _y + 12);
   }
 
   Locator::getDisplay()->print(_text);
 }
 
 void Block::setText(String text) {
+  ESP_LOGD(TAG, "setText called with: %s (old text was: %s)", text.c_str(), _text.c_str());
   _text = text;
 }
 
@@ -69,10 +69,6 @@ void Block::update() {
   } else if (_state == HIT) {
     
     if (millis() - lastMillis >= 60) {
-
-      // Serial.print("BLOCK Y = ");
-      // Serial.println(_y);
-      
       Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR);
       
       _y = _y + (MOVE_PACE * (direction == UP ? -1 : 1));
@@ -81,7 +77,6 @@ void Block::update() {
       setTextBlock();
                  
       if (floor(_firstY - _y) >= MAX_MOVE_HEIGHT) {
-        // Serial.println("DOWN");
         direction = DOWN;
       }
 
@@ -97,7 +92,6 @@ void Block::update() {
 
 
 void Block::execute(EventType event, Sprite* caller) {
-  //Serial.println("Checking collision");
 
   if (event == EventType::MOVE) {
     if (this->collidedWith(caller)) {
@@ -105,9 +99,9 @@ void Block::execute(EventType event, Sprite* caller) {
       hit();
       Locator::getEventBus()->broadcast(EventType::COLLISION, this);
     }
-  }
-  
-}
+  } 
+ }  
+
 
 
 const char* Block::name() {

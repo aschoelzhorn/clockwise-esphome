@@ -5,13 +5,11 @@
 
 enum EventType {
     MOVE, 
-    COLLISION
+    COLLISION,
+    COLLISION_JUMP  // New event type for collision-based jumps (no time update)
 };
 
 class EventTask {
   public:
     virtual void execute(EventType event, Sprite* caller) = 0;
 };
-
-
-
