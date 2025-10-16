@@ -7,7 +7,6 @@ esphome:
       - Networking
       - WiFi
       - EEPROM
-      - ropg/ezTime
       - adafruit/Adafruit BusIO 
       - adafruit/Adafruit GFX Library  
       - https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA

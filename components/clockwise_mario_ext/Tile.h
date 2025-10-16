@@ -5,8 +5,8 @@
 
 struct Tile {
   const unsigned short *_image;
-  int _width;
-  int _height;
+  uint8_t _width;
+  uint8_t _height;
 
   Tile(const unsigned short *image, int width, int height) {
     this->_image = image;

@@ -39,11 +39,11 @@ class ClockwiseClock : public esphome::PollingComponent {
   void setup() override;
   void update() override;
 
- protected:
-  int w_{64}, h_{64}; uint8_t brightness_{180}; bool clkphase_{true};
+protected:
+  uint8_t w_{64}, h_{64}; uint8_t brightness_{180}; bool clkphase_{true};
   std::string driver_{"FM6126A"};
   std::string i2c_speed_{"8M"};
-  int r1_,g1_,b1_, r2_,g2_,b2_, a_,bb_,c_,d_,e_, lat_,oe_,clk_;
+  uint8_t r1_,g1_,b1_, r2_,g2_,b2_, a_,bb_,c_,d_,e_, lat_,oe_,clk_;
   esphome::time::RealTimeClock* time_{nullptr};
 
   ::MatrixPanel_I2S_DMA* panel_{nullptr};
