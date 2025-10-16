@@ -1,6 +1,5 @@
 
 #include "pacman.h"
-#include "assets.h"
 
 // Static shared buffer for Pacman sprite
 uint16_t Pacman::_PACMAN[2][25] = {0};

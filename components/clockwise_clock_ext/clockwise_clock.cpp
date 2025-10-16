@@ -4,6 +4,9 @@
 #include "CWDateTime.h"
 #include "Locator.h"
 
+#include "MarioClockface.h"
+#include "PacmanClockface.h"
+
 namespace clockwise_clock_ext {
 
 static ::CWDateTime g_dt;   // implemented by shim (CWDateTime.cpp)
@@ -40,7 +43,12 @@ void ClockwiseClock::setup() {
 
   g_dt.begin(time_);
  
-  clockface_ = new Clockface(static_cast<Adafruit_GFX*>(panel_));
+  // Select clockface implementation
+  if (clockface_type_ == 1) { // TODO make enum or const, 0: pacman, 1: mario
+    clockface_ = new MarioClockface(static_cast<Adafruit_GFX*>(panel_));
+  } else {
+    clockface_ = new PacmanClockface(static_cast<Adafruit_GFX*>(panel_));
+  }
   clockface_->setup(&g_dt);
 }
 
@@ -48,4 +56,28 @@ void ClockwiseClock::update() {
   if (clockface_) clockface_->update();
 }
 
+  void ClockwiseClock::set_clockface_type(const std::string &type) {
+    int new_type = 0;
+    if (type == "pacman") {
+      new_type = 0;
+    } else if (type == "mario") {
+      new_type = 1;
+    }
+    set_clockface_type(new_type);  // call the int version
+  }
+
+void ClockwiseClock::set_clockface_type(int type) {
+  if (type == clockface_type_) return;
+  clockface_type_ = type;
+  if (clockface_) {
+    delete clockface_;
+    clockface_ = nullptr;
+  }
+  if (clockface_type_ == 0) { // 0: pacman
+    clockface_ = new PacmanClockface(static_cast<Adafruit_GFX*>(panel_));
+  } else { // 1: mario
+    clockface_ = new MarioClockface(static_cast<Adafruit_GFX*>(panel_));
+  }
+  if (clockface_) clockface_->setup(&g_dt);
+}
 }

@@ -5,7 +5,7 @@
 #include "Locator.h"
 #include "EventBus.h"
 #include "ImageUtils.h"
-#include "assets.h"
+#include "pacman_assets.h"
 
 
 class Pacman: public Sprite, public EventTask {

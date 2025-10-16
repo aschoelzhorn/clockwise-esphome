@@ -39,7 +39,7 @@ api:
         type: string
       then:
         - lambda: |-
-            id(clockwiseclk).set_clockface_type(type);
+            id(clockwiseclk).set_clockface_type(type);    
 
 ota:
   - platform: esphome

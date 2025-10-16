@@ -1,8 +1,9 @@
 #pragma once
+
 #include "esphome/core/component.h"
 #include "esphome/components/time/real_time_clock.h"
 
-#include "Clockface.h"
+#include "IClockface.h"
 #include "Tile.h"
 #include "Sprite.h"
 #include "ColorUtil.h"
@@ -28,6 +29,13 @@ class ClockwiseClock : public esphome::PollingComponent {
   void set_clkphase(bool v){clkphase_=v;}
   void set_time(esphome::time::RealTimeClock* t){time_=t;}
   void set_i2c_speed(const std::string& s){i2c_speed_=s;}
+  void set_clockface_type(int type);
+  void set_clockface_type(const std::string &type);
+  int get_clockface_type() { return clockface_type_; }
+
+  // void set_clockface_select(esphome::select::Select *select) {
+  //   this->clockface_select_ = select;
+  // }
 
   // pins
   void set_r1_pin(int v){r1_=v;}   void set_g1_pin(int v){g1_=v;} void set_b1_pin(int v){b1_=v;}
@@ -44,10 +52,13 @@ protected:
   std::string driver_{"FM6126A"};
   std::string i2c_speed_{"8M"};
   uint8_t r1_,g1_,b1_, r2_,g2_,b2_, a_,bb_,c_,d_,e_, lat_,oe_,clk_;
-  esphome::time::RealTimeClock* time_{nullptr};
 
   ::MatrixPanel_I2S_DMA* panel_{nullptr};
-  Clockface* clockface_{nullptr};  // the real clock face
+  IClockface* clockface_{nullptr};  // the real clock face (polymorphic)
+  int clockface_type_{0}; // default, can be set from YAML or runtime, // 0: pacman, 1: mario
+
+  esphome::time::RealTimeClock* time_{nullptr};
+  //esphome::select::Select *clockface_select_;
 };
 
-} 
+}
