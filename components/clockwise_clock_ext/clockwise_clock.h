@@ -33,10 +33,6 @@ class ClockwiseClock : public esphome::PollingComponent {
   void set_clockface_type(const std::string &type);
   int get_clockface_type() { return clockface_type_; }
 
-  // void set_clockface_select(esphome::select::Select *select) {
-  //   this->clockface_select_ = select;
-  // }
-
   // pins
   void set_r1_pin(int v){r1_=v;}   void set_g1_pin(int v){g1_=v;} void set_b1_pin(int v){b1_=v;}
   void set_r2_pin(int v){r2_=v;}   void set_g2_pin(int v){g2_=v;} void set_b2_pin(int v){b2_=v;}
@@ -58,7 +54,6 @@ protected:
   int clockface_type_{0}; // default, can be set from YAML or runtime, // 0: pacman, 1: mario
 
   esphome::time::RealTimeClock* time_{nullptr};
-  //esphome::select::Select *clockface_select_;
 };
 
 }

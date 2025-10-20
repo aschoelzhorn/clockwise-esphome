@@ -1,4 +1,5 @@
 #include "MarioClockface.h"
+#include "goomba.h"
 
 EventBus eventBus;
 
@@ -12,8 +13,8 @@ Object cloud1(CLOUD1, 13, 12);
 Object cloud2(CLOUD2, 13, 12);
 Object hill(HILL, 20, 22);
 
-
 Mario mario(23, 40);
+Goomba goomba(0, 48);
 Block hourBlock(13, 8);
 Block minuteBlock(32, 8);
 
@@ -39,16 +40,17 @@ void MarioClockface::setup(CWDateTime *dateTime) {
 
   updateTime();
 
-
   hourBlock.init();
   minuteBlock.init();
   mario.init();
+  goomba.init();
 }
 
 void MarioClockface::update() {
   hourBlock.update();
   minuteBlock.update();
   mario.update();
+  goomba.update();
 
   if (_dateTime->getSecond() == 0 && millis() - lastMillis > 1000) {
     mario.jump();

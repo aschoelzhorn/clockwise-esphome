@@ -14,6 +14,7 @@
 
 #include "mario_assets.h"
 #include "mario.h"
+#include "goomba.h"
 #include "block.h"
 
 class MarioClockface : public IClockface {

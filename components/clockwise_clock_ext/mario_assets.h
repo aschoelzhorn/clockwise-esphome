@@ -110,6 +110,7 @@ const unsigned short HILL[440] ={
 
 
 const unsigned short SKY_COLOR = 0x000E;
+const unsigned short TRANSPARENT   = 0x0000;
 
 const unsigned short _MASK = SKY_COLOR;
 
@@ -164,3 +165,111 @@ const uint16_t MARIO_JUMP [] PROGMEM = {
 };
 
 const byte MARIO_JUMP_SIZE[2]  = {17, 16};
+
+
+// enemies
+
+//SKY_COLOR
+
+//G_BROWN = warm brown (Goomba body)
+//G_BROWN_DARK = darker brown (outline)
+//G_WHITE = white (eyes)
+//0x0000 = black (pupils / mouth)
+//_MASK = light blue (sky background)
+
+// ===== NES-style modernized RGB565 color palette =====
+const unsigned short G_BLACK      = 0x0000; // outlines, pupils, mouth
+const unsigned short G_WHITE      = 0xFFFF; // eyes, highlights
+
+// Goomba
+const unsigned short G_BROWN_DARK = 0x6300; // outline brown
+const unsigned short G_BROWN      = 0xE320; // body brown
+
+// Koopa
+// const unsigned short M_GREEN      = 0x07E0; // shell green
+// const unsigned short M_OLIVE      = 0xA145; // outline/skin
+
+// const unsigned short M_STEM      = 0xC618; // stem beige
+// const unsigned short M_OUTLINE   = 0x0000; // outline/black
+
+
+const uint16_t GOOMBA[] PROGMEM = {
+    _MASK,_MASK,_MASK,G_BROWN_DARK,G_BROWN_DARK,_MASK,_MASK,_MASK,
+    _MASK,_MASK,G_BROWN_DARK,G_BROWN,G_BROWN,G_BROWN_DARK,_MASK,_MASK,
+    _MASK,G_BROWN_DARK,G_BROWN,G_BROWN,G_BROWN,G_BROWN,G_BROWN_DARK,_MASK,
+    G_BROWN_DARK,G_BROWN,G_BROWN,G_WHITE,G_WHITE,G_BROWN,G_BROWN,G_BROWN_DARK,
+    G_BROWN,G_BROWN,G_WHITE,G_BLACK,G_BLACK,G_WHITE,G_BROWN,G_BROWN,
+    G_BROWN_DARK,G_BROWN,G_WHITE,G_BROWN,G_BROWN,G_WHITE,G_BROWN,G_BROWN_DARK,
+    _MASK,G_BROWN_DARK,G_BROWN,G_BROWN,G_BROWN,G_BROWN,G_BROWN_DARK,_MASK,
+    _MASK,_MASK,G_BROWN_DARK,_MASK,_MASK,G_BROWN_DARK,_MASK,_MASK
+};
+
+const byte GOOMBA_SIZE[2]  = {8, 8};
+
+// const uint16_t goomba10x10_sky[] PROGMEM = {
+//     _MASK,_MASK,_MASK,G_BROWN_DARK,G_BROWN_DARK,G_BROWN_DARK,_MASK,_MASK,_MASK,_MASK,
+//     _MASK,_MASK,G_BROWN_DARK,G_BROWN,G_BROWN,G_BROWN,G_BROWN_DARK,_MASK,_MASK,_MASK,
+//     _MASK,G_BROWN_DARK,G_BROWN,G_BROWN,G_BROWN,G_BROWN,G_BROWN,G_BROWN_DARK,_MASK,_MASK,
+//     G_BROWN_DARK,G_BROWN,G_BROWN,G_WHITE,G_WHITE,G_WHITE,G_BROWN,G_BROWN,G_BROWN_DARK,_MASK,
+//     G_BROWN,G_BROWN,G_WHITE,0x0000,0x0000,0x0000,G_WHITE,G_BROWN,G_BROWN,_MASK,
+//     G_BROWN,G_BROWN,G_WHITE,G_BROWN,G_BROWN,G_BROWN,G_WHITE,G_BROWN,G_BROWN,_MASK,
+//     G_BROWN_DARK,G_BROWN,G_WHITE,G_BROWN,G_BROWN,G_BROWN,G_WHITE,G_BROWN,G_BROWN_DARK,_MASK,
+//     _MASK,G_BROWN_DARK,G_BROWN,G_BROWN,G_BROWN,G_BROWN,G_BROWN,G_BROWN_DARK,_MASK,_MASK,
+//     _MASK,_MASK,G_BROWN_DARK,G_BROWN,G_BROWN_DARK,G_BROWN_DARK,G_BROWN_DARK,_MASK,_MASK,_MASK,
+//     _MASK,_MASK,_MASK,G_BROWN_DARK,_MASK,_MASK,G_BROWN_DARK,_MASK,_MASK,_MASK
+// };
+// const byte goomba10x10_sky_size[2] = {10, 10};
+
+
+// const uint16_t koopa8x8_sky[] PROGMEM = {
+//     _MASK,_MASK,_MASK,0x07E0,0x07E0,_MASK,_MASK,_MASK,
+//     _MASK,_MASK,0x07E0,0xA145,0xA145,0x07E0,_MASK,_MASK,
+//     _MASK,0x07E0,0xA145,G_WHITE,G_WHITE,0xA145,0x07E0,_MASK,
+//     0x07E0,0xA145,G_WHITE,0x0000,0x0000,G_WHITE,0xA145,0x07E0,
+//     0xA145,G_WHITE,0x0000,0x0000,0x0000,0x0000,G_WHITE,0xA145,
+//     0x07E0,0xA145,G_WHITE,0xA145,0xA145,G_WHITE,0xA145,0x07E0,
+//     _MASK,0x07E0,0xA145,0xA145,0xA145,0xA145,0x07E0,_MASK,
+//     _MASK,_MASK,0x07E0,0x07E0,0x07E0,0x07E0,_MASK,_MASK
+// };
+// const byte koopa8x8_sky_size[2] = {8, 8};
+
+// const uint16_t koopa10x10_sky[] PROGMEM = {
+//     _MASK,_MASK,_MASK,0x07E0,0x07E0,0x07E0,_MASK,_MASK,_MASK,_MASK,
+//     _MASK,_MASK,0x07E0,0xA145,0xA145,0xA145,0x07E0,_MASK,_MASK,_MASK,
+//     _MASK,0x07E0,0xA145,G_WHITE,G_WHITE,G_WHITE,0xA145,0x07E0,_MASK,_MASK,
+//     0x07E0,0xA145,G_WHITE,0x0000,0x0000,0x0000,G_WHITE,0xA145,0x07E0,_MASK,
+//     0xA145,G_WHITE,0x0000,0x0000,0x0000,0x0000,0x0000,G_WHITE,0xA145,_MASK,
+//     0xA145,G_WHITE,0x0000,0x0000,0x0000,0x0000,0x0000,G_WHITE,0xA145,_MASK,
+//     0x07E0,0xA145,G_WHITE,0xA145,0xA145,0xA145,G_WHITE,0xA145,0x07E0,_MASK,
+//     _MASK,0x07E0,0xA145,0xA145,0xA145,0xA145,0xA145,0x07E0,_MASK,_MASK,
+//     _MASK,_MASK,0x07E0,0xA145,0x07E0,0x07E0,0x07E0,_MASK,_MASK,_MASK,
+//     _MASK,_MASK,_MASK,0x07E0,_MASK,_MASK,0x07E0,_MASK,_MASK,_MASK
+// };
+// const byte koopa10x10_sky_size[2] = {10, 10};
+
+// const uint16_t mushroom8x8_sky[] PROGMEM = {
+//     SKY_COLOR, SKY_COLOR, M_RED, M_RED, M_RED, M_RED, SKY_COLOR, SKY_COLOR,
+//     SKY_COLOR, M_RED, M_WHITE, M_RED, M_RED, M_WHITE, M_RED, SKY_COLOR,
+//     M_RED, M_WHITE, M_RED, M_RED, M_RED, M_RED, M_WHITE, M_RED,
+//     M_RED, M_RED, M_RED, M_RED, M_RED, M_RED, M_RED, M_RED,
+//     M_RED, M_RED, M_STEM, M_STEM, M_STEM, M_STEM, M_RED, M_RED,
+//     M_RED, M_STEM, M_STEM, M_STEM, M_STEM, M_STEM, M_STEM, M_RED,
+//     SKY_COLOR, M_STEM, M_STEM, M_STEM, M_STEM, M_STEM, M_STEM, SKY_COLOR,
+//     SKY_COLOR, SKY_COLOR, M_STEM, M_STEM, M_STEM, M_STEM, SKY_COLOR, SKY_COLOR
+// };
+// const byte mushroom8x8_sky_size[2] = {8, 8};
+
+// const uint16_t mushroom10x10_sky[] PROGMEM = {
+//     SKY_COLOR, SKY_COLOR, SKY_COLOR, M_RED,   M_RED,   M_RED,   M_RED,   SKY_COLOR, SKY_COLOR, SKY_COLOR,
+//     SKY_COLOR, SKY_COLOR, M_RED,   M_WHITE, M_RED,   M_RED,   M_WHITE, M_RED,   SKY_COLOR, SKY_COLOR,
+//     SKY_COLOR, M_RED,   M_WHITE, M_RED,   M_RED,   M_RED,   M_RED,   M_WHITE, M_RED,   SKY_COLOR,
+//     M_RED,   M_WHITE, M_RED,   M_RED,   M_RED,   M_RED,   M_RED,   M_RED,   M_WHITE, M_RED,
+//     M_RED,   M_RED,   M_RED,   M_RED,   M_RED,   M_RED,   M_RED,   M_RED,   M_RED,   M_RED,
+//     M_RED,   M_RED,   M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_RED,   M_RED,
+//     M_RED,   M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_RED,
+//     SKY_COLOR, M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_STEM,  SKY_COLOR,
+//     SKY_COLOR, SKY_COLOR, M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_STEM,  M_STEM,  SKY_COLOR, SKY_COLOR,
+//     SKY_COLOR, SKY_COLOR, SKY_COLOR, M_STEM,  M_STEM,  M_STEM,  M_STEM,  SKY_COLOR, SKY_COLOR, SKY_COLOR
+// };
+// const byte mushroom10x10_sky_size[2] = {10, 10};
+
