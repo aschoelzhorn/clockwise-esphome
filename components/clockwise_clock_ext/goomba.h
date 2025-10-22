@@ -17,7 +17,7 @@ class Goomba: public Sprite, public EventTask {
       WALKING
     };
 
-    Direction direction = RIGHT;  // Start moving right
+    Direction _direction = RIGHT;  // Start moving right
     bool movingRight = true;      // Track movement direction
 
     int _lastX;

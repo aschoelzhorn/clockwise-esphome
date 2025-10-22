@@ -71,6 +71,9 @@ void Goomba::checkMarioCollision() {
       approaching = true;  // Moving left towards Mario  
     }
     
+    ESP_LOGD(TAG, "Distance to Mario: %d, MovingRight: %s, Approaching: %s", 
+             distance, movingRight ? "true" : "false", approaching ? "true" : "false");
+    
     if (approaching) {
       // Trigger Mario jump through the event bus
       ESP_LOGD(TAG, "Broadcasting COLLISION_JUMP event");
@@ -121,14 +124,14 @@ void Goomba::walk() {
   // Check boundaries and change direction if needed
   if (movingRight && _x >= 64) {  // Completely off right edge
     movingRight = false;
-    direction = LEFT;
+    _direction = LEFT;
   } else if (!movingRight && _x <= -8) {    // Completely off left edge
     movingRight = true;
-    direction = RIGHT;
+    _direction = RIGHT;
   }
   
   // Move the Goomba
-  move(direction, 1);
+  move(_direction, 1);
 }
 
 void Goomba::idle() {
@@ -181,10 +184,7 @@ void Goomba::update() {
 }
 
 void Goomba::execute(EventType event, Sprite* caller) {
-  //if (event == EventType::COLLISION) {
-    //Serial.println("GOOMBA - Collision detected");
-    //direction = DOWN;
-  //}
+
 }
 
 const char* Goomba::name() {

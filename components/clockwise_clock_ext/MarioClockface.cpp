@@ -70,7 +70,7 @@ void MarioClockface::update() {
 
   if (_dateTime->getSecond() == 0 && millis() - lastMillis > 1000) {
     ESP_LOGD(TAG, "Time-based jump and TIME_UPDATE broadcast");
-    mario->jump();  // Just jump, don't update time directly
+    mario->jump(true);  // Time-based jump - should hit blocks
     Locator::getEventBus()->broadcast(TIME_UPDATE, nullptr);  // Broadcast time update event
     lastMillis = millis();
 
@@ -87,7 +87,7 @@ void MarioClockface::updateTime() {
 
 void MarioClockface::externalEvent(int type) {
   if (type == 0) {  //TODO create an enum
-    mario->jump();  // Just jump, don't update time directly
+    mario->jump(true);  // External event jump - should hit blocks
     Locator::getEventBus()->broadcast(TIME_UPDATE, nullptr);  // Broadcast time update event
   }  
 }

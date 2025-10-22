@@ -1,4 +1,7 @@
 #include "block.h"
+#include "esphome/core/log.h"
+
+static const char *TAG = "block";
 
 //String &Block::_text;
 
@@ -48,6 +51,7 @@ void Block::setTextBlock() {
 }
 
 void Block::setText(String text) {
+  ESP_LOGD(TAG, "setText called with: %s (old text was: %s)", text.c_str(), _text.c_str());
   _text = text;
 }
 
@@ -105,9 +109,14 @@ void Block::execute(EventType event, Sprite* caller) {
       hit();
       Locator::getEventBus()->broadcast(EventType::COLLISION, this);
     }
-  }
-  
-}
+  } else if (event == EventType::REDRAW_BLOCK) {
+      ESP_LOGD(TAG, "event == EventType::REDRAW_BLOCK");
+      // redraw block on initial position
+      Locator::getDisplay()->drawRGBBitmap(_x, _firstY, BLOCK, _width, _height);
+      setTextBlock();
+    }
+ }  
+
 
 
 const char* Block::name() {
