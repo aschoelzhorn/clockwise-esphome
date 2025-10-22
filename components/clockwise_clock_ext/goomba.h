@@ -7,7 +7,7 @@
 #include "ImageUtils.h"
 #include "mario_assets.h"
 
-const uint8_t GOOMBA_PACE = 3;
+const uint8_t GOOMBA_PACE = 6;
 
 class Goomba: public Sprite, public EventTask {
   private:

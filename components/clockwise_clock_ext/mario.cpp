@@ -63,7 +63,7 @@ void Mario::update() {
     Locator::getDisplay()->drawRGBBitmap(_x, _y, MARIO_IDLE, MARIO_IDLE_SIZE[0], MARIO_IDLE_SIZE[1]);
   } else if (_state == JUMPING) {
     
-    if (millis() - lastMillis >= 50) {
+    if (millis() - lastMillis >= 100) {  // Slowed down from 50ms to 150ms
 
       //Serial.println(_y);
       
