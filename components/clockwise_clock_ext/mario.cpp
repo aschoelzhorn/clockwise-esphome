@@ -1,4 +1,7 @@
 #include "mario.h"
+#include "esphome/core/log.h"
+
+static const char *TAG = "mario";
 
 Mario::Mario(int x, int y) {
   _x = x;
@@ -63,7 +66,7 @@ void Mario::update() {
     Locator::getDisplay()->drawRGBBitmap(_x, _y, MARIO_IDLE, MARIO_IDLE_SIZE[0], MARIO_IDLE_SIZE[1]);
   } else if (_state == JUMPING) {
     
-    if (millis() - lastMillis >= 100) {  // Slowed down from 50ms to 150ms
+    if (millis() - lastMillis >= 100) {  // Slowed down from 50ms to 100ms
 
       //Serial.println(_y);
       
@@ -91,9 +94,9 @@ void Mario::update() {
 }
 
 void Mario::execute(EventType event, Sprite* caller) {
-  if (event == EventType::COLLISION) {
-    //Serial.println("MARIO - Collision detected - jumping!");
-    jump();  // Make Mario jump when collision is detected
+  if (event == EventType::COLLISION_JUMP) {
+    ESP_LOGD(TAG, "Collision jump triggered - no time update!");
+    jump();  // Just jump, no time update
   }
 }
 

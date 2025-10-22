@@ -1,5 +1,8 @@
 #include "MarioClockface.h"
 #include "goomba.h"
+#include "esphome/core/log.h"
+
+static const char *TAG = "mario_clockface";
 
 const char* FORMAT_TWO_DIGITS = "%02d";
 
@@ -38,6 +41,9 @@ MarioClockface::~MarioClockface() {
 void MarioClockface::setup(CWDateTime *dateTime) {
   _dateTime = dateTime;
 
+  // Subscribe to events to handle time updates
+  Locator::getEventBus()->subscribe(this);
+
   Locator::getDisplay()->setFont(&Super_Mario_Bros__24pt7b);
   Locator::getDisplay()->fillRect(0, 0, 64, 64, SKY_COLOR);
 
@@ -63,8 +69,9 @@ void MarioClockface::update() {
   goomba->update();
 
   if (_dateTime->getSecond() == 0 && millis() - lastMillis > 1000) {
-    mario->jump();
-    updateTime();
+    ESP_LOGD(TAG, "Time-based jump and TIME_UPDATE broadcast");
+    mario->jump();  // Just jump, don't update time directly
+    Locator::getEventBus()->broadcast(TIME_UPDATE, nullptr);  // Broadcast time update event
     lastMillis = millis();
 
     //Serial.println(_dateTime->getFormattedTime());
@@ -72,13 +79,26 @@ void MarioClockface::update() {
 }  
 
 void MarioClockface::updateTime() {
+  ESP_LOGD(TAG, "updateTime() called - Hour: %d, Minute: %02d", _dateTime->getHour(), _dateTime->getMinute());
+  
   hourBlock->setText(String(_dateTime->getHour()));
   minuteBlock->setText(String(_dateTime->getMinute(FORMAT_TWO_DIGITS)));
 }
 
 void MarioClockface::externalEvent(int type) {
   if (type == 0) {  //TODO create an enum
-    mario->jump();
-    updateTime();
+    mario->jump();  // Just jump, don't update time directly
+    Locator::getEventBus()->broadcast(TIME_UPDATE, nullptr);  // Broadcast time update event
   }  
+}
+
+void MarioClockface::execute(EventType event, Sprite* caller) {
+  if (event == EventType::TIME_UPDATE) {
+    ESP_LOGD(TAG, "TIME_UPDATE event received - updating time blocks");
+    updateTime();  // Only update time blocks when TIME_UPDATE event is received
+  }
+}
+
+const char* MarioClockface::name() {
+  return "MARIO_CLOCKFACE";
 }

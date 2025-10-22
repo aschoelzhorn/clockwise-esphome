@@ -37,7 +37,7 @@ class Mario: public Sprite, public EventTask {
     Mario(int x, int y);
     void init();
     void move(Direction dir, int times);
-    void jump();
+    void jump();  // Simplified - no time update parameter needed
     void update();
     const char* name();
     void execute(EventType event, Sprite* caller);

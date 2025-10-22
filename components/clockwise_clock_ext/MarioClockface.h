@@ -8,6 +8,7 @@
 #include "Game.h"
 #include "Object.h"
 #include "ImageUtils.h"
+#include "EventBus.h"
 // Commons
 #include "IClockface.h"
 #include "CWDateTime.h"
@@ -17,7 +18,7 @@
 #include "goomba.h"
 #include "block.h"
 
-class MarioClockface : public IClockface {
+class MarioClockface : public IClockface, public EventTask {
   private:
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
@@ -42,5 +43,7 @@ public:
     void setup(CWDateTime *dateTime);
     void update();
     void externalEvent(int type);
+    void execute(EventType event, Sprite* caller);
+    const char* name();
 
 };

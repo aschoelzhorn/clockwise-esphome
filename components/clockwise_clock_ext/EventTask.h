@@ -5,7 +5,9 @@
 
 enum EventType {
     MOVE, 
-    COLLISION
+    COLLISION,
+    COLLISION_JUMP,  // New event type for collision-based jumps (no time update)
+    TIME_UPDATE      // New event type for time-based updates
 };
 
 class EventTask {

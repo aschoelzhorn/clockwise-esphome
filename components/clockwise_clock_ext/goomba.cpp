@@ -1,4 +1,7 @@
 #include "goomba.h"
+#include "esphome/core/log.h"
+
+static const char *TAG = "goomba";
 
 Goomba::Goomba(int x, int y) {
   _x = x;
@@ -70,7 +73,8 @@ void Goomba::checkMarioCollision() {
     
     if (approaching) {
       // Trigger Mario jump through the event bus
-      Locator::getEventBus()->broadcast(COLLISION, this);
+      ESP_LOGD(TAG, "Broadcasting COLLISION_JUMP event");
+      Locator::getEventBus()->broadcast(COLLISION_JUMP, this);
       lastJumpTrigger = millis();  // Set cooldown
     }
   }
