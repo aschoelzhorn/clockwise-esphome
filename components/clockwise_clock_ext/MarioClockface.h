@@ -24,8 +24,21 @@ class MarioClockface : public IClockface {
     void updateTime();
     unsigned long lastMillis = 0;
 
+    // Member objects instead of globals
+    EventBus* eventBus;
+    Tile* ground;
+    Object* bush;
+    Object* cloud1;
+    Object* cloud2;
+    Object* hill;
+    Mario* mario;
+    Goomba* goomba;
+    Block* hourBlock;
+    Block* minuteBlock;
+
 public:
     MarioClockface(Adafruit_GFX* display);
+    ~MarioClockface();
     void setup(CWDateTime *dateTime);
     void update();
     void externalEvent(int type);
