@@ -92,8 +92,8 @@ void Mario::update() {
 
 void Mario::execute(EventType event, Sprite* caller) {
   if (event == EventType::COLLISION) {
-    //Serial.println("MARIO - Collision detected");
-    direction = DOWN;
+    //Serial.println("MARIO - Collision detected - jumping!");
+    jump();  // Make Mario jump when collision is detected
   }
 }
 

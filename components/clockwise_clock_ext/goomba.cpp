@@ -42,6 +42,40 @@ void Goomba::drawTransparent(int x, int y, const uint16_t* bitmap, int width, in
   }
 }
 
+void Goomba::checkMarioCollision() {
+  // Mario is at position (23, 40), Goomba is at (_x, 48)
+  // Check if Goomba is approaching Mario horizontally
+  const int MARIO_X = 23;
+  const int MARIO_WIDTH = 16;  // Approximate Mario width
+  const int TRIGGER_DISTANCE = 12;  // Distance to trigger jump
+  const int JUMP_COOLDOWN = 2000;   // 2 second cooldown between jumps
+  
+  // Only trigger if enough time has passed since last jump
+  if (millis() - lastJumpTrigger < JUMP_COOLDOWN) {
+    return;
+  }
+  
+  // Calculate distance between Goomba and Mario
+  int distance = abs(_x - MARIO_X);
+  
+  // Check if Goomba is close to Mario and approaching
+  if (distance <= TRIGGER_DISTANCE) {
+    // Check if Goomba is actually moving towards Mario
+    bool approaching = false;
+    if (movingRight && _x < MARIO_X) {
+      approaching = true;  // Moving right towards Mario
+    } else if (!movingRight && _x > MARIO_X) {
+      approaching = true;  // Moving left towards Mario  
+    }
+    
+    if (approaching) {
+      // Trigger Mario jump through the event bus
+      Locator::getEventBus()->broadcast(COLLISION, this);
+      lastJumpTrigger = millis();  // Set cooldown
+    }
+  }
+}
+
 void Goomba::redrawBackground(int x, int y, int width, int height) {
   // Fill with sky color first
   Locator::getDisplay()->fillRect(x, y, width, height, SKY_COLOR);
@@ -125,6 +159,9 @@ void Goomba::update() {
     
     if (_state == WALKING) {
       walk();
+      // Check for Mario collision and trigger jump
+      checkMarioCollision();
+      
       // Only draw the Goomba if it's visible (partially or fully on screen)
       if (_x > -8 && _x < 64) {
         drawTransparent(_x, _y, GOOMBA, GOOMBA_SIZE[0], GOOMBA_SIZE[1]);

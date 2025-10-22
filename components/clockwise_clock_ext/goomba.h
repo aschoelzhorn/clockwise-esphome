@@ -25,6 +25,7 @@ class Goomba: public Sprite, public EventTask {
 
     const unsigned short* _sprite;
     unsigned long lastMillis = 0;
+    unsigned long lastJumpTrigger = 0;  // Cooldown for Mario jump
     State _state = WALKING;       // Start in walking state
     State _lastState = IDLE; 
     
@@ -38,6 +39,7 @@ class Goomba: public Sprite, public EventTask {
     void update();
     void redrawBackground(int x, int y, int width, int height); // Method to redraw background
     void drawTransparent(int x, int y, const uint16_t* bitmap, int width, int height); // Draw with transparency
+    void checkMarioCollision(); // Check if close to Mario and make him jump
     const char* name();
     void execute(EventType event, Sprite* caller);
     
