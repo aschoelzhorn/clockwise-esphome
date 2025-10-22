@@ -14,7 +14,7 @@ MarioClockface::MarioClockface(Adafruit_GFX* display) {
   cloud2 = new Object(CLOUD2, 13, 12);
   hill = new Object(HILL, 20, 22);
   mario = new Mario(23, 40);
-  goomba = new Goomba(0, 48);
+  goomba = new Goomba(-8, 48);  // Start outside left edge (width is 8px)
   hourBlock = new Block(13, 8);
   minuteBlock = new Block(32, 8);
 
