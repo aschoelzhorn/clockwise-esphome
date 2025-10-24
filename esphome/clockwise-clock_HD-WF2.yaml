@@ -1,0 +1,152 @@
+esphome:
+  name: clockwise_clock
+  friendly_name: Clockwise Clock
+  on_boot:
+    priority: 600
+    then:
+      # Power up the LDR
+      - output.turn_on: ldr_power
+      - delay: 100ms
+
+  platformio_options:
+    lib_deps:
+      - Networking
+      - WiFi
+      - EEPROM
+      - adafruit/Adafruit BusIO 
+      - adafruit/Adafruit GFX Library  
+      - https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA
+    build_flags:
+      - -I$PROJECT_PACKAGES_DIR/framework-arduinoespressif32/libraries/Network/src
+      - -I$PROJECT_PACKAGES_DIR/framework-arduinoespressif32/libraries/WiFi/src
+      - -I$PROJECT_PACKAGES_DIR/framework-arduinoespressif32/libraries/EEPROM/src
+    lib_ldf_mode: chain+      
+
+external_components:
+  - source: github://aschoelzhorn/clockwise-esphome@feature/optimize_ram
+    refresh: 1s
+
+esp32:
+  variant: esp32s3
+  flash_size: 8MB
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_encryption_key
+  services:
+    - service: set_clockface
+      variables:
+        type: string
+      then:
+        - lambda: |-
+            id(clockwiseclk).set_clockface_type(type);    
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password  
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "LED Matrix WF2"
+    password: !secret wifi_ap_password
+
+time:
+  - platform: sntp
+    id: sntp_time
+
+i2c:
+  sda: 41
+  scl: 42
+
+# Device Specific Config
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO17
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Board Test Button"
+    on_press:
+      - lambda: |-
+          int current = id(clockwiseclk).get_clockface_type();
+          if (current == 0) {
+            id(clockwiseclk).set_clockface_type(1);
+          } else {
+            id(clockwiseclk).set_clockface_type(0);
+          }
+
+status_led:
+  pin:
+    number: GPIO40
+    inverted: true
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+    
+  # LDR sensor for automatic brightness control
+  - platform: adc
+    pin: GPIO9
+    name: "Light Sensor (LDR)"
+    id: ldr_sensor
+    update_interval: 2s
+    attenuation: auto
+    filters:
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 5
+    on_value:
+      then:
+        - lambda: |-
+            // Auto brightness based on LDR reading
+            // LDR value range: 0.0 (dark) to ~3.3V (bright)
+            // Brightness range: 20 (dim) to 255 (bright)
+            float ldr_voltage = x;
+            int brightness = 20 + (int)((ldr_voltage / 3.3) * 235);
+            ESP_LOGD("ldr", "LDR: %.2fV, Setting brightness: %d", ldr_voltage, brightness);
+            id(clockwiseclk).set_brightness(brightness);
+
+# Power supply for LDR
+output:
+  - platform: gpio
+    pin: GPIO8
+    id: ldr_power
+    inverted: false
+
+
+clockwise_clock_ext:
+  id: clockwiseclk
+  width: 64
+  height: 64
+  brightness: 180
+  time_id: sntp_time
+  driver: FM6126A
+  clock_phase: false
+  i2c_speed: 20M
+  clockface: pacman
+  pins:
+    r1: 10 #2
+    g1: 6
+    b1: 2 #10
+    r2: 11 #3
+    g2: 7
+    b2: 3 #11
+    a: 39
+    b: 38
+    c: 37
+    d: 36
+    e: 21
+    lat: 33
+    oe: 35
+    clk: 34
