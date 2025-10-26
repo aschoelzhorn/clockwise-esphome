@@ -32,7 +32,7 @@ esp32:
   framework:
     type: arduino
 
-# Enable logging
+# Enable logging (restore hardware UART since TX not used for LDR)
 logger:
 
 # Enable Home Assistant API
@@ -45,7 +45,20 @@ api:
         type: string
       then:
         - lambda: |-
-            id(clockwiseclk).set_clockface_type(type);    
+            id(clockwiseclk).set_clockface_type(type);
+    - service: test_ldr_power
+      variables:
+        state: bool
+      then:
+        - if:
+            condition:
+              lambda: return state;
+            then:
+              - output.turn_on: ldr_power
+              - logger.log: "LDR power turned ON - measure GPIO8 voltage now"
+            else:
+              - output.turn_off: ldr_power
+              - logger.log: "LDR power turned OFF"    
 
 ota:
   - platform: esphome
@@ -90,40 +103,53 @@ status_led:
     number: GPIO40
     inverted: true
 
+# Buck converter recommended: 5V -> 3.3V for clean LDR supply
+output:
+  - platform: gpio
+    pin: GPIO8  # Can still use for power control if needed
+    id: ldr_power
+    inverted: false
+
 sensor:
   - platform: wifi_signal
     name: "WiFi Signal"
     update_interval: 60s
     
   # LDR sensor for automatic brightness control
+  # Using buck converter: 5V -> Buck Converter -> 3.3V (much cleaner solution!)
+  # Circuit: 3.3V -> LDR -> GPIO0 -> 10kO -> GND (+ 10kO pull-up to 3.3V)
+  # Boot safety: 10kO pull-up to 3.3V keeps GPIO0 high during boot
   - platform: adc
-    pin: GPIO9
+    pin: GPIO0  # Boot pin - safe with 3.3V supply and pull-up
     name: "Light Sensor (LDR)"
     id: ldr_sensor
-    update_interval: 2s
-    attenuation: auto
+    update_interval: 5s
+    attenuation: 11db  # Maximum attenuation for higher voltage tolerance
     filters:
       - sliding_window_moving_average:
-          window_size: 5
-          send_every: 5
+          window_size: 10
+          send_every: 10
+      - delta: 0.05  # Only report significant changes
     on_value:
       then:
         - lambda: |-
             // Auto brightness based on LDR reading
-            // LDR value range: 0.0 (dark) to ~3.3V (bright)
-            // Brightness range: 20 (dim) to 255 (bright)
+            // Using GPIO0 with clean 3.3V buck converter supply
             float ldr_voltage = x;
-            int brightness = 20 + (int)((ldr_voltage / 3.3) * 235);
-            ESP_LOGD("ldr", "LDR: %.2fV, Setting brightness: %d", ldr_voltage, brightness);
+            
+            // Clean 3.3V supply - full voltage range available
+            float min_voltage = 0.5;   // Bright light (low LDR resistance)
+            float max_voltage = 2.8;   // Dark (high LDR resistance, near 3.3V)  
+            
+            // Map voltage to brightness
+            float normalized = (ldr_voltage - min_voltage) / (max_voltage - min_voltage);
+            normalized = std::max(0.0f, std::min(1.0f, normalized));
+            
+            // Conservative brightness range
+            int brightness = 80 + (int)(normalized * 150);
+            
+            ESP_LOGD("ldr", "LDR (GPIO0): %.3fV, Normalized: %.2f, Brightness: %d", ldr_voltage, normalized, brightness);
             id(clockwiseclk).set_brightness(brightness);
-
-# Power supply for LDR
-output:
-  - platform: gpio
-    pin: GPIO8
-    id: ldr_power
-    inverted: false
-
 
 clockwise_clock_ext:
   id: clockwiseclk
