@@ -14,25 +14,28 @@ esphome:
   name: ${device_name}
   friendly_name: ${friendly_name}
   comment: "Clockwise Clock on HD-WF2 Board with FM6126A Driver"
+  platformio_options:
+    lib_deps:
+      - adafruit/Adafruit BusIO
+      - adafruit/Adafruit GFX Library  # Required for Clockface compatibility
+    build_flags:
+      - -Os  # Optimize for size
+      - -DCORE_DEBUG_LEVEL=1  # Reduce debug level
+    lib_ldf_mode: chain+  # More selective dependency resolution to reduce flash usage
 
 esp32:
   board: esp32-s3-devkitc-1
   variant: esp32s3
   framework:
-    type: esp-idf
+    type: arduino
     version: recommended
-    sdkconfig_options:
-      # ESP32-S3 with 8MB Flash, No PSRAM
-      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
-      CONFIG_ESPTOOLPY_FLASHSIZE_8MB: "y"
-      CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE: "y"
 
 # Enable logging
 logger:
-  level: INFO
+  level: WARN  # Reduce logging to save flash
   logs:
-    component: INFO
-    hub75: DEBUG
+    component: ERROR
+    hub75: WARN
     clockwise_hub75: INFO
 
 # Enable Home Assistant API
@@ -58,10 +61,11 @@ wifi:
 
 captive_portal:
 
-# Web server (optional - disable for production to save memory)
-web_server:
-  port: 80
-  local: true
+# Web server - DISABLED to save flash memory (~100KB savings)
+# Uncomment if you need web interface (increases flash usage)
+# web_server:
+#   port: 80
+#   local: true
 
 # Time component for clock functionality
 time:
@@ -109,13 +113,15 @@ display:
     clock_phase: false
     # latch_blanking: 1  # Default is fine
 
-    # Disable lambda since clockwise component handles rendering
-    update_interval: never
+    # Disable display updates - clockwise component handles rendering
+    # Note: Upstream changed update_interval to integer (ms), never = 4294967295
+    update_interval: 4294967295ms
 
 # Clockwise Integration Component
 clockwise_hub75:
   id: clockwise_main
   hub75_id: matrix_display
+  time_id: homeassistant_time  # Link to time component for clock display
   clockface_type: PACMAN  # Options: PACMAN, MARIO, CLOCK
   initial_brightness: ${initial_brightness}
 

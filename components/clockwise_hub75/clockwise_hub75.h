@@ -1,7 +1,14 @@
 #pragma once
 
 #include "esphome/core/component.h"
-#include "esphome/components/hub75/hub75_component.h"  // ensure path matches upstream; if build fails may need to adjust
+#include "esphome/components/hub75/hub75_component.h"
+#include "esphome/components/time/real_time_clock.h"
+#include "IClockface.h"
+#include "CWDateTime.h"
+
+
+// Forward declaration to avoid circular include
+class GFXWrapper;
 
 namespace esphome {
 namespace clockwise_hub75 {
@@ -12,15 +19,16 @@ enum ClockfaceType {
     CLOCK = 2
 };
 
-class ClockwiseHUB75 : public Component {
+class ClockwiseHUB75 : public PollingComponent {
  public:
   void setup() override;
-  void loop() override;
+  void update() override { update_display_(); }
   void dump_config() override;
   float get_setup_priority() const override { return setup_priority::AFTER_CONNECTION; }
 
   // Configuration
   void set_hub75_display(hub75_display::HUB75Display *display) { hub75_display_ = display; }
+  void set_time(time::RealTimeClock *time) { time_ = time; }
   void set_clockface_type(ClockfaceType type) { clockface_type_ = type; }
   void set_initial_brightness(uint8_t brightness) { initial_brightness_ = brightness; }
 
@@ -36,18 +44,16 @@ class ClockwiseHUB75 : public Component {
 
  protected:
   hub75_display::HUB75Display *hub75_display_{nullptr};
+  time::RealTimeClock *time_{nullptr};
+  IClockface *clockface_{nullptr};
+  GFXWrapper *gfx_wrapper_{nullptr};
   
   ClockfaceType clockface_type_{PACMAN};
   uint8_t initial_brightness_{128};
   uint8_t current_brightness_{128};
   bool power_state_{true};
   
-  uint32_t last_update_{0};
-  
   void update_display_();
-  void render_pacman_clockface_();
-  void render_mario_clockface_();
-  void render_clock_clockface_();
 };
 
 }  // namespace clockwise_hub75
