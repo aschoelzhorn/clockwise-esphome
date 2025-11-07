@@ -21,7 +21,7 @@ Clockface::~Clockface() {
   // Cleanup any dynamically allocated resources
 }
 
-void Clockface::setup() {
+void Clockface::setup(CWDateTime* dateTime) {
   
   // Initialize timing
   lastBackgroundChange = millis();

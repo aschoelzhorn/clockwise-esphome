@@ -33,7 +33,7 @@ class Clockface : public IClockface {
 public:
     Clockface(Adafruit_GFX* display);
     ~Clockface();
-    void setup();
-    void update();
+    void setup(CWDateTime* dateTime) override;
+    void update() override;
 };
 }  // namespace dune
