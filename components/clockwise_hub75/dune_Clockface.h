@@ -1,8 +1,6 @@
 #pragma once
 
-#include <Arduino.h>
 #include <Adafruit_GFX.h>
-
 #include "Tile.h"
 #include "Locator.h"
 #include "Game.h"
@@ -19,7 +17,9 @@ class Clockface : public IClockface {
   private:
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
-    
+
+    void updateTime();
+
     // Timing
     unsigned long lastMillis = 0;
     unsigned long lastMillisTime = 0;
@@ -30,11 +30,10 @@ class Clockface : public IClockface {
     static const int BACKGROUND_COUNT = 5;
     static const unsigned long BACKGROUND_CHANGE_INTERVAL = 5000; // 5 seconds
     
-    void updateTime();
     void drawBackground();
     void cycleBackground();
 
-  public:
+public:
     Clockface(Adafruit_GFX* display);
     ~Clockface();
     void setup(CWDateTime *dateTime);

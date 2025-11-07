@@ -1,5 +1,4 @@
 #include "dune_Clockface.h"
-#include "dune_assets.h"
 
 namespace dune {
 
