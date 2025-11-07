@@ -14,13 +14,16 @@
 
 namespace dune {
 
-// Array of pointers to background images
-static const uint16_t* backgroundImages[5] = {
+// Array of pointers to background images - updated with new diverse Dune scenes
+static const uint16_t* backgroundImages[8] = {
+  dune_baron64x64,
   dune_background64x64,
+  dune_ornithopter64x64,
+  dune_chani64x64,
   dune_sandworm64x64,
   dune_paul_sandworm64x64,
-  dune_ornithopter64x64,
-  dune_chani64x64
+  dune_baron_desert64x64,
+  dune_baron_chamber64x64
 };
 
 class Clockface : public IClockface {
@@ -35,7 +38,7 @@ class Clockface : public IClockface {
     
     // Background cycling
     int currentBackgroundIndex = 0;
-    static const int BACKGROUND_COUNT = 5;
+    static const int BACKGROUND_COUNT = 8;  // Updated for 8 new images
     static const unsigned long BACKGROUND_CHANGE_INTERVAL = 5000; // 5 seconds
     
     void drawBackground() {
@@ -63,17 +66,17 @@ class Clockface : public IClockface {
       char timeStr[6];  // HH:MM format
       snprintf(timeStr, sizeof(timeStr), "%02d:%02d", hour, minute);
       
-      // Set text properties for visibility on any background
+      // Set text properties for visibility on any background - smaller text
       Locator::getDisplay()->setTextColor(0xFFFF, 0x0000); // White text with black background
       Locator::getDisplay()->setTextSize(1);
       
-      // Calculate center position for text (each character is 6 pixels wide, 5 characters = 30 pixels)
-      int textWidth = 30; // 5 chars * 6 pixels per char
+      // Calculate center position for smaller text (each character is 5 pixels wide, 5 characters = 25 pixels at size 1)
+      int textWidth = 25; // 5 chars * 5 pixels per char (6x8 font is 5 pixels wide)
       int x = (64 - textWidth) / 2;
-      int y = 2; // Top of screen with small margin
+      int y = 1; // Top of screen with smaller margin
       
-      // Draw black background rectangle for text readability
-      Locator::getDisplay()->fillRect(x - 1, y - 1, textWidth + 2, 8, 0x0000);
+      // Draw smaller black background rectangle for text readability
+      Locator::getDisplay()->fillRect(x - 1, y - 1, textWidth + 2, 6, 0x0000);
       
       // Draw the time text
       Locator::getDisplay()->setCursor(x, y);
