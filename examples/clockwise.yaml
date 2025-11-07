@@ -27,7 +27,7 @@ esphome:
     lib_ldf_mode: chain+
     build_flags:
       - -Os  # Optimize for size
-      - -DCORE_DEBUG_LEVEL=1  # Reduce debug level    
+      - -DCORE_DEBUG_LEVEL=1  # Reduce debug level
   on_boot:
     priority: 600
     then:
@@ -54,8 +54,8 @@ logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
+  # encryption:
+  #   key: !secret api_encryption_key
   reboot_timeout: 0s
 
 # Enable OTA updates
@@ -82,9 +82,9 @@ i2c:
   scan: true
 
 # Web server (optional - disable for production to save memory)
-#web_server:
-#  port: 80
-#  local: true
+# web_server:
+#   port: 80
+#   local: true
 
 # Time component for clock functionality
 time:
@@ -119,7 +119,7 @@ display:
     # Panel dimensions - 64×64 FM6126A panel
     panel_width: ${panel_width}
     panel_height: ${panel_height}
-    
+
     # Display settings
     brightness: ${initial_brightness}
     bit_depth: 8
@@ -134,7 +134,7 @@ display:
     # Timing configuration
     clock_speed: 20MHZ
     clock_phase: false
-    
+
     # Disable display updates - clockwise component handles rendering
     # Note: Upstream changed update_interval to integer (ms), never = 4294967295
     update_interval: 4294967295ms
@@ -298,11 +298,11 @@ sensor:
     update_interval: 60s
     entity_category: diagnostic
   
-  # ESP32-S3 internal temperature
-  - platform: internal_temperature
-    name: "ESP32-S3 Temperature"
-    update_interval: 60s
-    entity_category: diagnostic
+  # ESP32-S3 internal temperature - disabled for compilation testing
+  # - platform: internal_temperature
+  #   name: "ESP32-S3 Temperature"
+  #   update_interval: 60s
+  #   entity_category: diagnostic
 
 text_sensor:
   - platform: wifi_info
