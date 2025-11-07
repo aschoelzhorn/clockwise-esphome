@@ -34,8 +34,8 @@ std::string ClockwiseSelect::clockface_type_to_string(ClockfaceType type) {
       return "Pacman";
     case MARIO:
       return "Mario";
-    case CLOCK:
-      return "Clock";
+    case DUNE:
+      return "Dune";
     default:
       return "Pacman";
   }
@@ -44,8 +44,10 @@ std::string ClockwiseSelect::clockface_type_to_string(ClockfaceType type) {
 ClockfaceType ClockwiseSelect::string_to_clockface_type(const std::string &str) {
   if (str == "Mario") {
     return MARIO;
-  } else if (str == "Clock") {
-    return CLOCK;
+  } else if (str == "Pacman") {
+    return PACMAN;
+  } else if (str == "Dune") {
+    return DUNE;
   } else {
     return PACMAN;  // Default
   }

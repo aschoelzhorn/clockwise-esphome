@@ -27,7 +27,7 @@ esphome:
     lib_ldf_mode: chain+
     build_flags:
       - -Os  # Optimize for size
-      - -DCORE_DEBUG_LEVEL=1  # Reduce debug level    
+      - -DCORE_DEBUG_LEVEL=1  # Reduce debug level
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -70,9 +70,9 @@ wifi:
 captive_portal:
 
 # Web server (optional - disable for production to save memory)
-#web_server:
-#  port: 80
-#  local: true
+# web_server:
+#   port: 80
+#   local: true
 
 # Time component for clock functionality
 time:
@@ -99,13 +99,13 @@ display:
     # Panel dimensions - 64×64 FM6126A panel
     panel_width: ${panel_width}
     panel_height: ${panel_height}
-    
+
     # Display settings
     brightness: ${initial_brightness}
     bit_depth: 8
     min_refresh_rate: 120  # ESP32-S3 can handle high refresh rates
     double_buffer: false
-    
+
     # Hardware configuration - FM6126A driver chip
     shift_driver: FM6126A
     scan_wiring: STANDARD_TWO_SCAN  # 1/32 scan for 64px high
@@ -113,7 +113,7 @@ display:
     # Timing configuration
     clock_speed: 20MHZ
     clock_phase: false
-    
+
     # Disable display updates - clockwise component handles rendering
     # Note: Upstream changed update_interval to integer (ms), never = 4294967295
     update_interval: 4294967295ms
@@ -122,8 +122,8 @@ display:
 clockwise_hub75:
   id: clockwise_main
   hub75_id: matrix_display
-  time_id: homeassistant_time  # Link to time component for clock display  
-  clockface_type: MARIO
+  time_id: homeassistant_time  # Link to time component for clock display
+  clockface_type: PACMAN  # Options: PACMAN, MARIO, DUNE
   initial_brightness: ${initial_brightness}
 
 # Home Assistant Entities
