@@ -14,15 +14,13 @@
 
 namespace dune {
 
-// Array of pointers to background images - using unique images only to avoid duplicates
-static const uint16_t* backgroundImages[7] = {
+// Array of pointers to background images - using only images from first half to avoid duplicates
+static const uint16_t* backgroundImages[5] = {
   dune_baron64x64,
   dune_ornithopter64x64,
   dune_chani64x64,
   dune_sandworm64x64,
-  dune_paul_sandworm64x64,
-  dune_baron_desert64x64,
-  dune_baron_chamber64x64
+  dune_paul_sandworm64x64
 };
 
 class Clockface : public IClockface {
@@ -37,7 +35,7 @@ class Clockface : public IClockface {
     
     // Background cycling
     int currentBackgroundIndex = 0;
-    static const int BACKGROUND_COUNT = 7;  // Updated for 7 unique images
+    static const int BACKGROUND_COUNT = 5;  // Back to 5 images to avoid duplicates
     static const unsigned long BACKGROUND_CHANGE_INTERVAL = 5000; // 5 seconds
     
     void drawBackground() {
