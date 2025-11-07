@@ -23,9 +23,16 @@ class Clockface : public IClockface {
     // Timing
     unsigned long lastMillis = 0;
     unsigned long lastMillisTime = 0;
+    unsigned long lastBackgroundChange = 0;
+    
+    // Background cycling
+    int currentBackgroundIndex = 0;
+    static const int BACKGROUND_COUNT = 5;
+    static const unsigned long BACKGROUND_CHANGE_INTERVAL = 5000; // 5 seconds
     
     void updateTime();
     void drawBackground();
+    void cycleBackground();
 
   public:
     Clockface(Adafruit_GFX* display);
