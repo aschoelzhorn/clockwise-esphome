@@ -10,7 +10,19 @@
 #include "IClockface.h"
 #include "CWDateTime.h"
 
+#include "dune_assets.h"
+
 namespace dune {
+
+// Array of pointers to background images
+static const uint16_t* backgroundImages[5] = {
+  dune_background64x64,
+  dune_sandworm64x64,
+  dune_paul_sandworm64x64,
+  dune_ornithopter64x64,
+  dune_chani64x64
+};
+
 class Clockface : public IClockface {
   private:
     Adafruit_GFX* _display;
@@ -26,10 +38,19 @@ class Clockface : public IClockface {
     static const unsigned long BACKGROUND_CHANGE_INTERVAL = 5000; // 5 seconds
     
     void drawBackground() {
-      // Simple color cycling for now to ensure linking works
-      uint16_t colors[5] = {0xF800, 0x07E0, 0x001F, 0xFFE0, 0xF81F}; // Red, Green, Blue, Yellow, Magenta
-      uint16_t currentColor = colors[currentBackgroundIndex];
-      Locator::getDisplay()->fillRect(0, 0, 64, 64, currentColor);
+      // Clear the display first
+      Locator::getDisplay()->fillRect(0, 0, 64, 64, 0x0000);
+      
+      // Draw the current Dune background image
+      const uint16_t* currentBackground = backgroundImages[currentBackgroundIndex];
+      
+      // Draw the 64x64 RGB565 image pixel by pixel
+      for (int y = 0; y < 64; y++) {
+        for (int x = 0; x < 64; x++) {
+          uint16_t color = pgm_read_word(&currentBackground[y * 64 + x]);
+          Locator::getDisplay()->drawPixel(x, y, color);
+        }
+      }
     }
     
     void cycleBackground() {
