@@ -1,4 +1,6 @@
+#include <Arduino.h>
 #include "dune_Clockface.h"
+#include "dune_assets.h"
 
 namespace dune {
 
@@ -28,7 +30,7 @@ void Clockface::setup(CWDateTime *dateTime) {
   
   // Initialize display
   drawBackground();
-  //updateTime();
+  updateTime();
 }
 
 void Clockface::update() {
@@ -40,7 +42,7 @@ void Clockface::update() {
   
   // Update time display every minute
   if (millis() - lastMillisTime >= 60000) {
-    //updateTime();
+    updateTime();
     lastMillisTime = millis();
   }
   
@@ -79,8 +81,8 @@ void Clockface::updateTime() {
   int x = (64 - textWidth) / 2;
   
   // Draw time
-  #Locator::getDisplay()->setCursor(x, 54);
-  #Locator::getDisplay()->print(timeStr);
+  Locator::getDisplay()->setCursor(x, 54);
+  Locator::getDisplay()->print(timeStr);
 }
 
 void Clockface::drawBackground() {
@@ -107,7 +109,7 @@ void Clockface::cycleBackground() {
   drawBackground();
   
   // Redraw time on top of new background
-  //updateTime();
+  updateTime();
 }
 
 }  // namespace dune

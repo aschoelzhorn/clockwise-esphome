@@ -35,8 +35,8 @@ logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
+  # encryption:
+  #   key: !secret api_encryption_key
   reboot_timeout: 0s
 
 # Enable OTA updates
@@ -75,9 +75,10 @@ external_components:
   # HUB75 upstream component
   - source: github://stuartparmenter/hub75-esphome
   
-  # Clockwise HUB75 integration component
-  - source: github://aschoelzhorn/clockwise-esphome@main
-    components: [clockwise_hub75]
+  # Clockwise HUB75 integration component - use local development version
+  - source: 
+      type: local
+      path: ../components
 
 # HUB75 Matrix Display Configuration for HD-WF2 Board
 display:
@@ -113,7 +114,7 @@ clockwise_hub75:
   id: clockwise_main
   hub75_id: matrix_display
   time_id: homeassistant_time  # Link to time component for clock display
-  clockface_type: PACMAN  # Options: PACMAN, MARIO, DUNE
+  clockface_type: DUNE  # Options: PACMAN, MARIO, DUNE
   initial_brightness: ${initial_brightness}
 
 # Home Assistant Entities
@@ -159,11 +160,11 @@ sensor:
     update_interval: 60s
     entity_category: diagnostic
   
-  # ESP32-S3 internal temperature
-  - platform: internal_temperature
-    name: "ESP32-S3 Temperature"
-    update_interval: 60s
-    entity_category: diagnostic
+  # ESP32-S3 internal temperature - disabled for compilation testing
+  # - platform: internal_temperature
+  #   name: "ESP32-S3 Temperature"
+  #   update_interval: 60s
+  #   entity_category: diagnostic
 
 text_sensor:
   - platform: wifi_info
