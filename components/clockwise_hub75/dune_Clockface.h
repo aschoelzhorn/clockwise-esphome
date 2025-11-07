@@ -15,7 +15,7 @@
 namespace dune {
 
 // Array of pointers to background images - using only images from first half to avoid duplicates
-static const uint16_t* backgroundImages[5] = {
+static const uint16_t* backgroundImages[10] = {
   dune_baron64x64,
   dune_baron_desert64x64,
   dune_baron_chamber64x64,
