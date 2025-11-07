@@ -26,6 +26,7 @@ static const uint16_t* backgroundImages[5] = {
 class Clockface : public IClockface {
   private:
     Adafruit_GFX* _display;
+    CWDateTime* _dateTime;  // Store the datetime reference
 
     // Timing
     unsigned long lastMillis = 0;
@@ -53,9 +54,35 @@ class Clockface : public IClockface {
       }
     }
     
+    void drawTime() {
+      if (!_dateTime) return;
+      
+      // Get current time
+      auto now = _dateTime->now();
+      char timeStr[6];  // HH:MM format
+      snprintf(timeStr, sizeof(timeStr), "%02d:%02d", now.hour, now.minute);
+      
+      // Set text properties for visibility on any background
+      Locator::getDisplay()->setTextColor(0xFFFF, 0x0000); // White text with black background
+      Locator::getDisplay()->setTextSize(1);
+      
+      // Calculate center position for text (each character is 6 pixels wide, 5 characters = 30 pixels)
+      int textWidth = 30; // 5 chars * 6 pixels per char
+      int x = (64 - textWidth) / 2;
+      int y = 2; // Top of screen with small margin
+      
+      // Draw black background rectangle for text readability
+      Locator::getDisplay()->fillRect(x - 1, y - 1, textWidth + 2, 8, 0x0000);
+      
+      // Draw the time text
+      Locator::getDisplay()->setCursor(x, y);
+      Locator::getDisplay()->print(timeStr);
+    }
+    
     void cycleBackground() {
       currentBackgroundIndex = (currentBackgroundIndex + 1) % BACKGROUND_COUNT;
       drawBackground();
+      drawTime(); // Redraw time on new background
     }
 
 public:
@@ -66,8 +93,10 @@ public:
     ~Clockface() = default;
     
     void setup(CWDateTime* dateTime) override {
+      _dateTime = dateTime; // Store the datetime reference
       lastBackgroundChange = millis();
       drawBackground();
+      drawTime(); // Draw initial time
     }
     
     void update() override {
@@ -75,6 +104,12 @@ public:
       if (millis() - lastBackgroundChange >= BACKGROUND_CHANGE_INTERVAL) {
         cycleBackground();
         lastBackgroundChange = millis();
+      }
+      
+      // Update time display every minute (60 seconds)
+      if (millis() - lastMillisTime >= 60000) {
+        drawTime();
+        lastMillisTime = millis();
       }
     }
 };
