@@ -57,10 +57,11 @@ class Clockface : public IClockface {
     void drawTime() {
       if (!_dateTime) return;
       
-      // Get current time
-      auto now = _dateTime->now();
+      // Get current time using CWDateTime methods
+      int hour = _dateTime->getHour();
+      int minute = _dateTime->getMinute();
       char timeStr[6];  // HH:MM format
-      snprintf(timeStr, sizeof(timeStr), "%02d:%02d", now.hour, now.minute);
+      snprintf(timeStr, sizeof(timeStr), "%02d:%02d", hour, minute);
       
       // Set text properties for visibility on any background
       Locator::getDisplay()->setTextColor(0xFFFF, 0x0000); // White text with black background
