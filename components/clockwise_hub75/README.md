@@ -83,7 +83,7 @@ select:
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `display_id` | ID | **Required** | Reference to HUB75 display component |
-| `clockface_type` | enum | `PACMAN` | Initial clockface: `PACMAN`, `MARIO`, `CLOCK` |
+| `clockface_type` | enum | `PACMAN` | Initial clockface: `PACMAN`, `MARIO`, `DUNE` |
 | `initial_brightness` | int | `128` | Initial brightness (0-255) |
 
 ### Home Assistant Entities

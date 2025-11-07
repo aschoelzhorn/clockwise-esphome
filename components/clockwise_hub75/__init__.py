@@ -28,7 +28,7 @@ CONF_TIME_ID = "time_id"
 CLOCKFACE_TYPES = {
     "PACMAN": ClockfaceType.PACMAN,
     "MARIO": ClockfaceType.MARIO,
-    "CLOCK": ClockfaceType.CLOCK,
+    "DUNE": ClockfaceType.DUNE,
 }
 
 CONF_HUB75_ID = "hub75_id"
