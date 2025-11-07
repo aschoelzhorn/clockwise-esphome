@@ -16,9 +16,6 @@ namespace dune {
 class Clockface : public IClockface {
   private:
     Adafruit_GFX* _display;
-    CWDateTime* _dateTime;
-
-    void updateTime();
 
     // Timing
     unsigned long lastMillis = 0;
@@ -36,7 +33,7 @@ class Clockface : public IClockface {
 public:
     Clockface(Adafruit_GFX* display);
     ~Clockface();
-    void setup(CWDateTime *dateTime);
+    void setup();
     void update();
 };
 }  // namespace dune

@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include "dune_Clockface.h"
 #include "dune_assets.h"
 
@@ -22,15 +21,13 @@ Clockface::~Clockface() {
   // Cleanup any dynamically allocated resources
 }
 
-void Clockface::setup(CWDateTime *dateTime) {
-  _dateTime = dateTime;
+void Clockface::setup() {
   
   // Initialize timing
   lastBackgroundChange = millis();
   
   // Initialize display
   drawBackground();
-  updateTime();
 }
 
 void Clockface::update() {
@@ -42,7 +39,6 @@ void Clockface::update() {
   
   // Update time display every minute
   if (millis() - lastMillisTime >= 60000) {
-    updateTime();
     lastMillisTime = millis();
   }
   
@@ -51,38 +47,6 @@ void Clockface::update() {
     // Animation frame update
     lastMillis = millis();
   }
-}
-
-void Clockface::updateTime() {
-  if (_dateTime == nullptr) return;
-  
-  // Get current time
-  int hour = _dateTime->getHour();
-  int minute = _dateTime->getMinute();
-  
-  // Convert to 12-hour format
-  int displayHour = hour;
-  if (displayHour == 0) displayHour = 12;
-  else if (displayHour > 12) displayHour -= 12;
-  
-  // Clear time area (bottom part of display)
-  Locator::getDisplay()->fillRect(0, 50, 64, 14, 0x0000);
-  
-  // Set text properties
-  Locator::getDisplay()->setTextSize(1);
-  Locator::getDisplay()->setTextColor(0xFFFF); // White text
-  
-  // Format time string
-  char timeStr[6];
-  sprintf(timeStr, "%02d:%02d", displayHour, minute);
-  
-  // Center the text (approximate)
-  int textWidth = strlen(timeStr) * 6; // Approximate width
-  int x = (64 - textWidth) / 2;
-  
-  // Draw time
-  Locator::getDisplay()->setCursor(x, 54);
-  Locator::getDisplay()->print(timeStr);
 }
 
 void Clockface::drawBackground() {
@@ -107,9 +71,6 @@ void Clockface::cycleBackground() {
   
   // Redraw background with new image
   drawBackground();
-  
-  // Redraw time on top of new background
-  updateTime();
 }
 
 }  // namespace dune
