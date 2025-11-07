@@ -84,7 +84,7 @@ Use the template brightness, selectors and text/time entities in [the complete e
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `hub75_id` | ID | **Required** | Reference to HUB75 display component |
-| `clockface_type` | enum | `PACMAN` | Initial clockface: `PACMAN`, `MARIO`; `CLOCK` is reserved |
+| `clockface_type` | enum | `PACMAN` | Initial clockface: `PACMAN`, `MARIO`; `DUNE` is reserved |
 | `panel_color_order` | enum | `RGB` | Channel order: `RGB`, `RBG`, `GRB`, `GBR`, `BRG`, `BGR` |
 | `special_dates` | string | `""` | Initial recurring dates as `MM-DD:Name,MM-DD:Name` |
 | `initial_brightness` | int | `128` | Initial brightness (0-255) |

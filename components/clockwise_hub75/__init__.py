@@ -37,7 +37,7 @@ NIGHT_MODE_TIME = cv.All(
 CLOCKFACE_TYPES = {
     "PACMAN": ClockfaceType.PACMAN,
     "MARIO": ClockfaceType.MARIO,
-    "CLOCK": ClockfaceType.CLOCK,
+    "DUNE": ClockfaceType.DUNE,
 }
 
 PANEL_COLOR_ORDERS = {

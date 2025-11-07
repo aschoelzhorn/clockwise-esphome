@@ -9,6 +9,7 @@
 #include "SpecialDates.h"
 #include <cctype>
 #include <cstring>
+#include "dune_Clockface.h"   // For Dune face
 
 ::CWDateTime g_dt;
 
@@ -21,7 +22,7 @@ std::string trim_copy(const std::string &in) {
   size_t start = 0;
   while (start < in.size() && std::isspace(static_cast<unsigned char>(in[start]))) {
     start++;
-  }
+}
   size_t end = in.size();
   while (end > start && std::isspace(static_cast<unsigned char>(in[end - 1]))) {
     end--;
@@ -32,7 +33,7 @@ std::string trim_copy(const std::string &in) {
 bool parse_int_in_range(const std::string &s, int min_value, int max_value, int &out) {
   if (s.empty()) {
     return false;
-  }
+}
   for (char ch : s) {
     if (!std::isdigit(static_cast<unsigned char>(ch))) {
       return false;
@@ -152,21 +153,30 @@ void ClockwiseHUB75::setup() {
   
   // Provide the wrapper to the Clockface engine via Locator
   Locator::provide(gfx_wrapper_);
-
+  
   // Register special-dates callbacks so clockfaces can query without coupling to this class
   special_dates_register(this, s_is_today_cb, s_name_cb);
   
   // Initialize datetime shim and wire initial time source
   g_dt.begin();
   set_time_source(time_source_);
-
+  
   // Create initial clockface
   clockface_ = create_clockface_(clockface_type_, gfx_wrapper_, night_schedule_);
   if (clockface_ != nullptr) {
-    clockface_->setup(&g_dt);
-    ESP_LOGCONFIG(TAG, "Clockface %d initialized", static_cast<int>(clockface_type_));
-  } else {
-    ESP_LOGW(TAG, "Clockface %d not yet implemented", static_cast<int>(clockface_type_));
+      clockface_->setup(&g_dt);
+      ESP_LOGCONFIG(TAG, "Pacman clockface initialized");
+      break;
+    case MARIO:
+      clockface_ = new mario::Clockface(gfx_wrapper_);  // Mario Clockface implements IClockface
+      clockface_->setup(&g_dt);
+      ESP_LOGCONFIG(TAG, "Mario clockface initialized");
+      break;
+    case DUNE:
+      clockface_ = new dune::Clockface(gfx_wrapper_);  // Dune Clockface implements IClockface
+      clockface_->setup(&g_dt);
+      ESP_LOGCONFIG(TAG, "Dune clockface initialized");
+      break;
   }
   
   ESP_LOGCONFIG(TAG, "Clockwise HUB75 setup complete");
@@ -208,7 +218,7 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type, bool force) {
     ESP_LOGD(TAG, "Already using clockface type %d, skipping switch", static_cast<int>(type));
     return;
   }
-
+  
   // Called before setup() (e.g. from a template select restoring its value):
   // gfx_wrapper_ isn't created yet, so just record the type and return.
   // setup() will then create the correct clockface.
@@ -219,7 +229,7 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type, bool force) {
   }
 
   ESP_LOGI(TAG, "Switching clockface from %d to %d", static_cast<int>(clockface_type_), static_cast<int>(type));
-
+  
   // Destroy the old clockface
   if (clockface_ != nullptr) {
     delete clockface_;
@@ -233,13 +243,22 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type, bool force) {
   
   // Update the clockface type
   clockface_type_ = type;
-
+  
   clockface_ = create_clockface_(clockface_type_, gfx_wrapper_, night_schedule_);
   if (clockface_ != nullptr) {
-    clockface_->setup(&g_dt);
-    ESP_LOGI(TAG, "Switched to clockface %d", static_cast<int>(clockface_type_));
-  } else {
-    ESP_LOGW(TAG, "Clockface %d not yet implemented", static_cast<int>(clockface_type_));
+      clockface_->setup(&g_dt);
+      ESP_LOGCONFIG(TAG, "Switched to Pacman clockface");
+      break;
+    case MARIO:
+      clockface_ = new mario::Clockface(gfx_wrapper_);
+      clockface_->setup(&g_dt);
+      ESP_LOGCONFIG(TAG, "Switched to Mario clockface");
+      break;
+    case DUNE:
+      clockface_ = new dune::Clockface(gfx_wrapper_);
+      clockface_->setup(&g_dt);
+      ESP_LOGCONFIG(TAG, "Switched to Dune clockface");
+      break;
   }
 }
 

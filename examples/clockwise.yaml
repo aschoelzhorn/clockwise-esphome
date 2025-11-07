@@ -32,8 +32,8 @@ esphome:
       - -DCORE_DEBUG_LEVEL=1  # Reduce debug level
   on_boot:
     - priority: 600
-      then:
-        - lambda: |-
+    then:
+      - lambda: |-
             // Restore saved settings from globals (globals restored at priority 600)
             // These set member vars BEFORE ClockwiseHUB75::setup() creates the clockface
             id(clockwise_main).set_clockface_type(
@@ -42,9 +42,9 @@ esphome:
               static_cast<esphome::clockwise_hub75::PanelColorOrder>((int)id(saved_color_order)));
             id(clockwise_main).set_initial_brightness((uint8_t)(int)id(saved_brightness));
             // Link time sources
-            id(clockwise_main).set_ha_time(id(homeassistant_time));
+          id(clockwise_main).set_ha_time(id(homeassistant_time));
             id(clockwise_main).set_ntp_time(id(ntp_time));
-            id(clockwise_main).set_rtc_time(id(rtc_time));
+          id(clockwise_main).set_rtc_time(id(rtc_time));
     - priority: -100
       then:
         - lambda: |-
@@ -92,8 +92,8 @@ logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
+  # encryption:
+  #   key: !secret api_encryption_key
   reboot_timeout: 0s
 
 # Enable OTA updates
@@ -120,9 +120,9 @@ i2c:
   scan: true
 
 # Web server (optional - disable for production to save memory)
-#web_server:
-#  port: 80
-#  local: true
+# web_server:
+#   port: 80
+#   local: true
 #  version: 3
 #  ota: false  # Use encrypted ESPHome OTA instead of browser uploads
 
@@ -171,7 +171,7 @@ display:
     # Panel dimensions - 64×64 FM6126A panel
     panel_width: ${panel_width}
     panel_height: ${panel_height}
-    
+
     # Display settings
     brightness: ${initial_brightness}
     bit_depth: 8
@@ -186,7 +186,7 @@ display:
     # Timing configuration
     clock_speed: 20MHZ
     clock_phase: false
-    
+
     # Disable display updates - clockwise component handles rendering
     # Note: Upstream changed update_interval to integer (ms), never = 4294967295
     update_interval: 4294967295ms
@@ -485,11 +485,11 @@ sensor:
     update_interval: 60s
     entity_category: diagnostic
   
-  # ESP32-S3 internal temperature
-  - platform: internal_temperature
-    name: "ESP32-S3 Temperature"
-    update_interval: 60s
-    entity_category: diagnostic
+  # ESP32-S3 internal temperature - disabled for compilation testing
+  # - platform: internal_temperature
+  #   name: "ESP32-S3 Temperature"
+  #   update_interval: 60s
+  #   entity_category: diagnostic
 
 text_sensor:
   - platform: wifi_info

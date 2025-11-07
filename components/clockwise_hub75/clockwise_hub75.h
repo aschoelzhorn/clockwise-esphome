@@ -20,7 +20,7 @@ namespace clockwise_hub75 {
 enum ClockfaceType {
     PACMAN = 0,
     MARIO = 1,
-    CLOCK = 2
+    DUNE = 2
 };
 
 enum PanelColorOrder {
