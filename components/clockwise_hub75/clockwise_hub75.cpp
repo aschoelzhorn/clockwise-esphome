@@ -6,6 +6,7 @@
 #include "GFXWrapper.h"
 #include "pacman_Clockface.h"  // Pacman clockface implementation
 #include "mario_Clockface.h"  // For Mario face
+#include "dune_Clockface.h"   // For Dune face
 
 ::CWDateTime g_dt;
 
@@ -77,9 +78,10 @@ void ClockwiseHUB75::setup() {
       clockface_->setup(&g_dt);
       ESP_LOGCONFIG(TAG, "Mario clockface initialized");
       break;
-    case CLOCK:
-      // TODO: Replace with BasicClockface (must implement IClockface)
-      ESP_LOGW(TAG, "Basic clock clockface not yet implemented");
+    case DUNE:
+      clockface_ = new dune::Clockface(gfx_wrapper_);  // Dune Clockface implements IClockface
+      clockface_->setup(&g_dt);
+      ESP_LOGCONFIG(TAG, "Dune clockface initialized");
       break;
   }
   
@@ -148,8 +150,10 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type) {
       clockface_->setup(&g_dt);
       ESP_LOGCONFIG(TAG, "Switched to Mario clockface");
       break;
-    case CLOCK:
-      ESP_LOGW(TAG, "Basic clock clockface not yet implemented, staying black");
+    case DUNE:
+      clockface_ = new dune::Clockface(gfx_wrapper_);
+      clockface_->setup(&g_dt);
+      ESP_LOGCONFIG(TAG, "Switched to Dune clockface");
       break;
   }
 }

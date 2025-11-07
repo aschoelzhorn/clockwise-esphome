@@ -25,7 +25,7 @@ CONFIG_SCHEMA = select.select_schema(
 
 
 async def to_code(config):
-    options = ["Pacman", "Mario", "Clock"]
+    options = ["Pacman", "Mario", "Clock", "Dune"]
     var = await select.new_select(config, options=options)
     await cg.register_component(var, config)
     
