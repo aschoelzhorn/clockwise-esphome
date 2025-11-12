@@ -32,7 +32,7 @@ Once installed, you'll get these entities in Home Assistant:
 
 ## 🏗️ Project Background
 
-This project integrates the amazing [Clockwise](https://clockwise.page/) retro clock project by [jnthas](https://github.com/jnthas/clockwise) with Home Assistant using ESPHome. It leverages the excellent [HUB75 ESPHome component](https://github.com/stuartparmenter/hub75-esp32) by Stuart Parmenter to drive HUB75 LED matrices.
+This project integrates the amazing [Clockwise](https://clockwise.page/) retro clock project by [jnthas](https://github.com/jnthas/clockwise) with Home Assistant using ESPHome. It leverages the excellent [HUB75 ESPHome component](https://github.com/stuartparmenter/hub75-esphome) by Stuart Parmenter to drive HUB75 LED matrices.
 
 ### Key Integration Points
 
