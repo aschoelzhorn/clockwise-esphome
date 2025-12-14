@@ -35,6 +35,13 @@ esp32:
     type: arduino
     version: recommended
 
+# Globals for runtime state
+globals:
+  - id: auto_brightness_enabled
+    type: bool
+    restore_value: yes
+    initial_value: '${enable_ldr}'
+
 # Enable logging
 logger:
 
@@ -143,6 +150,26 @@ switch:
     entity_category: config
     restore_mode: RESTORE_DEFAULT_ON
 
+  # Auto-Brightness Control (LDR)
+  - platform: template
+    id: auto_brightness_switch
+    name: "Auto Brightness"
+    icon: mdi:brightness-auto
+    entity_category: config
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    lambda: return id(auto_brightness_enabled);
+    turn_on_action:
+      - globals.set:
+          id: auto_brightness_enabled
+          value: 'true'
+      - logger.log: "Auto-brightness enabled"
+    turn_off_action:
+      - globals.set:
+          id: auto_brightness_enabled
+          value: 'false'
+      - logger.log: "Auto-brightness disabled"
+
 # Clockface Selection
 select:
   - platform: clockwise_hub75
@@ -188,10 +215,10 @@ sensor:
     accuracy_decimals: 0
     entity_category: diagnostic
     on_value:
-      # Only run auto-brightness when LDR is enabled
+      # Only run auto-brightness when enabled via Home Assistant switch
       if:
         condition:
-          lambda: return ("${enable_ldr}" == std::string("true"));
+          lambda: return id(auto_brightness_enabled);
         then:
           # Automatic brightness adjustment based on ambient light
           # Maps light percentage (0-100%) to brightness (20-255)
