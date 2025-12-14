@@ -222,6 +222,11 @@ sensor:
           # Automatic brightness adjustment based on ambient light
           # Maps light percentage (0-100%) to brightness (20-255)
           - lambda: |-
+              // Only adjust brightness if display is powered on
+              if (!id(display_power).state) {
+                return;  // Display is off, don't change brightness
+              }
+              
               // Map ambient light (0-100%) to brightness (20-255)
               // Minimum brightness: 20 (always visible)
               // Maximum brightness: 255 (full brightness)
