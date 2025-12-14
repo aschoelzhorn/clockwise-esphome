@@ -154,26 +154,35 @@ select:
 
 # Status indicators
 sensor:
+  # Raw voltage sensor for LDR calibration (debug only)
+  # - platform: adc
+  #   pin: ${ldr_pin}
+  #   name: "LDR Raw Voltage"
+  #   id: ldr_raw_voltage
+  #   update_interval: ${ldr_update_interval}
+  #   attenuation: 12db
+  #   accuracy_decimals: 2
+  #   unit_of_measurement: "V"
+  #   entity_category: diagnostic
+
   # Light sensor (LDR) for automatic brightness control
-  # To disable: Set enable_ldr: "false" in substitutions or comment out this entire section
+  # To disable: Set enable_ldr: "false" in substitutions
   - platform: adc
     pin: ${ldr_pin}
     name: "Ambient Light"
     id: ambient_light
     update_interval: ${ldr_update_interval}
-    attenuation: 11db  # For 0-3.3V range
-    disabled_by_default: ${{ enable_ldr != "true" }}
-    internal: ${{ enable_ldr != "true" }}
+    attenuation: 12db  # For 0-3.3V range
     filters:
       # Smooth readings to avoid flickering
       - sliding_window_moving_average:
           window_size: 5
           send_every: 1
-      # Optional: Calibrate to percentage (0-100%)
-      # Adjust multiplier based on your LDR and voltage divider
+      # Calibrate based on YOUR actual lighting conditions
+      # Measured values: Dark=1.27V, Bright=3.13V
       - calibrate_linear:
-          - 0.0 -> 0.0    # Dark: 0V = 0%
-          - 3.3 -> 100.0  # Bright: 3.3V = 100%
+          - 1.3 -> 0.0    # Dark (covered) voltage -> 0%
+          - 3.0 -> 100.0  # Bright (full light) voltage -> 100%
       - lambda: return min(100.0f, max(0.0f, x));  # Clamp to 0-100%
     unit_of_measurement: "%"
     accuracy_decimals: 0
