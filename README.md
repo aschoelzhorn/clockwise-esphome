@@ -17,6 +17,7 @@ This ESPHome component brings the fantastic [Clockwise](https://clockwise.page/)
 - **🎮 Retro Game Clockfaces**: Mario and Pac-Man themed clock displays
 - **🏠 Home Assistant Integration**: Full control via Home Assistant dashboard
 - **💡 Brightness Control**: Adjust display brightness (0-255) remotely
+- **🌅 Automatic Brightness**: Optional LDR sensor for automatic brightness adjustment
 - **🔄 Clockface Switching**: Change between clock styles on the fly
 - **⚡ Power Control**: Turn display on/off remotely
 - **🎯 Huidu HD-WF2 Support**: Optimized for HD-WF2 boards with automatic pin mapping
@@ -161,9 +162,37 @@ select:
 - Classic arcade font styling
 - Based on: [Original Pac-Man Clockface (cw-cf-0x05)](https://github.com/jnthas/cw-cf-0x05)
 
+### Automatic Brightness Control (Optional)
+
+The display can automatically adjust brightness based on ambient light using an LDR sensor:
+
+```yaml
+substitutions:
+  enable_ldr: "true"  # Set to "false" to disable
+  ldr_pin: GPIO4
+  ldr_update_interval: "2s"
+
+sensor:
+  - platform: adc
+    pin: ${ldr_pin}
+    name: "Ambient Light"
+    id: ambient_light
+    update_interval: ${ldr_update_interval}
+    attenuation: 12db
+    filters:
+      - sliding_window_moving_average:
+          window_size: 5
+      - calibrate_linear:
+          - 1.3 -> 0.0    # Dark voltage -> 0%
+          - 3.0 -> 100.0  # Bright voltage -> 100%
+    on_value:
+      # Maps 0-100% light to 20-255 brightness
+```
+
+**Calibration**: Measure your LDR voltage range in dark/bright conditions and adjust the `calibrate_linear` values accordingly. See the full example in `examples/clockwise.yaml`.
+
 ### Planned Features
 
-- **🌅 Automatic Brightness**: LDR sensor integration for automatic brightness adjustment
 - **🎮 More Themes**: Additional retro game clockfaces
 - **📊 Weather Display**: Weather information integration
 
@@ -260,5 +289,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is maintained and tested with the hardware configurations listed above. New features and clockfaces are continuously being developed.
 
-**Current Status**: Stable for Mario and Pac-Man clockfaces
-**Next Release**: Automatic brightness control via LDR sensor
+**Current Status**: Stable for Mario and Pac-Man clockfaces with optional auto-brightness support
