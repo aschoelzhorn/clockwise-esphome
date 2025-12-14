@@ -156,9 +156,8 @@ switch:
     name: "Auto Brightness"
     icon: mdi:brightness-auto
     entity_category: config
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    lambda: return id(auto_brightness_enabled);
+    lambda: |-
+      return id(auto_brightness_enabled);
     turn_on_action:
       - globals.set:
           id: auto_brightness_enabled
