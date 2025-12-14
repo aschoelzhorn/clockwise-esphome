@@ -28,8 +28,10 @@ This ESPHome component brings the fantastic [Clockwise](https://clockwise.page/)
 Once installed, you'll get these entities in Home Assistant:
 
 - **Switch**: `display_power` - Turn display on/off
+- **Switch**: `auto_brightness` - Enable/disable automatic brightness (when LDR is configured)
 - **Number**: `display_brightness` - Adjust brightness (0-255)
 - **Select**: `clockface` - Choose between Mario, Pac-Man, and other styles
+- **Sensor**: `ambient_light` - Current light level percentage (when LDR is configured)
 
 ## 🏗️ Project Background
 
@@ -168,7 +170,7 @@ The display can automatically adjust brightness based on ambient light using an 
 
 ```yaml
 substitutions:
-  enable_ldr: "true"  # Set to "false" to disable
+  enable_ldr: "true"  # Initial state on first boot
   ldr_pin: GPIO4
   ldr_update_interval: "2s"
 
@@ -188,6 +190,8 @@ sensor:
     on_value:
       # Maps 0-100% light to 20-255 brightness
 ```
+
+**Home Assistant Control**: Toggle auto-brightness on/off anytime using the `switch.auto_brightness` entity - no recompilation needed! The switch state persists across reboots and can be integrated into automations.
 
 **Calibration**: Measure your LDR voltage range in dark/bright conditions and adjust the `calibrate_linear` values accordingly. See the full example in `examples/clockwise.yaml`.
 
