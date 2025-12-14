@@ -8,7 +8,7 @@ static const char *const TAG = "clockwise_select";
 
 void ClockwiseSelect::setup() {
   if (parent_ != nullptr) {
-    // Initialize with current clockface type from parent
+    // Just publish the current state from parent
     std::string current = clockface_type_to_string(parent_->get_clockface_type());
     this->publish_state(current);
   }
@@ -24,7 +24,6 @@ void ClockwiseSelect::control(const std::string &value) {
     ClockfaceType type = string_to_clockface_type(value);
     parent_->switch_clockface(type);
     this->publish_state(value);
-    ESP_LOGD(TAG, "Setting clockface to %s", value.c_str());
   }
 }
 

@@ -8,8 +8,9 @@ static const char *const TAG = "clockwise_brightness";
 
 void ClockwiseBrightness::setup() {
   if (parent_ != nullptr) {
-    // Initialize with current brightness from parent
-    this->publish_state(parent_->get_brightness());
+    // Just publish the current brightness from parent
+    uint8_t current = parent_->get_brightness();
+    this->publish_state(current);
   }
 }
 
@@ -23,7 +24,6 @@ void ClockwiseBrightness::control(float value) {
     uint8_t brightness = static_cast<uint8_t>(value);
     parent_->set_brightness(brightness);
     this->publish_state(value);
-    ESP_LOGD(TAG, "Setting brightness to %.0f", value);
   }
 }
 

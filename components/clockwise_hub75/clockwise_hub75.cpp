@@ -19,8 +19,27 @@ void ClockwiseHUB75::setup() {
     return;
   }
   
-  // Set initial brightness
-  current_brightness_ = initial_brightness_;
+  // Setup preferences
+  pref_clockface_ = global_preferences->make_preference<uint8_t>(fnv1_hash("clockface"));
+  pref_brightness_ = global_preferences->make_preference<uint8_t>(fnv1_hash("brightness"));
+  
+  // Load saved clockface type
+  uint8_t saved_type = 0;
+  if (pref_clockface_.load(&saved_type)) {
+    clockface_type_ = static_cast<ClockfaceType>(saved_type);
+    ESP_LOGI(TAG, "Restored clockface type: %d", saved_type);
+  }
+  
+  // Load saved brightness
+  uint8_t saved_brightness = 0;
+  if (pref_brightness_.load(&saved_brightness)) {
+    current_brightness_ = saved_brightness;
+    ESP_LOGI(TAG, "Restored brightness: %d", saved_brightness);
+  } else {
+    current_brightness_ = initial_brightness_;
+  }
+  
+  // Apply brightness
   hub75_display_->set_brightness(current_brightness_);
   hub75_display_->fill(Color(0,0,0));
   
@@ -36,20 +55,19 @@ void ClockwiseHUB75::setup() {
     g_dt.set_rtc(time_);
   }
   
-  // Create clockface based on type
+  // Create clockface based on (potentially restored) type
   switch (clockface_type_) {
     case PACMAN:
-      clockface_ = new pacman::Clockface(gfx_wrapper_);  // Pacman Clockface implements IClockface
+      clockface_ = new pacman::Clockface(gfx_wrapper_);
       clockface_->setup(&g_dt);
       ESP_LOGCONFIG(TAG, "Pacman clockface initialized");
       break;
     case MARIO:
-      clockface_ = new mario::Clockface(gfx_wrapper_);  // Mario Clockface implements IClockface
+      clockface_ = new mario::Clockface(gfx_wrapper_);
       clockface_->setup(&g_dt);
       ESP_LOGCONFIG(TAG, "Mario clockface initialized");
       break;
     case CLOCK:
-      // TODO: Replace with BasicClockface (must implement IClockface)
       ESP_LOGW(TAG, "Basic clock clockface not yet implemented");
       break;
   }
@@ -70,7 +88,8 @@ void ClockwiseHUB75::set_brightness(uint8_t brightness) {
   if (hub75_display_ != nullptr) {
     hub75_display_->set_brightness(brightness);
   }
-  ESP_LOGD(TAG, "Brightness set to %d", brightness);
+  pref_brightness_.save(&brightness);
+  ESP_LOGD(TAG, "Brightness set to %d (saved)", brightness);
 }
 
 void ClockwiseHUB75::set_power(bool state) {
@@ -87,7 +106,7 @@ void ClockwiseHUB75::set_power(bool state) {
 
 void ClockwiseHUB75::switch_clockface(ClockfaceType type) {
   if (type == clockface_type_) {
-    ESP_LOGD(TAG, "Already using clockface type %d, skipping switch", static_cast<int>(type));
+    ESP_LOGD(TAG, "Already using clockface type %d", static_cast<int>(type));
     return;
   }
   
@@ -104,8 +123,10 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type) {
     hub75_display_->fill(Color(0, 0, 0));
   }
   
-  // Update the clockface type
+  // Update and save the clockface type
   clockface_type_ = type;
+  uint8_t type_value = static_cast<uint8_t>(type);
+  pref_clockface_.save(&type_value);
   
   // Create the new clockface based on type
   switch (clockface_type_) {
