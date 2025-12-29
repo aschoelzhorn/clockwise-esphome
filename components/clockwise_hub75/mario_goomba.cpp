@@ -10,7 +10,8 @@ Goomba::Goomba(int x, int y) {
   _y = y;
   _width = GOOMBA_SIZE[0];
   _height = GOOMBA_SIZE[1];
-  _sprite = GOOMBA;
+  //_sprite = GOOMBA;
+  _sprite = KOOPA;  // Temporary use Koopa sprite for testing
 }
 
 void Goomba::move(Direction dir, int times) {
@@ -138,10 +139,6 @@ void Goomba::idle() {
     _state = IDLE;
 
     Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR);
-
-    _width = GOOMBA_SIZE[0];
-    _height = GOOMBA_SIZE[1];
-    _sprite = GOOMBA;
   }
 }
 
@@ -200,7 +197,7 @@ void Goomba::init(CWDateTime* dateTime) {
   _dateTime = dateTime;
   // Don't draw initially if starting off-screen
   if (_x > -8 && _x < 64) {
-    drawTransparent(_x, _y, GOOMBA, GOOMBA_SIZE[0], GOOMBA_SIZE[1]);
+    drawTransparent(_x, _y, _sprite, _width, _height);
   }
 }
 
@@ -223,11 +220,11 @@ void Goomba::update() {
       
       // Only draw the Goomba if it's visible (partially or fully on screen)
       if (_x > -8 && _x < 64) {
-        drawTransparent(_x, _y, GOOMBA, GOOMBA_SIZE[0], GOOMBA_SIZE[1]);
+        drawTransparent(_x, _y, _sprite, _width, _height);
       }
     } else if (_state == IDLE && _state != _lastState) {
       if (_x > -8 && _x < 64) {
-        drawTransparent(_x, _y, GOOMBA, GOOMBA_SIZE[0], GOOMBA_SIZE[1]);
+        drawTransparent(_x, _y, _sprite, _width, _height);
       }
     }
     
