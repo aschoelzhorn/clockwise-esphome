@@ -5,6 +5,7 @@
 #include "Locator.h"
 #include "EventTask.h"
 #include "mario_assets.h"
+#include "ImageUtils.h"
 
 const uint8_t MOVE_PACE = 2;
 const uint8_t MAX_MOVE_HEIGHT = 4;

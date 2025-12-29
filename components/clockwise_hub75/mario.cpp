@@ -18,6 +18,17 @@ void Mario::move(Direction dir, int times) {
 
 }
 
+// void Mario::drawTransparent(int x, int y, const uint16_t* bitmap, int width, int height, uint16_t maskColor) {
+//   for (int j = 0; j < height; j++) {
+//     for (int i = 0; i < width; i++) {
+//       uint16_t pixel = pgm_read_word(&bitmap[j * width + i]);
+//       if (pixel != TRANSPARENT) {
+//         Locator::getDisplay()->drawPixel(x + i, y + j, pixel);
+//       }
+//     }
+//   }
+// }
+
 void Mario::jump(bool shouldHitBlocks) {
   if (_state != JUMPING && (millis() - lastMillis > 500) ) {
     // Serial.println("Jump - Start");
@@ -28,7 +39,7 @@ void Mario::jump(bool shouldHitBlocks) {
     _targetJumpHeight = _shouldHitBlocks ? MARIO_JUMP_HEIGHT : MARIO_COLLISION_JUMP_HEIGHT;
 
     // Clear Mario's current position using his current size
-    Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR);
+    Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR_NIGHT);
     
     _width = MARIO_JUMP_SIZE[0];
     _height = MARIO_JUMP_SIZE[1];
@@ -48,7 +59,7 @@ void Mario::idle() {
     _lastState = _state;
     _state = IDLE;
 
-    Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR);
+    Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR_NIGHT);
 
     _width = MARIO_IDLE_SIZE[0];
     _height = MARIO_IDLE_SIZE[1];
@@ -59,14 +70,14 @@ void Mario::idle() {
 
 void Mario::init() {
   Locator::getEventBus()->subscribe(this);
-  Locator::getDisplay()->drawRGBBitmap(_x, _y, MARIO_IDLE, MARIO_IDLE_SIZE[0], MARIO_IDLE_SIZE[1]);
+  ImageUtils::drawTransparent(_x, _y, MARIO_IDLE, MARIO_IDLE_SIZE[0], MARIO_IDLE_SIZE[1], SKY_COLOR_NIGHT); // Use SKY_COLOR or SKY_COLOR_NIGHT as needed
 }
 
 void Mario::update() {
   
 
   if (_state == IDLE && _state != _lastState) {
-    Locator::getDisplay()->drawRGBBitmap(_x, _y, MARIO_IDLE, MARIO_IDLE_SIZE[0], MARIO_IDLE_SIZE[1]);
+    ImageUtils::drawTransparent(_x, _y, MARIO_IDLE, MARIO_IDLE_SIZE[0], MARIO_IDLE_SIZE[1], SKY_COLOR_NIGHT); // Use SKY_COLOR or SKY_COLOR_NIGHT as needed
   } else if (_state == JUMPING) {
     
     // Calculate how high we've jumped (distance from start)
@@ -78,11 +89,11 @@ void Mario::update() {
     
     if (millis() - lastMillis >= jumpDelay) {
      
-      Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR);
+      Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR_NIGHT);
       
       _y = _y + (MARIO_PACE * (_direction == UP ? -1 : 1));
 
-      Locator::getDisplay()->drawRGBBitmap(_x, _y, _sprite, _width, _height);
+      ImageUtils::drawTransparent(_x, _y, _sprite, _width, _height, SKY_COLOR_NIGHT); // Use SKY_COLOR or SKY_COLOR_NIGHT as needed
       
       // Broadcast different events based on whether this jump should hit blocks
       if (_shouldHitBlocks) {

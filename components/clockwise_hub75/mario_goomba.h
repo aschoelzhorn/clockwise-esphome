@@ -47,7 +47,7 @@ class Goomba: public Sprite, public EventTask {
     void move(Direction dir, int times);
     void update();
     void redrawBackground(int x, int y, int width, int height); // Method to redraw background
-    void drawTransparent(int x, int y, const uint16_t* bitmap, int width, int height); // Draw with transparency
+    // void drawTransparent(int x, int y, const uint16_t* bitmap, int width, int height, uint16_t maskColor); // Draw with transparency
     void checkMarioCollision(); // Check if close to Mario and make him jump
     const char* name();
     void execute(EventType event, Sprite* caller);

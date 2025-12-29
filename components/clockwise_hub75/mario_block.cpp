@@ -53,14 +53,15 @@ void Block::setText(String text) {
 
 void Block::init() {
   Locator::getEventBus()->subscribe(this);
-  Locator::getDisplay()->drawRGBBitmap(_x, _y, BLOCK, _width, _height);
+  ImageUtils::drawTransparent(_x, _y, BLOCK, _width, _height, SKY_COLOR_NIGHT);
+  //Locator::getDisplay()->drawRGBBitmap(_x, _y, BLOCK, _width, _height);
   setTextBlock();  
 }
 
 void Block::update() {
 
   if (_state == IDLE && _lastState != _state) {
-    Locator::getDisplay()->drawRGBBitmap(_x, _y, BLOCK, _width, _height);
+    ImageUtils::drawTransparent(_x, _y, BLOCK, _width, _height, SKY_COLOR_NIGHT);
 
     setTextBlock();
 
@@ -69,11 +70,11 @@ void Block::update() {
   } else if (_state == HIT) {
     
     if (millis() - lastMillis >= 60) {
-      Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR);
+      Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR_NIGHT);
       
       _y = _y + (MOVE_PACE * (direction == UP ? -1 : 1));
  
-      Locator::getDisplay()->drawRGBBitmap(_x, _y, BLOCK, _width, _height);
+      ImageUtils::drawTransparent(_x, _y, BLOCK, _width, _height, SKY_COLOR_NIGHT);
       setTextBlock();
                  
       if (floor(_firstY - _y) >= MAX_MOVE_HEIGHT) {

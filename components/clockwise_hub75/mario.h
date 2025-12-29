@@ -7,7 +7,6 @@
 #include "ImageUtils.h"
 #include "mario_assets.h"
 
-
 const uint8_t MARIO_PACE = 3;
 const uint8_t MARIO_JUMP_HEIGHT = 14;
 const uint8_t MARIO_COLLISION_JUMP_HEIGHT = 12;  // 2 pixels shorter to avoid block
@@ -35,6 +34,7 @@ class Mario: public Sprite, public EventTask {
     uint8_t _targetJumpHeight = MARIO_JUMP_HEIGHT;  // Track target height for this jump
     
     void idle();
+    // void drawTransparent(int x, int y, const uint16_t* bitmap, int width, int height, uint16_t maskColor); // Draw with transparency
 
   public:
     Mario(int x, int y);

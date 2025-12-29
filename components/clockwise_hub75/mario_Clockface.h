@@ -24,7 +24,13 @@ class Clockface : public IClockface {
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
     void updateTime();
+    bool shouldBeNightMode();
+    void applyNightMode(bool enable);
+    void drawStars();
+    void drawStaticObjects();
+    // void drawTransparent(int x, int y, const uint16_t* bitmap, int width, int height, uint16_t maskColor);
     unsigned long lastMillis = 0;
+    bool _isNightMode = false;
 
     // Member objects instead of globals
     EventBus* eventBus;
@@ -33,6 +39,7 @@ class Clockface : public IClockface {
     Object* cloud1;
     Object* cloud2;
     Object* hill;
+    Object* moon;
     Mario* mario;
     Goomba* goomba;
     Block* hourBlock;

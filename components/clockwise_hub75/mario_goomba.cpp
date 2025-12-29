@@ -27,6 +27,7 @@ void Goomba::move(Direction dir, int times) {
   }  
   
   // Only clear and redraw if the old position was visible
+  // TODO replace 64 and -8 with constants (diplay width and Goomba width)
   if (oldX >= -8 && oldX < 64) {
     redrawBackground(oldX, oldY, _width, _height);
   }
@@ -36,17 +37,20 @@ void Goomba::move(Direction dir, int times) {
   _lastY = _y;
 }
 
-void Goomba::drawTransparent(int x, int y, const uint16_t* bitmap, int width, int height) {
-  // Draw bitmap pixel by pixel, skipping mask pixels
-  for (int j = 0; j < height; j++) {
-    for (int i = 0; i < width; i++) {
-      uint16_t pixel = pgm_read_word(&bitmap[j * width + i]);
-      if (pixel != _MASK) {  // Only draw non-transparent pixels
-        Locator::getDisplay()->drawPixel(x + i, y + j, pixel);
-      }
-    }
-  }
-}
+// void Goomba::drawTransparent(int x, int y, const uint16_t* bitmap, int width, int height, uint16_t maskColor) {
+//   // Draw bitmap pixel by pixel, skipping mask pixels (TRANSPARENT)
+//   for (int j = 0; j < height; j++) {
+//     for (int i = 0; i < width; i++) {
+//       uint16_t pixel = pgm_read_word(&bitmap[j * width + i]);
+//       if (pixel != TRANSPARENT) {  // Only draw non-transparent pixels
+//         Locator::getDisplay()->drawPixel(x + i, y + j, pixel);
+//       } else {
+//         // Optionally, fill with maskColor if you want to erase background
+//         // Locator::getDisplay()->drawPixel(x + i, y + j, maskColor);
+//       }
+//     }
+//   }
+// }
 
 void Goomba::checkMarioCollision() {
   // Mario is at position (23, 40), Goomba is at (_x, 48)
@@ -87,7 +91,7 @@ void Goomba::checkMarioCollision() {
 
 void Goomba::redrawBackground(int x, int y, int width, int height) {
   // Fill with sky color first
-  Locator::getDisplay()->fillRect(x, y, width, height, SKY_COLOR);
+  Locator::getDisplay()->fillRect(x, y, width, height, SKY_COLOR_NIGHT);
   
   // Redraw background elements that might be in this area
   
@@ -95,16 +99,17 @@ void Goomba::redrawBackground(int x, int y, int width, int height) {
   // Check if the cleared area overlaps with the bush
   if (x < 43 + 21 && x + width > 43 && y < 47 + 9 && y + height > 47) {
     // Redraw the part of the bush that was cleared
-    Locator::getDisplay()->drawRGBBitmap(43, 47, BUSH, 21, 9);
+    ImageUtils::drawTransparent(43, 47, BUSH, 21, 9, SKY_COLOR_NIGHT); // Use SKY_COLOR or SKY_COLOR_NIGHT
   }
   
   // Hill is at position (0, 34) with size (20, 22) - might overlap at edges
   if (x < 0 + 20 && x + width > 0 && y < 34 + 22 && y + height > 34) {
     // Redraw hill if it overlaps
-    Locator::getDisplay()->drawRGBBitmap(0, 34, HILL, 20, 22);
+    ImageUtils::drawTransparent(0, 34, HILL, 20, 22, SKY_COLOR_NIGHT); // Use SKY_COLOR or SKY_COLOR_NIGHT
   }
   
   // Ground tiles (y=56 and below)
+  // TODO check if this is really needed
   if (y + height > 56) {
     int startX = (x / 8) * 8;
     int endX = ((x + width + 7) / 8) * 8;
@@ -124,6 +129,7 @@ void Goomba::walk() {
   }
   
   // Check boundaries - hide when reaching edge instead of turning around
+  // TODO replace 64 and -8 with constants (diplay width and Goomba width)
   if ((_movingRight && _x >= 64) || (!_movingRight && _x <= -8)) {
     hide();  // Hide when reaching edge
     return;
@@ -160,6 +166,7 @@ void Goomba::startRandomRun() {
   // Randomly choose direction
   _movingRight = random(0, 2) == 0;  // 50% chance
   
+    // TODO replace 64 and -8 with constants (diplay width and Goomba width)
   if (_movingRight) {
     _x = -8;  // Start from left
     _direction = RIGHT;
@@ -168,6 +175,7 @@ void Goomba::startRandomRun() {
     _direction = LEFT;
   }
   
+    // TODO replace 48 with constant (ground level)
   _y = 48;  // Ground level
   _lastX = _x;
   _lastY = _y;
@@ -196,8 +204,9 @@ void Goomba::init(CWDateTime* dateTime) {
   _lastY = _y;
   _dateTime = dateTime;
   // Don't draw initially if starting off-screen
+  // TODO replace 64 and -8 with constants (diplay width and Goomba width)
   if (_x > -8 && _x < 64) {
-    drawTransparent(_x, _y, _sprite, _width, _height);
+    ImageUtils::drawTransparent(_x, _y, _sprite, _width, _height, SKY_COLOR_NIGHT);
   }
 }
 
@@ -218,13 +227,14 @@ void Goomba::update() {
       // Check for Mario collision and trigger jump
       checkMarioCollision();
       
+      // TODO replace 64 and -8 with constants (diplay width and Goomba width)
       // Only draw the Goomba if it's visible (partially or fully on screen)
       if (_x > -8 && _x < 64) {
-        drawTransparent(_x, _y, _sprite, _width, _height);
+        ImageUtils::drawTransparent(_x, _y, _sprite, _width, _height, SKY_COLOR_NIGHT);
       }
     } else if (_state == IDLE && _state != _lastState) {
       if (_x > -8 && _x < 64) {
-        drawTransparent(_x, _y, _sprite, _width, _height);
+        ImageUtils::drawTransparent(_x, _y, _sprite, _width, _height, SKY_COLOR_NIGHT);
       }
     }
     
