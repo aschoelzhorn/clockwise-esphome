@@ -106,9 +106,9 @@ void Clockface::update() {
   
   // Check if we need to switch between day/night mode
   bool shouldBeNight = shouldBeNightMode();
-  if (shouldBeNight != _isNightMode) {
+  //if (shouldBeNight != _isNightMode) {
     applyNightMode(shouldBeNight);
-  }
+  //}
   
   hourBlock->update();
   minuteBlock->update();
