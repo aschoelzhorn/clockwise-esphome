@@ -117,7 +117,7 @@ void Pacman::flip() {
 
 }
 
-void Pacman::execute(EventType event, Sprite* caller) {
+void Pacman::execute(EventType event, Sprite* caller, uint16_t value) {
   if (event == EventType::COLLISION) {
     _direction = DOWN;
   }

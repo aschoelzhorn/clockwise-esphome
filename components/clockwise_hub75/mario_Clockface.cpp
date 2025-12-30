@@ -6,7 +6,7 @@ const char* FORMAT_TWO_DIGITS = "%02d";
 
 static const char *const TAG = "mario_Clockface";
 
-// Star positions for night mode (x, y coordinates)
+// Star positions for night mode (x, y coordinates of center of star)
 static const int STAR_POSITIONS[][2] = {
     {10, 18}, {55, 6}, {60, 10}, {55, 22}, {25, 1}, {45, 2}
 };
@@ -51,11 +51,11 @@ void Clockface::setup(CWDateTime *dateTime) {
 
   // Create objects here instead of in constructor to avoid initialization order issues
   eventBus = new EventBus();
-  ground = new Tile(GROUND, 8, 8);
-  bush = new Object(BUSH, 21, 9);
-  cloud1 = new Object(CLOUD1, 13, 12);
-  cloud2 = new Object(CLOUD2, 13, 12);
-  hill = new Object(HILL, 20, 22);
+  ground = new Tile(GROUND, GROUND_SIZE[0], GROUND_SIZE[1]);
+  bush = new Object(BUSH, BUSH_SIZE[0], BUSH_SIZE[1]);
+  cloud1 = new Object(CLOUD1, CLOUD1_SIZE[0], CLOUD1_SIZE[1]);
+  cloud2 = new Object(CLOUD2, CLOUD2_SIZE[0], CLOUD2_SIZE[1]);
+  hill = new Object(HILL, HILL_SIZE[0], HILL_SIZE[1]);
   moon = new Object(MOON, MOON_SIZE[0], MOON_SIZE[1]);
   mario = new Mario(23, 40);
   hourBlock = new Block(13, 8);
@@ -90,16 +90,14 @@ void Clockface::setup(CWDateTime *dateTime) {
 
 void Clockface::drawStaticObjects() {
   ground->fillRow(DISPLAY_HEIGHT - ground->_height);
-  //bush->draw(43, 47); // TODO
-  ImageUtils::drawTransparent(43, 47, BUSH, 21, 9, SKY_COLOR_NIGHT);
-  //hill->draw(0, 34); // TODO
-  ImageUtils::drawTransparent(0, 34, HILL, 20, 22, SKY_COLOR_NIGHT);
+  bush->drawTransparent(43, 47, _skyColor);
+  hill->drawTransparent(0, 34, _skyColor);
+  
   if (!_isNightMode) {
     cloud1->draw(0, 21);
     cloud2->draw(51, 7);
   } else {
-    ImageUtils::drawTransparent(3, 3, MOON, MOON_SIZE[0], MOON_SIZE[1], SKY_COLOR_NIGHT);
-    //moon->draw(3, 3); // TODO
+    moon->drawTransparent(3, 3, _skyColor);
     drawStars();
   }
 }
@@ -134,7 +132,21 @@ void Clockface::update() {
 }
 
 bool Clockface::isTimeForEnemyRun() {
-  return (_nextEnemyRunTime > 0 && millis() >= _nextEnemyRunTime && !isNearTimeChange());
+  if (_nextEnemyRunTime > 0 && millis() >= _nextEnemyRunTime) {
+    if (isNearTimeChange()) {
+      // Postpone if near time change
+      _nextEnemyRunTime += 15000; // Postpone by 15 seconds (max time change window)
+      ESP_LOGD(TAG, "Postponing enemy run due to time change proximity");
+      return false;
+    }
+    else {
+      ESP_LOGD(TAG, "It's time for enemy run!");
+      return true;
+    }
+  }
+  else {
+    return false;
+  }
 }
 
 bool Clockface::areAllEnemiesHidden() {
@@ -177,6 +189,7 @@ void Clockface::updateTime() {
   minuteBlock->setText(String(_dateTime->getMinute(FORMAT_TWO_DIGITS)));
 }
 
+// Handle external events (probably not used at the moment)
 void Clockface::externalEvent(int type) {
   if (type == 0) {  //TODO create an enum
     mario->jump(true);  // External event jump - should hit blocks
@@ -185,7 +198,6 @@ void Clockface::externalEvent(int type) {
 }
 
 bool Clockface::shouldBeNightMode() {
-  return true;
   // Night mode from 20:00 (8 PM) to 06:00 (6 AM)
   int hour = _dateTime->getHour();
   return (hour >= 20 || hour < 6);
@@ -193,10 +205,14 @@ bool Clockface::shouldBeNightMode() {
 
 void Clockface::applyNightMode(bool enable) {
   _isNightMode = enable;
-  
+  _skyColor = _isNightMode ? SKY_COLOR_NIGHT : SKY_COLOR;
+  // Broadcast new sky color to all listeners
+    if (eventBus) {
+      eventBus->broadcast(SKY_COLOR_CHANGED, nullptr, _skyColor);
+  }
+
   // Redraw entire background
-  uint16_t skyColor = _isNightMode ? SKY_COLOR_NIGHT : SKY_COLOR;
-  Locator::getDisplay()->fillRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, skyColor);
+  Locator::getDisplay()->fillRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, _skyColor);
   
   drawStaticObjects();
     
@@ -208,8 +224,7 @@ void Clockface::drawStars() {
   for (int i = 0; i < STAR_COUNT; i++) {
     int x = STAR_POSITIONS[i][0] - 1;  // Center the 3x3 sprite
     int y = STAR_POSITIONS[i][1] - 1;
-    //Locator::getDisplay()->drawRGBBitmap(x, y, STAR, STAR_SIZE[0], STAR_SIZE[1]);
-    ImageUtils::drawTransparent(x, y, STAR, STAR_SIZE[0], STAR_SIZE[1], SKY_COLOR_NIGHT);
+    ImageUtils::drawTransparent(x, y, STAR, STAR_SIZE[0], STAR_SIZE[1], _skyColor);
   }
 }
 

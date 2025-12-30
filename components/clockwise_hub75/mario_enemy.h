@@ -36,6 +36,7 @@ class Enemy: public Sprite, public EventTask {
     unsigned long _lastJumpTrigger = 0;  // Cooldown for Mario jump
     State _state = HIDDEN;              // Start hidden
     State _lastState = HIDDEN; 
+    unsigned short _skyColor = SKY_COLOR;
 
     const char* _name;
     
@@ -47,11 +48,12 @@ class Enemy: public Sprite, public EventTask {
     void init();
     void move(Direction dir);
     void update();
+    void draw();
     void redrawBackground(int x, int y, int width, int height); // Method to redraw background
     void checkMarioCollision(); // Check if close to Mario and make him jump
     void startRandomRun();
     const char* name() override;
-    void execute(EventType event, Sprite* caller);
+    void execute(EventType event, Sprite* caller, uint16_t value = 0) override;
     bool isHidden() const { return _state == HIDDEN; }
 };
 

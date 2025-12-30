@@ -83,7 +83,7 @@ void Enemy::checkMarioCollision() {
 
 void Enemy::redrawBackground(int x, int y, int width, int height) {
   // Fill with sky color first
-  Locator::getDisplay()->fillRect(x, y, width, height, SKY_COLOR_NIGHT);
+  Locator::getDisplay()->fillRect(x, y, width, height, _skyColor);
   
   // Redraw background elements that might be in this area
   
@@ -91,13 +91,13 @@ void Enemy::redrawBackground(int x, int y, int width, int height) {
   // Check if the cleared area overlaps with the bush
   if (x < 43 + 21 && x + width > 43 && y < 47 + 9 && y + height > 47) {
     // Redraw the part of the bush that was cleared
-    ImageUtils::drawTransparent(43, 47, BUSH, 21, 9, SKY_COLOR_NIGHT); // Use SKY_COLOR or SKY_COLOR_NIGHT
+    ImageUtils::drawTransparent(43, 47, BUSH, BUSH_SIZE[0], BUSH_SIZE[1], _skyColor);
   }
   
   // Hill is at position (0, 34) with size (20, 22) - might overlap at edges
   if (x < 0 + 20 && x + width > 0 && y < 34 + 22 && y + height > 34) {
     // Redraw hill if it overlaps
-    ImageUtils::drawTransparent(0, 34, HILL, 20, 22, SKY_COLOR_NIGHT); // Use SKY_COLOR or SKY_COLOR_NIGHT
+    ImageUtils::drawTransparent(0, 34, HILL, HILL_SIZE[0], HILL_SIZE[1], _skyColor);
   }
 }
 
@@ -155,7 +155,7 @@ void Enemy::init() {
   _lastY = _y;
   // Don't draw initially if starting off-screen
   if (_x > -_width && _x < DISPLAY_WIDTH) {
-    ImageUtils::drawTransparent(_x, _y, _sprite, _width, _height, SKY_COLOR_NIGHT);
+    draw();
   }
 }
 
@@ -175,22 +175,23 @@ void Enemy::update() {
       
       // Only draw the Enemy if it's visible (partially or fully on screen)
       if (_x > -_width && _x < DISPLAY_WIDTH) {
-        ImageUtils::drawTransparent(_x, _y, _sprite, _width, _height, SKY_COLOR_NIGHT);
+        draw();
       }
     } 
-    /*else if (_state == IDLE && _state != _lastState) {
-      if (_x > -_width && _x < DISPLAY_WIDTH) {
-        ImageUtils::drawTransparent(_x, _y, _sprite, _width, _height, SKY_COLOR_NIGHT);
-      }
-    }*/
-    
+
     _lastMillis = millis();
   }
 }
 
-void Enemy::execute(EventType event, Sprite* caller) {
-  // Currently no event handling needed for Enemy
- }  
+void Enemy::draw() {
+  ImageUtils::drawTransparent(_x, _y, _sprite, _width, _height, _skyColor);
+}
+
+void Enemy::execute(EventType event, Sprite* caller, uint16_t value) {
+  if (event == SKY_COLOR_CHANGED) {
+    _skyColor = value;
+  }
+}
 
 const char* Enemy::name() {
   return _name;

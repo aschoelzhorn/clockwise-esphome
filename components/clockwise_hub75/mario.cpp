@@ -26,7 +26,7 @@ void Mario::jump(bool shouldHitBlocks) {
     _targetJumpHeight = _shouldHitBlocks ? MARIO_JUMP_HEIGHT : MARIO_COLLISION_JUMP_HEIGHT;
 
     // Clear Mario's current position using his current size
-    Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR_NIGHT);
+    Locator::getDisplay()->fillRect(_x, _y, _width, _height, _skyColor);
     
     _width = MARIO_JUMP_SIZE[0];
     _height = MARIO_JUMP_SIZE[1];
@@ -46,7 +46,7 @@ void Mario::idle() {
     _lastState = _state;
     _state = IDLE;
 
-    Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR_NIGHT);
+    Locator::getDisplay()->fillRect(_x, _y, _width, _height, _skyColor);
 
     _width = MARIO_IDLE_SIZE[0];
     _height = MARIO_IDLE_SIZE[1];
@@ -57,14 +57,17 @@ void Mario::idle() {
 
 void Mario::init() {
   Locator::getEventBus()->subscribe(this);
-  ImageUtils::drawTransparent(_x, _y, MARIO_IDLE, MARIO_IDLE_SIZE[0], MARIO_IDLE_SIZE[1], SKY_COLOR_NIGHT); // Use SKY_COLOR or SKY_COLOR_NIGHT as needed
+  draw();
+}
+
+void Mario::draw() {
+  ImageUtils::drawTransparent(_x, _y, _sprite, _width, _height, _skyColor);
 }
 
 void Mario::update() {
-  
 
   if (_state == IDLE && _state != _lastState) {
-    ImageUtils::drawTransparent(_x, _y, MARIO_IDLE, MARIO_IDLE_SIZE[0], MARIO_IDLE_SIZE[1], SKY_COLOR_NIGHT); // Use SKY_COLOR or SKY_COLOR_NIGHT as needed
+    draw();
   } else if (_state == JUMPING) {
     
     // Calculate how high we've jumped (distance from start)
@@ -76,11 +79,11 @@ void Mario::update() {
     
     if (millis() - lastMillis >= jumpDelay) {
      
-      Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR_NIGHT);
+      Locator::getDisplay()->fillRect(_x, _y, _width, _height, _skyColor);
       
       _y = _y + (MARIO_PACE * (_direction == UP ? -1 : 1));
 
-      ImageUtils::drawTransparent(_x, _y, _sprite, _width, _height, SKY_COLOR_NIGHT); // Use SKY_COLOR or SKY_COLOR_NIGHT as needed
+      draw();
       
       // Broadcast different events based on whether this jump should hit blocks
       if (_shouldHitBlocks) {
@@ -101,8 +104,10 @@ void Mario::update() {
   }
 }
 
-void Mario::execute(EventType event, Sprite* caller) {
-  if (event == EventType::COLLISION_JUMP) {
+void Mario::execute(EventType event, Sprite* caller, uint16_t value) {
+  if (event == SKY_COLOR_CHANGED) {
+    _skyColor = value;
+  } else if (event == EventType::COLLISION_JUMP) {
     ESP_LOGD(name(), "Collision jump triggered - no time update!");
     jump(false);  // Collision jump - don't hit blocks
   }

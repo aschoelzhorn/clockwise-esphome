@@ -39,6 +39,7 @@ class Clockface : public IClockface {
     bool _isNightMode = false;
     int _activeEnemyIdx = 0;
     unsigned long _nextEnemyRunTime = 0; // When to start next enemy run
+    unsigned short _skyColor = SKY_COLOR;
 
     // Member objects instead of globals
     EventBus* eventBus;

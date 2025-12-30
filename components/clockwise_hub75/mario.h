@@ -32,7 +32,9 @@ class Mario: public Sprite, public EventTask {
     State _lastState = IDLE;
     bool _shouldHitBlocks = true;  // Track if this jump should hit blocks
     uint8_t _targetJumpHeight = MARIO_JUMP_HEIGHT;  // Track target height for this jump
+    unsigned short _skyColor = SKY_COLOR;
     
+    void draw();
     void idle();
 
   public:
@@ -42,6 +44,6 @@ class Mario: public Sprite, public EventTask {
     void jump(bool shouldHitBlocks = true);  // Parameter to control block hitting
     void update();
     const char* name();
-    void execute(EventType event, Sprite* caller);
+    void execute(EventType event, Sprite* caller, uint16_t value = 0) override;
     
 };
