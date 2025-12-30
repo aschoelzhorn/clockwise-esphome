@@ -189,6 +189,7 @@ void Enemy::draw() {
 
 void Enemy::execute(EventType event, Sprite* caller, uint16_t value) {
   if (event == SKY_COLOR_CHANGED) {
+    ESP_LOGD(name(), "_skyColor changed to: %u (old color was: %u)", value, _skyColor);
     _skyColor = value;
   }
 }

@@ -206,9 +206,11 @@ bool Clockface::shouldBeNightMode() {
 void Clockface::applyNightMode(bool enable) {
   _isNightMode = enable;
   _skyColor = _isNightMode ? SKY_COLOR_NIGHT : SKY_COLOR;
+  ESP_LOGD(name(), "_isNightMode changed to: %s. Changed _skyColor to: %u", _isNightMode ? "true" : "false", _skyColor);
   // Broadcast new sky color to all listeners
-    if (eventBus) {
-      eventBus->broadcast(SKY_COLOR_CHANGED, nullptr, _skyColor);
+  if (eventBus) {
+    ESP_LOGD(name(), "Broadcasting SKY_COLOR_CHANGED event with color: %u", _skyColor);
+    eventBus->broadcast(SKY_COLOR_CHANGED, nullptr, _skyColor);
   }
 
   // Redraw entire background

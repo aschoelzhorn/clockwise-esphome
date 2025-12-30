@@ -106,6 +106,7 @@ void Mario::update() {
 
 void Mario::execute(EventType event, Sprite* caller, uint16_t value) {
   if (event == SKY_COLOR_CHANGED) {
+    ESP_LOGD(name(), "_skyColor changed to: %u (old color was: %u)", value, _skyColor);
     _skyColor = value;
   } else if (event == EventType::COLLISION_JUMP) {
     ESP_LOGD(name(), "Collision jump triggered - no time update!");
