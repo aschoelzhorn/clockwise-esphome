@@ -26,6 +26,7 @@ void Mario::jump(bool shouldHitBlocks) {
     _targetJumpHeight = _shouldHitBlocks ? MARIO_JUMP_HEIGHT : MARIO_COLLISION_JUMP_HEIGHT;
 
     // Clear Mario's current position using his current size
+    ESP_LOGD(name(), "Clearing Mario in jump() using _skyColor %u", _skyColor);
     Locator::getDisplay()->fillRect(_x, _y, _width, _height, _skyColor);
     
     _width = MARIO_JUMP_SIZE[0];
@@ -46,6 +47,7 @@ void Mario::idle() {
     _lastState = _state;
     _state = IDLE;
 
+    ESP_LOGD(name(), "Clearing Mario in idle() using _skyColor %u", _skyColor);
     Locator::getDisplay()->fillRect(_x, _y, _width, _height, _skyColor);
 
     _width = MARIO_IDLE_SIZE[0];
@@ -61,6 +63,7 @@ void Mario::init() {
 }
 
 void Mario::draw() {
+  ESP_LOGD(name(), "draw() called with _skyColor: %u", _skyColor);
   ImageUtils::drawTransparent(_x, _y, _sprite, _width, _height, _skyColor);
 }
 
@@ -78,7 +81,7 @@ void Mario::update() {
     unsigned long jumpDelay = (!_shouldHitBlocks && inUpperHalf) ? 150 : 100;
     
     if (millis() - lastMillis >= jumpDelay) {
-     
+      ESP_LOGD(name(), "Clearing Mario in update() using _skyColor %u", _skyColor);
       Locator::getDisplay()->fillRect(_x, _y, _width, _height, _skyColor);
       
       _y = _y + (MARIO_PACE * (_direction == UP ? -1 : 1));
