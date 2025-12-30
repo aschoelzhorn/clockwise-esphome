@@ -86,6 +86,8 @@ void Clockface::setup(CWDateTime *dateTime) {
   minuteBlock->init();
   mario->init();
   for (int i = 0; i < ENEMY_COUNT; ++i) enemies[i]->init();
+
+  applyNightMode(shouldBeNight);
 }
 
 void Clockface::drawStaticObjects() {
