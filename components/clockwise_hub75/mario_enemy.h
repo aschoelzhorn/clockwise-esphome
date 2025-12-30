@@ -9,15 +9,18 @@
 #include "CWDateTime.h"
 
 namespace mario {
+enum class EnemyType {
+  GOOMBA,
+  KOOPA
+};
 
-const uint8_t GOOMBA_PACE = 6;
+const uint8_t ENEMY_PACE = 6;
 
-class Goomba: public Sprite, public EventTask {
+class Enemy: public Sprite, public EventTask {
   private:
 
     enum State {
       HIDDEN,   // Not visible, waiting for next run
-      IDLE,
       WALKING
     };
 
@@ -31,27 +34,25 @@ class Goomba: public Sprite, public EventTask {
     CWDateTime* _dateTime;  // Reference to datetime for time checking
     unsigned long _lastMillis = 0;
     unsigned long _lastJumpTrigger = 0;  // Cooldown for Mario jump
-    unsigned long _nextRunTime = 0;      // When to start next run
     State _state = HIDDEN;              // Start hidden
     State _lastState = HIDDEN; 
+
+    const char* _name;
     
-    void idle();
     void walk();
     void hide();
-    void startRandomRun();
-    bool isNearTimeChange();  // Check if current time is close to minute change
 
   public:
-    Goomba(int x, int y);
-    void init(CWDateTime* dateTime);
-    void move(Direction dir, int times);
+    Enemy(int x, int y, EnemyType type);
+    void init();
+    void move(Direction dir);
     void update();
     void redrawBackground(int x, int y, int width, int height); // Method to redraw background
-    // void drawTransparent(int x, int y, const uint16_t* bitmap, int width, int height, uint16_t maskColor); // Draw with transparency
     void checkMarioCollision(); // Check if close to Mario and make him jump
-    const char* name();
+    void startRandomRun();
+    const char* name() override;
     void execute(EventType event, Sprite* caller);
-    
+    bool isHidden() const { return _state == HIDDEN; }
 };
 
 }  // namespace mario

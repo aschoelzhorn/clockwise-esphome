@@ -1,5 +1,5 @@
 #include "mario_Clockface.h"
-#include "mario_goomba.h"
+#include "mario_enemy.h"
 #include "esphome/core/log.h"
 
 const char* FORMAT_TWO_DIGITS = "%02d";
@@ -25,7 +25,7 @@ Clockface::Clockface(Adafruit_GFX* display) {
   hill = nullptr;
   moon = nullptr;
   mario = nullptr;
-  goomba = nullptr;
+  for (int i = 0; i < ENEMY_COUNT; ++i) enemies[i] = nullptr;
   hourBlock = nullptr;
   minuteBlock = nullptr;
 
@@ -41,7 +41,7 @@ Clockface::~Clockface() {
   delete hill;
   delete moon;
   delete mario;
-  delete goomba;
+  for (int i = 0; i < ENEMY_COUNT; ++i) delete enemies[i];
   delete hourBlock;
   delete minuteBlock;
 }
@@ -58,9 +58,16 @@ void Clockface::setup(CWDateTime *dateTime) {
   hill = new Object(HILL, 20, 22);
   moon = new Object(MOON, MOON_SIZE[0], MOON_SIZE[1]);
   mario = new Mario(23, 40);
-  goomba = new Goomba(-8, 48);
   hourBlock = new Block(13, 8);
   minuteBlock = new Block(32, 8);
+ 
+  // Goomba
+  enemies[0] = new Enemy(-ENEMY_SIZE[0], 48, EnemyType::GOOMBA);
+  // Koopa
+  enemies[1] = new Enemy(-ENEMY_SIZE[0], 48, EnemyType::KOOPA);
+  
+  _activeEnemyIdx = -1; // no active enemy at start
+  _nextEnemyRunTime = 0; // don't start at all until scheduled
 
   // Provide EventBus after creation
   Locator::provide(eventBus);
@@ -78,21 +85,21 @@ void Clockface::setup(CWDateTime *dateTime) {
   hourBlock->init();
   minuteBlock->init();
   mario->init();
-  goomba->init(_dateTime);
+  for (int i = 0; i < ENEMY_COUNT; ++i) enemies[i]->init();
 }
 
 void Clockface::drawStaticObjects() {
   ground->fillRow(DISPLAY_HEIGHT - ground->_height);
-  //bush->draw(43, 47);
+  //bush->draw(43, 47); // TODO
   ImageUtils::drawTransparent(43, 47, BUSH, 21, 9, SKY_COLOR_NIGHT);
-  //hill->draw(0, 34);
+  //hill->draw(0, 34); // TODO
   ImageUtils::drawTransparent(0, 34, HILL, 20, 22, SKY_COLOR_NIGHT);
   if (!_isNightMode) {
     cloud1->draw(0, 21);
     cloud2->draw(51, 7);
   } else {
     ImageUtils::drawTransparent(3, 3, MOON, MOON_SIZE[0], MOON_SIZE[1], SKY_COLOR_NIGHT);
-    //moon->draw(3, 3);
+    //moon->draw(3, 3); // TODO
     drawStars();
   }
 }
@@ -108,7 +115,15 @@ void Clockface::update() {
   hourBlock->update();
   minuteBlock->update();
   mario->update();
-  goomba->update();
+
+  scheduleNextEnemyRun();
+  if (isTimeForEnemyRun()) {
+    chooseRandomEnemy();
+    enemies[_activeEnemyIdx]->startRandomRun();
+    _nextEnemyRunTime = 0; // Reset to indicate no run scheduled
+  }
+
+  enemies[_activeEnemyIdx]->update();
 
   if (_dateTime->getSecond() == 0 && millis() - lastMillis > 1000) {
     ESP_LOGD(TAG, "Time-based jump and TIME_UPDATE broadcast");
@@ -116,7 +131,45 @@ void Clockface::update() {
     updateTime();
     lastMillis = millis();
   }
-}  
+}
+
+bool Clockface::isTimeForEnemyRun() {
+  return (_nextEnemyRunTime > 0 && millis() >= _nextEnemyRunTime && !isNearTimeChange());
+}
+
+bool Clockface::areAllEnemiesHidden() {
+  for (int i = 0; i < ENEMY_COUNT; ++i) {
+    if (!enemies[i]->isHidden()) {
+      return false;
+    }
+  }
+  return true;
+} 
+
+void Clockface::scheduleNextEnemyRun() {
+  if (_nextEnemyRunTime > 0) {
+    return; // Already scheduled
+  } 
+  if (areAllEnemiesHidden()) { 
+    // Schedule next enemy run between 20 to 60 seconds from now
+    unsigned long interval = random(20000, 60000);
+    _nextEnemyRunTime = millis() + interval;
+    ESP_LOGD(TAG, "Next enemy run scheduled in %lu ms", interval);
+  }
+}
+
+bool Clockface::isNearTimeChange() {
+  // Check if we're within 10 seconds before or 5 seconds after a minute change
+  // This avoids interfering with Mario's time jump
+  int seconds = _dateTime->getSecond();
+  // Avoid 50-59 seconds (before minute change) and 0-5 seconds (after minute change)
+  return (seconds >= 50 || seconds <= 5);
+}
+
+
+void Clockface::chooseRandomEnemy() {
+  _activeEnemyIdx = random(0, ENEMY_COUNT);
+}
 
 void Clockface::updateTime() {
   ESP_LOGD(TAG, "updateTime() called - Hour: %d, Minute: %02d", _dateTime->getHour(), _dateTime->getMinute());
@@ -159,16 +212,5 @@ void Clockface::drawStars() {
     ImageUtils::drawTransparent(x, y, STAR, STAR_SIZE[0], STAR_SIZE[1], SKY_COLOR_NIGHT);
   }
 }
-
-// void Clockface::drawTransparent(int x, int y, const uint16_t* bitmap, int width, int height, uint16_t maskColor) {
-//   for (int j = 0; j < height; j++) {
-//     for (int i = 0; i < width; i++) {
-//       uint16_t pixel = pgm_read_word(&bitmap[j * width + i]);
-//       if (pixel != MASK_COLOR) {
-//         Locator::getDisplay()->drawPixel(x + i, y + j, pixel);
-//       }
-//     }
-//   }
-// }
 
 }  // namespace mario

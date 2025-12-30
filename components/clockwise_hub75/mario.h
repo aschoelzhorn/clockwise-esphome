@@ -34,7 +34,6 @@ class Mario: public Sprite, public EventTask {
     uint8_t _targetJumpHeight = MARIO_JUMP_HEIGHT;  // Track target height for this jump
     
     void idle();
-    // void drawTransparent(int x, int y, const uint16_t* bitmap, int width, int height, uint16_t maskColor); // Draw with transparency
 
   public:
     Mario(int x, int y);

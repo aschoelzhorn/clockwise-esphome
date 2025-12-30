@@ -1,8 +1,6 @@
 #include "mario_block.h"
 #include "esphome/core/log.h"
 
-static const char *TAG = "block";
-
 Block::Block(int x, int y) {
   _x = x;
   _y = y;
@@ -47,7 +45,7 @@ void Block::setTextBlock() {
 }
 
 void Block::setText(String text) {
-  ESP_LOGD(TAG, "setText called with: %s (old text was: %s)", text.c_str(), _text.c_str());
+  ESP_LOGD(name(), "setText called with: %s (old text was: %s)", text.c_str(), _text.c_str());
   _text = text;
 }
 

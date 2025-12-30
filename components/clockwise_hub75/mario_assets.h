@@ -167,14 +167,6 @@ const byte MARIO_JUMP_SIZE[2]  = {17, 16};
 
 // enemies
 
-//SKY_COLOR
-
-//G_BROWN = warm brown (Goomba body)
-//G_BROWN_DARK = darker brown (outline)
-//WHITE = white (eyes)
-//0x0000 = black (pupils / mouth)
-//TRANSPARENT = light blue (sky background)
-
 // ===== NES-style modernized RGB565 color palette =====
 const unsigned short BLACK      = 0x0000; // outlines, pupils, mouth
 const unsigned short WHITE      = 0xFFFF; // eyes, highlights
@@ -202,9 +194,6 @@ const uint16_t GOOMBA[] PROGMEM = {
     TRANSPARENT,TRANSPARENT,G_BROWN_DARK,TRANSPARENT,TRANSPARENT,G_BROWN_DARK,TRANSPARENT,TRANSPARENT
 };
 
-const byte GOOMBA_SIZE[2]  = {8, 8};
-
-
 const uint16_t KOOPA[] PROGMEM = {
     TRANSPARENT,TRANSPARENT,TRANSPARENT,0x07E0,0x07E0,TRANSPARENT,TRANSPARENT,TRANSPARENT,
     TRANSPARENT,TRANSPARENT,0x07E0,0xA145,0xA145,0x07E0,TRANSPARENT,TRANSPARENT,
@@ -215,7 +204,9 @@ const uint16_t KOOPA[] PROGMEM = {
     TRANSPARENT,0x07E0,0xA145,0xA145,0xA145,0xA145,0x07E0,TRANSPARENT,
     TRANSPARENT,TRANSPARENT,0x07E0,0x07E0,0x07E0,0x07E0,TRANSPARENT,TRANSPARENT
 };
-const byte KOOPA_SIZE[2] = {8, 8};
+
+const byte ENEMY_SIZE[2]  = {8, 8};
+
 
 // Night mode assets
 const uint16_t MOON[] PROGMEM = {

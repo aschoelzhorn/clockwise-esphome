@@ -1,8 +1,6 @@
 #include "mario.h"
 #include "esphome/core/log.h"
 
-static const char *TAG = "mario";
-
 Mario::Mario(int x, int y) {
   _x = x;
   _y = y;
@@ -17,17 +15,6 @@ void Mario::move(Direction dir, int times) {
   }  
 
 }
-
-// void Mario::drawTransparent(int x, int y, const uint16_t* bitmap, int width, int height, uint16_t maskColor) {
-//   for (int j = 0; j < height; j++) {
-//     for (int i = 0; i < width; i++) {
-//       uint16_t pixel = pgm_read_word(&bitmap[j * width + i]);
-//       if (pixel != TRANSPARENT) {
-//         Locator::getDisplay()->drawPixel(x + i, y + j, pixel);
-//       }
-//     }
-//   }
-// }
 
 void Mario::jump(bool shouldHitBlocks) {
   if (_state != JUMPING && (millis() - lastMillis > 500) ) {
@@ -116,7 +103,7 @@ void Mario::update() {
 
 void Mario::execute(EventType event, Sprite* caller) {
   if (event == EventType::COLLISION_JUMP) {
-    ESP_LOGD(TAG, "Collision jump triggered - no time update!");
+    ESP_LOGD(name(), "Collision jump triggered - no time update!");
     jump(false);  // Collision jump - don't hit blocks
   }
 }
