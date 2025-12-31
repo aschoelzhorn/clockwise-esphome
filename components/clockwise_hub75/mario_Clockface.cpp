@@ -200,6 +200,7 @@ void Clockface::externalEvent(int type) {
 }
 
 bool Clockface::shouldBeNightMode() {
+  return true;
   // Night mode from 20:00 (8 PM) to 06:00 (6 AM)
   int hour = _dateTime->getHour();
   return (hour >= 20 || hour < 6);
