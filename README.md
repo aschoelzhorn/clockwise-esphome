@@ -9,6 +9,7 @@
 This ESPHome component brings the fantastic [Clockwise](https://clockwise.page/) project to Home Assistant, featuring retro gaming clockfaces like Mario and Pac-Man with full remote control capabilities.
 
 ![Mario Clockface](docs/images/cf_0x01_thumb.jpg)
+![Mario Clockface](docs/images/enemy.jpg)
 ![Pac-Man Clockface](docs/images/cf_0x05_thumb.jpg)
 ![Home Assistant](docs/images/home_assistant.jpg)
 

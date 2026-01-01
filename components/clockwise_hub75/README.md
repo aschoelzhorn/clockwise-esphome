@@ -89,15 +89,18 @@ select:
 ### Home Assistant Entities
 
 #### Number Entity (Brightness)
+
 - **Range**: 0-255
 - **Purpose**: Control display brightness
 - **Icon**: `mdi:brightness-5`
 
-#### Switch Entity (Power)  
+#### Switch Entity (Power)
+
 - **Purpose**: Turn display on/off
 - **Icon**: `mdi:power`
 
 #### Select Entity (Clockface)
+
 - **Options**: "Pacman", "Mario", "Clock"
 - **Purpose**: Switch between clockface modes
 - **Icon**: `mdi:clock-outline`
@@ -139,18 +142,21 @@ display:
 ## Development Roadmap
 
 ### Phase 1: Core Integration ✅
+
 - [x] HUB75 component integration
 - [x] Native HA entities  
 - [x] Basic clockface switching
 - [x] Brightness and power control
 
 ### Phase 2: Clockface Migration
-- [ ] Port existing Pacman clockface logic
-- [ ] Port existing Mario clockface logic  
+
+- [x] Port existing Pacman clockface logic
+- [x] Port existing Mario clockface logic  
 - [ ] Implement enhanced clock mode
 - [ ] Add font rendering support
 
 ### Phase 3: Advanced Features
+
 - [ ] Animation support
 - [ ] Custom clockface API
 - [ ] Multi-panel clockface layouts
@@ -166,6 +172,7 @@ See the `examples/` directory for complete configuration examples:
 ## Contributing
 
 This component builds on the excellent work by:
+
 - Stuart Parmenter ([hub75-esphome](https://github.com/stuartparmenter/hub75-esphome))
 - ESPHome community
 - Original clockwise component developers
@@ -177,6 +184,7 @@ MIT License - see LICENSE file for details.
 ## Support
 
 For issues related to:
+
 - **HUB75 hardware/drivers**: Report to [hub75-esphome](https://github.com/stuartparmenter/hub75-esphome) 
 - **Clockwise integration**: Report to this repository
 - **ESPHome core**: Report to [ESPHome](https://github.com/esphome/esphome)

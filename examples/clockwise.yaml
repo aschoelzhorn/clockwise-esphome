@@ -9,6 +9,7 @@ substitutions:
   panel_width: "64"
   panel_height: "64"
   initial_brightness: "128"
+
   
   # LDR Configuration (optional - set enable_ldr: "true" to enable)
   enable_ldr: "false"  # Set to "true" to enable auto-brightness
@@ -84,10 +85,7 @@ time:
 
 # External components
 external_components:
-  # HUB75 upstream component
-  - source: github://stuartparmenter/hub75-esphome
-  
-  # Clockwise HUB75 integration component
+  # Clockwise HUB75 integration component (hub75 is now built-in to ESPHome core)
   - source: github://aschoelzhorn/clockwise-esphome@main
     components: [clockwise_hub75]
 

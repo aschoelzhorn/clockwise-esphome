@@ -64,7 +64,7 @@ class Pacman: public Sprite, public EventTask {
     int getY();
     void update();
     const char* name();
-    void execute(EventType event, Sprite* caller);
+    void execute(EventType event, Sprite* caller, uint16_t value = 0);
     Direction _direction = Direction::RIGHT;
     State _state = MOVING;
     const int SPRITE_SIZE = 5;

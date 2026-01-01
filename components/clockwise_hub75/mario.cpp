@@ -1,4 +1,5 @@
 #include "mario.h"
+#include "esphome/core/log.h"
 
 Mario::Mario(int x, int y) {
   _x = x;
@@ -15,20 +16,23 @@ void Mario::move(Direction dir, int times) {
 
 }
 
-void Mario::jump() {
+void Mario::jump(bool shouldHitBlocks) {
   if (_state != JUMPING && (millis() - lastMillis > 500) ) {
     // Serial.println("Jump - Start");
 
     _lastState = _state;
     _state = JUMPING;
+    _shouldHitBlocks = shouldHitBlocks;  // Store whether this jump should hit blocks
+    _targetJumpHeight = _shouldHitBlocks ? MARIO_JUMP_HEIGHT : MARIO_COLLISION_JUMP_HEIGHT;
 
-    Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR);
+    // Clear Mario's current position using his current size
+    Locator::getDisplay()->fillRect(_x, _y, _width, _height, _skyColor);
     
     _width = MARIO_JUMP_SIZE[0];
     _height = MARIO_JUMP_SIZE[1];
     _sprite = MARIO_JUMP;
 
-    direction = UP;
+    _direction = UP;
 
     _lastY = _y;
     _lastX = _x;
@@ -42,7 +46,7 @@ void Mario::idle() {
     _lastState = _state;
     _state = IDLE;
 
-    Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR);
+    Locator::getDisplay()->fillRect(_x, _y, _width, _height, _skyColor);
 
     _width = MARIO_IDLE_SIZE[0];
     _height = MARIO_IDLE_SIZE[1];
@@ -53,34 +57,43 @@ void Mario::idle() {
 
 void Mario::init() {
   Locator::getEventBus()->subscribe(this);
-  Locator::getDisplay()->drawRGBBitmap(_x, _y, MARIO_IDLE, MARIO_IDLE_SIZE[0], MARIO_IDLE_SIZE[1]);
+  draw();
+}
+
+void Mario::draw() {
+  ImageUtils::drawTransparent(_x, _y, _sprite, _width, _height, _skyColor);
 }
 
 void Mario::update() {
-  
 
   if (_state == IDLE && _state != _lastState) {
-    Locator::getDisplay()->drawRGBBitmap(_x, _y, MARIO_IDLE, MARIO_IDLE_SIZE[0], MARIO_IDLE_SIZE[1]);
+    draw();
   } else if (_state == JUMPING) {
     
-    if (millis() - lastMillis >= 50) {
-
-      //Serial.println(_y);
+    // Calculate how high we've jumped (distance from start)
+    int jumpProgress = abs(_lastY - _y);
+    bool inUpperHalf = jumpProgress >= (_targetJumpHeight / 2);
+    
+    // Slow down the upper half of the jump (150ms vs 100ms) only for non block-hitting jumps
+    unsigned long jumpDelay = (!_shouldHitBlocks && inUpperHalf) ? 150 : 100;
+    
+    if (millis() - lastMillis >= jumpDelay) {
+      Locator::getDisplay()->fillRect(_x, _y, _width, _height, _skyColor);
       
-      Locator::getDisplay()->fillRect(_x, _y, _width, _height, SKY_COLOR);
-      
-      _y = _y + (MARIO_PACE * (direction == UP ? -1 : 1));
+      _y = _y + (MARIO_PACE * (_direction == UP ? -1 : 1));
 
-      Locator::getDisplay()->drawRGBBitmap(_x, _y, _sprite, _width, _height);
+      draw();
       
-      Locator::getEventBus()->broadcast(MOVE, this);
+      // Broadcast different events based on whether this jump should hit blocks
+      if (_shouldHitBlocks) {
+        Locator::getEventBus()->broadcast(MOVE, this);  // Normal move - blocks will check collision
+      } 
 
-     
-      if (floor(_lastY - _y) >= MARIO_JUMP_HEIGHT) {
-        direction = DOWN;
+      if (floor(_lastY - _y) >= _targetJumpHeight) {
+        _direction = DOWN;
       }
 
-      if (_y+_height >= 56) {
+      if (_y + _height >= 56) {
         idle();
       }
 
@@ -90,10 +103,13 @@ void Mario::update() {
   }
 }
 
-void Mario::execute(EventType event, Sprite* caller) {
-  if (event == EventType::COLLISION) {
-    //Serial.println("MARIO - Collision detected");
-    direction = DOWN;
+void Mario::execute(EventType event, Sprite* caller, uint16_t value) {
+  if (event == SKY_COLOR_CHANGED) {
+    ESP_LOGD(name(), "_skyColor changed to: %u (old color was: %u)", value, _skyColor);
+    _skyColor = value;
+  } else if (event == EventType::COLLISION_JUMP) {
+    ESP_LOGD(name(), "Collision jump triggered - no time update!");
+    jump(false);  // Collision jump - don't hit blocks
   }
 }
 

@@ -5,6 +5,7 @@
 #include "Locator.h"
 #include "EventTask.h"
 #include "mario_assets.h"
+#include "ImageUtils.h"
 
 const uint8_t MOVE_PACE = 2;
 const uint8_t MAX_MOVE_HEIGHT = 4;
@@ -16,7 +17,7 @@ class Block: public Sprite, public EventTask {
       HIT
     };   
 
-    Direction direction; 
+    Direction _direction; 
 
     String _text;
 
@@ -25,10 +26,12 @@ class Block: public Sprite, public EventTask {
     State _lastState = IDLE; 
     uint8_t _lastY;
     uint8_t _firstY;
+    unsigned short _skyColor = SKY_COLOR;
     
     void idle();
     void hit();
     void setTextBlock();
+    void draw();
 
   public:
     Block(int x, int y);
@@ -36,6 +39,6 @@ class Block: public Sprite, public EventTask {
     void init();
     void update();    
     const char* name();
-    void execute(EventType event, Sprite* caller);
+    void execute(EventType event, Sprite* caller, uint16_t value = 0) override;
 
 };
