@@ -45,7 +45,7 @@ void Clockface::update() {
 	static const char* phrase = nullptr;
 	uint32_t now = millis();
 	if (phrase == nullptr || now - lastPhraseUpdate > 10000) {
-		phrase = dune::selectPhrase(act);
+		phrase = selectPhrase(act);
 		lastPhraseUpdate = now;
 	}
 	// Display phrase at top (y=2), centered
@@ -59,10 +59,21 @@ void Clockface::update() {
 	_display->print(phrase);
 }
 
+const char* Clockface::selectPhrase(uint8_t act) {
+  switch (act) {
+    case 1: return PHRASES_DESERT[random(COUNT_DESERT)];
+    case 2: return PHRASES_TIME[random(COUNT_TIME)];
+    case 3: return PHRASES_POWER[random(COUNT_POWER)];
+    case 4: return PHRASES_DANGER[random(COUNT_DANGER)];
+    case 5: return PHRASES_SURVIVAL[random(COUNT_SURVIVAL)];
+    default: return "TIME FLOWS";
+  }
+}
+
 void Clockface::drawDigit(uint8_t digit, int x, int y, uint16_t color) {
-	extern const uint8_t font5x7_alpha[][5];
+	extern const uint8_t font5x7_digits[][5];
 	for (int col = 0; col < 5; ++col) {
-		uint8_t bits = dune::font5x7_alpha[digit][col];
+		uint8_t bits = dune::font5x7_digits[digit][col];
 		for (int row = 0; row < 7; ++row) {
 			if (bits & (1 << row)) {
 				// Draw 2x2 block for scaling
