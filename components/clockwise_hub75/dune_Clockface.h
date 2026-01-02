@@ -11,112 +11,209 @@
 #include "CWDateTime.h"
 
 #include "dune_assets.h"
+//#include "dune_font.h"
+#include "dune_phrases.h"
+#include "dune_act.h"
 
 namespace dune {
 
-// Array of pointers to background images - using only images from first half to avoid duplicates
-static const uint16_t* backgroundImages[10] = {
-  dune_baron64x64,
-  dune_baron_desert64x64,
-  dune_baron_chamber64x64,
-  dune_ornithopter64x64,
-  dune_chani64x64,
-  dune_sandworm64x64,
-  dune_paul_sandworm64x64,
-  dune_background64x64,
-  dune_background_264x64,
-  dune_baron_chamber_background64x64
-};
-
 class Clockface : public IClockface {
   private:
-    Adafruit_GFX* _display;
-    CWDateTime* _dateTime;  // Store the datetime reference
 
-    // Timing
-    unsigned long lastMillis = 0;
-    unsigned long lastMillisTime = 0;
-    unsigned long lastBackgroundChange = 0;
+    static constexpr int TEXT_Y = 2;
+    static constexpr int FONT_W = 5;
+    static constexpr int FONT_H = 7;
+    static constexpr int CHAR_SPACING = 1;
+    int textWidth(const char* s);
+
+    #define COLOR_COOL_BLACK   0x18C3 // Dark, cool black for clearing
+    #define COLOR_SHADOW_DARK  0x4208  // dark brown/gray
+    #define COLOR_SHADOW_SOFT  0x630C  // softer edge
+
+    // frame_text begin
+    // Text state
+    enum TextPhase {
+        TEXT_IDLE,
+        TEXT_FADE_IN,
+        TEXT_HOLD,
+        TEXT_FADE_OUT,
+        TEXT_QUIET
+    };
+
+    struct TextState {
+      TextPhase phase = TEXT_IDLE;
+      const char* phrase = nullptr;
+      uint32_t phaseStart = 0;
+    };
+
+    static constexpr uint32_t TEXT_FADE_MS  = 1000;
+    static constexpr uint32_t TEXT_HOLD_MS     = 3000;
+    static constexpr uint32_t TEXT_QUIET_MS    = 1500; //600000; // 10 minutes
+
+    TextState _text;
+// frame_text end
+
+// frame ambient begin
+struct AmbientState {
+  bool enabled = false;
+  uint32_t lastUpdate = 0;
+  float phase = 0.0f;
+};
+AmbientState _ambientHeat;
+AmbientState _ambientSand;
+AmbientState _ambientTremor;
+
+//frame ambient end
+
+    // typedef enum {
+    //   VS_IDLE,
+    //   VS_ENTER,
+    //   VS_ACTIVE,
+    //   VS_EXIT
+    // } VisualPhase;
+
+
+    // #define STORM_ENTER_MS   800
+    // #define STORM_ACTIVE_MS 3000
+    // #define STORM_EXIT_MS   1200
+
+    // typedef enum {
+    //   EVENT_NONE = 0,
+    //   EVENT_STORM,
+    //   EVENT_WORM,
+    //   EVENT_FLIGHT
+    // } EventType;
+
+    // typedef struct {
+    //   bool active = false;
+    //   EventType type = EVENT_NONE;
+    //   VisualPhase phase = VS_IDLE;
+    //   uint32_t phaseStart = 0;
+    // } Event;
+    // Event _event;
+
+// frame event begin
+
+enum EventType {
+  EVENT_NONE,
+  EVENT_STORM,
+  EVENT_WORM,
+  EVENT_FLIGHT
+};
+
+enum EventPhase {
+  EP_IDLE,
+  EP_ENTER,   // buildup
+  EP_ACTIVE,  // main visuals
+  EP_EXIT     // fade out / settle
+};
+struct EventState {
+  bool active = false;
+  EventType type = EVENT_NONE;
+  EventPhase phase = EP_IDLE;
+  uint32_t phaseStart = 0;
+};
+EventState _event;
+// frame event end
+
+struct BackgroundTransition {
+  bool active = false;
+  const uint16_t* from = nullptr;
+  const uint16_t* to = nullptr;
+  uint32_t start = 0;
+  uint32_t duration = 2500;
+};
+
+BackgroundTransition _bgTransition;
+
+
+    #define ACT_I 1
+    #define ACT_II 2
+    #define ACT_III 3
+    #define ACT_IV 4
+    #define ACT_V 5
+    #define ACT_VI 6
+
+    // framebuffer for double buffering
+    inline void fbClear(uint16_t color);
+    inline uint16_t fbGet(uint8_t x, uint8_t y);
+    inline void fbSet(uint8_t x, uint8_t y, uint16_t color);
+
+    // Shadow state
+    uint32_t _shadowLastUpdate = 0;
+    uint8_t  _shadowX = 0;
+    uint8_t  _shadowY = 10;
+    int8_t   _shadowDx = 1;
+
+    // Tremor state
+    uint32_t _tremorLastUpdate = 0;
+    static const uint8_t TREMOR_UPDATE_MS = 100; // 10 fps for ripples
+
+    Adafruit_GFX* _display;
+    CWDateTime* _dateTime;
+    Act _activeAct;
+    Act _acts[6];
+
+    uint32_t _now;
+
+    EventBus* _eventBus;
+
+    Act getCurrentAct(uint8_t hour);
+
+    void initializeActs();
+    void setActiveAct();
+    void enterAct(uint8_t actId);
+
+    void drawBackgroundImage(const uint16_t* image);
+    void flushFramebuffer();
+    void drawTime(uint8_t hour, uint8_t minute, uint16_t color);
+    void drawDigit(uint8_t digit, int x, int y, uint16_t color);
+    void drawColon(int x, int y, bool blink, uint16_t color);
+
+
+    // rendering layers
+    void layer_clear();
+    void layer_background();
+    void layer_ambient();
+    void layer_event();
+    void layer_time();
+    void layer_text();
+
+    // ambient effects
+    void ambient_heat();
+    void ambient_spice();
+    void ambient_shadow();
+    void ambient_tremor();
+    void ambient_wind();
+    void ambient_dust();
+
+    // event effects
+    void maybeStartEvent();
+    void startEvent(EventType type);
+    void endEvent();
+    void drawStorm();
+    void drawWorm();
+    void drawFlight();
+
     
-    // Background cycling
-    int currentBackgroundIndex = 0;
-    static const int BACKGROUND_COUNT = 10;  // Back to 5 images to avoid duplicates
-    static const unsigned long BACKGROUND_CHANGE_INTERVAL = 3000; // 3 seconds
-    
-    void drawBackground() {
-      // Clear the display first
-      Locator::getDisplay()->fillRect(0, 0, 64, 64, 0x0000);
-      
-      // Draw the current Dune background image
-      const uint16_t* currentBackground = backgroundImages[currentBackgroundIndex];
-      
-      // Draw the 64x64 RGB565 image pixel by pixel
-      for (int y = 0; y < 64; y++) {
-        for (int x = 0; x < 64; x++) {
-          uint16_t color = pgm_read_word(&currentBackground[y * 64 + x]);
-          Locator::getDisplay()->drawPixel(x, y, color);
-        }
-      }
-    }
-    
-    void drawTime() {
-      if (!_dateTime) return;
-      
-      // Get current time using CWDateTime methods
-      int hour = _dateTime->getHour();
-      int minute = _dateTime->getMinute();
-      char timeStr[6];  // HH:MM format
-      snprintf(timeStr, sizeof(timeStr), "%02d:%02d", hour, minute);
-      
-      // Set text properties for visibility on any background - smaller text
-      Locator::getDisplay()->setTextColor(0xFFFF, 0x0000); // White text with black background
-      Locator::getDisplay()->setTextSize(1);
-      
-      // Calculate center position for smaller text (each character is 5 pixels wide, 5 characters = 25 pixels at size 1)
-      int textWidth = 25; // 5 chars * 5 pixels per char (6x8 font is 5 pixels wide)
-      int x = (64 - textWidth) / 2;
-      int y = 1; // Top of screen with smaller margin
-      
-      // Draw smaller black background rectangle for text readability
-      Locator::getDisplay()->fillRect(x - 1, y - 1, textWidth + 2, 6, 0x0000);
-      
-      // Draw the time text
-      Locator::getDisplay()->setCursor(x, y);
-      Locator::getDisplay()->print(timeStr);
-    }
-    
-    void cycleBackground() {
-      currentBackgroundIndex = (currentBackgroundIndex + 1) % BACKGROUND_COUNT;
-      drawBackground();
-      drawTime(); // Redraw time on new background
-    }
+    void drawShadowBand(uint8_t xStart, uint8_t yStart);
+    uint16_t darken(uint16_t color);
+    uint16_t darken(uint16_t color, float factor);
+    void drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t* bg);
+
+    bool eventSilencesText() const;
+
+    uint16_t blend565(uint16_t bg, uint16_t fg, uint8_t alpha);
+    void drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha);
+    void drawCharBlended(char c, int x, int y, uint16_t color, uint8_t alpha);
 
 public:
-    Clockface(Adafruit_GFX* display) : _display(display) {
-      Locator::provide(display);
-    }
-    
-    ~Clockface() = default;
-    
-    void setup(CWDateTime* dateTime) override {
-      _dateTime = dateTime; // Store the datetime reference
-      lastBackgroundChange = millis();
-      drawBackground();
-      drawTime(); // Draw initial time
-    }
-    
-    void update() override {
-      // Update background every 5 seconds
-      if (millis() - lastBackgroundChange >= BACKGROUND_CHANGE_INTERVAL) {
-        cycleBackground();
-        lastBackgroundChange = millis();
-      }
-      
-      // Update time display every minute (60 seconds)
-      if (millis() - lastMillisTime >= 60000) {
-        drawTime();
-        lastMillisTime = millis();
-      }
-    }
+    Clockface(Adafruit_GFX* display);
+    ~Clockface();
+    void setup(CWDateTime *dateTime);
+    void update();
+    void externalEvent(int type);
+
+    static uint16_t framebuffer[64 * 64];    
 };
 }  // namespace dune

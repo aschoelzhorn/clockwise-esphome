@@ -101,6 +101,11 @@ ota:
   - platform: esphome
     encryption:  # Inherit the existing API encryption key
 
+i2c:
+  sda: 41
+  scl: 42
+  scan: true
+
 # WiFi configuration
 wifi:
   ssid: !secret wifi_ssid
