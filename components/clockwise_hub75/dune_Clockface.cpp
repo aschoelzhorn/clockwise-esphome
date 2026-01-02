@@ -95,10 +95,10 @@ void Clockface::drawTime(uint8_t hour, uint8_t minute, uint8_t act) {
 
 	// Format HH:MM
 	uint8_t digits[4] = {
-		hour / 10,
-		hour % 10,
-		minute / 10,
-		minute % 10
+		static_cast<uint8_t>(hour / 10),
+		static_cast<uint8_t>(hour % 10),
+		static_cast<uint8_t>(minute / 10),
+		static_cast<uint8_t>(minute % 10)
 	};
 
 	// Draw digits
