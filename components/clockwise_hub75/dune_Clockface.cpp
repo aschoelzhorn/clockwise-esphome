@@ -55,15 +55,15 @@ void Clockface::update() {
 // Helper: Draw a single digit using 5x7 font, scaled ×2
 void Clockface::drawDigit(uint8_t digit, int x, int y, uint16_t color) {
 	extern const uint8_t font5x7_alpha[][5];
-	for (int col = 0; col < 5; ++col) {
-		uint8_t bits = font5x7_alpha[digit][col];
-		for (int row = 0; row < 7; ++row) {
-			if (bits & (1 << row)) {
-				// Draw 2x2 block for scaling
-				_display->fillRect(x + col*2, y + row*2, 2, 2, color);
-			}
-		}
-	}
+	   for (int col = 0; col < 5; ++col) {
+		   uint8_t bits = dune::font5x7_alpha[digit][col];
+		   for (int row = 0; row < 7; ++row) {
+			   if (bits & (1 << row)) {
+				   // Draw 2x2 block for scaling
+				   _display->fillRect(x + col*2, y + row*2, 2, 2, color);
+			   }
+		   }
+	   }
 }
 
 // Helper: Draw colon
