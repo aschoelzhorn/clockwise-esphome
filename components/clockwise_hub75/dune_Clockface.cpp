@@ -1,5 +1,6 @@
 // Minimal implementation - all functionality moved to header for guaranteed linking
 #include "dune_Clockface.h"
+#include "dune_phrases.h"
 
 namespace dune {
 
@@ -17,16 +18,6 @@ void Clockface::setup(CWDateTime *dateTime) {
 	_dateTime = dateTime;
 }
 
-char* Clockface::selectPhrase(uint8_t act) {
-  switch (act) {
-    case 1: return PHRASES_DESERT[random(COUNT_DESERT)];
-    case 2: return PHRASES_TIME[random(COUNT_TIME)];
-    case 3: return PHRASES_POWER[random(COUNT_POWER)];
-    case 4: return PHRASES_DANGER[random(COUNT_DANGER)];
-    case 5: return PHRASES_SURVIVAL[random(COUNT_SURVIVAL)];
-    default: return "TIME FLOWS";
-  }
-}
 
 void Clockface::update() {
 	if (!_dateTime) return;
