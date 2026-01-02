@@ -103,14 +103,14 @@ void Clockface::drawTime(uint8_t hour, uint8_t minute, uint8_t act) {
 
 	// Draw digits
 	for (int i = 0; i < 2; ++i) {
-		drawDigit(_display, digits[i], x + i*10, y, color);
+		drawDigit(digits[i], x + i*10, y, color);
 	}
 	// Colon
 	bool blink = (millis() / 1000) % 2 == 0;
-	drawColon(_display, x + 20, y, blink, color);
+	drawColon(x + 20, y, blink, color);
 	// Last two digits
 	for (int i = 2; i < 4; ++i) {
-		drawDigit(_display, digits[i], x + 24 + (i-2)*10, y, color);
+		drawDigit(digits[i], x + 24 + (i-2)*10, y, color);
 	}
 }
 
