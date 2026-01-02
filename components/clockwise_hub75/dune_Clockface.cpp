@@ -1,8 +1,3 @@
-	// Logging: current act/phase and time until next act/phase
-	uint8_t nextActHour = ((hour / 4) + 1) * 4;
-	uint8_t hoursLeft = (nextActHour > 23) ? (24 - hour) : (nextActHour - hour);
-	uint8_t minutesLeft = 60 - minute;
-	ESP_LOGD("DUNE_CLOCK", "Act: %d | Time: %02d:%02d | Time until next act: %dh %dm", act, hour, minute, hoursLeft, minutesLeft);
 // Minimal implementation - all functionality moved to header for guaranteed linking
 #include "dune_Clockface.h"
 
@@ -20,6 +15,17 @@ Clockface::~Clockface() {}
 
 void Clockface::setup(CWDateTime *dateTime) {
 	_dateTime = dateTime;
+}
+
+char* Clockface::selectPhrase(uint8_t act) {
+  switch (act) {
+    case 1: return PHRASES_DESERT[random(COUNT_DESERT)];
+    case 2: return PHRASES_TIME[random(COUNT_TIME)];
+    case 3: return PHRASES_POWER[random(COUNT_POWER)];
+    case 4: return PHRASES_DANGER[random(COUNT_DANGER)];
+    case 5: return PHRASES_SURVIVAL[random(COUNT_SURVIVAL)];
+    default: return "TIME FLOWS";
+  }
 }
 
 void Clockface::update() {
@@ -62,9 +68,6 @@ void Clockface::update() {
 	_display->print(phrase);
 }
 
-// Helper: Draw a single digit using 5x7 font, scaled ×2
-// Helper: Draw a single digit using 5x7 font, scaled ×2
-#include "dune_font.h"
 void Clockface::drawDigit(uint8_t digit, int x, int y, uint16_t color) {
 	extern const uint8_t font5x7_alpha[][5];
 	for (int col = 0; col < 5; ++col) {
