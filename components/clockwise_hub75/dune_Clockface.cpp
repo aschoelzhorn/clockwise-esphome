@@ -1,3 +1,8 @@
+	// Logging: current act/phase and time until next act/phase
+	uint8_t nextActHour = ((hour / 4) + 1) * 4;
+	uint8_t hoursLeft = (nextActHour > 23) ? (24 - hour) : (nextActHour - hour);
+	uint8_t minutesLeft = 60 - minute;
+	ESP_LOGD("DUNE_CLOCK", "Act: %d | Time: %02d:%02d | Time until next act: %dh %dm", act, hour, minute, hoursLeft, minutesLeft);
 // Minimal implementation - all functionality moved to header for guaranteed linking
 #include "dune_Clockface.h"
 
@@ -38,9 +43,14 @@ void Clockface::update() {
 	// Draw time (HH:MM) using 5x7 font, scaled ×2, at (x=10, y=34)
 	drawTime(hour, minute, act);
 
-	// Select and display phrase for current act
-	extern const char* selectPhrase(uint8_t act);
-	const char* phrase = selectPhrase(act);
+	// Throttle phrase updates to every 10 seconds
+	static uint32_t lastPhraseUpdate = 0;
+	static const char* phrase = nullptr;
+	uint32_t now = millis();
+	if (phrase == nullptr || now - lastPhraseUpdate > 10000) {
+		phrase = dune::selectPhrase(act);
+		lastPhraseUpdate = now;
+	}
 	// Display phrase at top (y=2), centered
 	_display->setTextSize(1); // Default size
 	_display->setTextColor(0xFFFF); // White for visibility
