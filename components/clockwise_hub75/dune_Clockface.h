@@ -70,6 +70,11 @@ class Clockface : public IClockface {
 
     EventBus* eventBus;
 
+    void drawTime(uint8_t hour, uint8_t minute, uint8_t act);
+    void drawDigit(uint8_t digit, int x, int y, uint16_t color);
+    void drawColon(int x, int y, bool blink, uint16_t color);      
+    uint8_t getActForHour(uint8_t hour);
+    
 public:
     Clockface(Adafruit_GFX* display);
     ~Clockface();

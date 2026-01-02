@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 const char* PHRASES_TIME[] = {
   "TIME FLOWS",
   "THE HOUR TURNS",

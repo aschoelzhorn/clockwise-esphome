@@ -105,5 +105,3 @@ uint8_t getFontIndex(char c) {
   return FONT_SPACE;
 }
 
-
-}

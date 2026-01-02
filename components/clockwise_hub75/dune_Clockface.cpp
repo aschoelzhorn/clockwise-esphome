@@ -4,7 +4,7 @@
 namespace dune {
 
 // Helper: Get act/phase from hour
-static uint8_t getActForHour(uint8_t hour) {
+uint8_t Clockface::getActForHour(uint8_t hour) {
 	// 6 phases, each 4 hours
 	return hour / 4; // 0-5
 }
@@ -19,8 +19,8 @@ void Clockface::setup(CWDateTime *dateTime) {
 
 void Clockface::update() {
 	if (!_dateTime) return;
-	uint8_t hour = _dateTime->hour();
-	uint8_t minute = _dateTime->minute();
+	uint8_t hour = _dateTime->getHour();
+	uint8_t minute = _dateTime->getMinute();
 	uint8_t act = getActForHour(hour);
 
 
@@ -53,27 +53,27 @@ void Clockface::update() {
 }
 
 // Helper: Draw a single digit using 5x7 font, scaled ×2
-static void drawDigit(Adafruit_GFX* display, uint8_t digit, int x, int y, uint16_t color) {
+void Clockface::drawDigit(uint8_t digit, int x, int y, uint16_t color) {
 	extern const uint8_t font5x7_alpha[][5];
 	for (int col = 0; col < 5; ++col) {
 		uint8_t bits = font5x7_alpha[digit][col];
 		for (int row = 0; row < 7; ++row) {
 			if (bits & (1 << row)) {
 				// Draw 2x2 block for scaling
-				display->fillRect(x + col*2, y + row*2, 2, 2, color);
+				_display->fillRect(x + col*2, y + row*2, 2, 2, color);
 			}
 		}
 	}
 }
 
 // Helper: Draw colon
-static void drawColon(Adafruit_GFX* display, int x, int y, bool blink, uint16_t color) {
+void Clockface::drawColon(int x, int y, bool blink, uint16_t color) {
 	// Colon is 4x14 px, two dots
 	if (blink) {
 		// Draw upper dot
-		display->fillRect(x, y+4, 4, 4, color);
+		_display->fillRect(x, y+4, 4, 4, color);
 		// Draw lower dot
-		display->fillRect(x, y+10, 4, 4, color);
+		_display->fillRect(x, y+10, 4, 4, color);
 	}
 }
 
