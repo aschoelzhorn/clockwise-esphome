@@ -1,8 +1,5 @@
 #include <Arduino.h>
 
-#include <stdint.h>
-
-namespace dune {
 const uint8_t font5x7_alpha[][5] PROGMEM = {
   // SPACE
   {0x00,0x00,0x00,0x00,0x00},
@@ -100,12 +97,9 @@ const uint8_t font5x7_colon[5] = {
 #define FONT_SPACE 0
 #define FONT_A     1
 
-uint8_t getFontIndex(char c) {
-  if (c == ' ') return FONT_SPACE;
-  if (c >= 'A' && c <= 'Z') return (c - 'A') + FONT_A;
-  return FONT_SPACE;
-}
+// uint8_t getFontIndex(char c) {
+//   if (c == ' ') return FONT_SPACE;
+//   if (c >= 'A' && c <= 'Z') return (c - 'A') + FONT_A;
+//   return FONT_SPACE;
+// }
 
-
-}
-// End of dune_font.h
