@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 
+namespace dune {
 const uint8_t font5x7_alpha[][5] PROGMEM = {
   // SPACE
   {0x00,0x00,0x00,0x00,0x00},
@@ -59,6 +60,8 @@ const uint8_t font5x7_alpha[][5] PROGMEM = {
   // Z
   {0x61,0x51,0x49,0x45,0x43}
 };
+// ...existing code...
+}
 
 
 // 5x7 font, digits only (columns, LSB = top)
