@@ -60,8 +60,6 @@ const uint8_t font5x7_alpha[][5] PROGMEM = {
   // Z
   {0x61,0x51,0x49,0x45,0x43}
 };
-// ...existing code...
-}
 
 
 // 5x7 font, digits only (columns, LSB = top)
@@ -108,3 +106,6 @@ uint8_t getFontIndex(char c) {
   return FONT_SPACE;
 }
 
+
+}
+// End of dune_font.h
