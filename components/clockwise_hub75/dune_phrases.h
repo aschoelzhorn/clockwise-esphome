@@ -37,6 +37,7 @@ const char* PHRASES_SURVIVAL[] = {
 #define COUNT_DANGER    3
 #define COUNT_SURVIVAL  3
 
+namespace dune {
 const char* selectPhrase(uint8_t act) {
   switch (act) {
     case 1: return PHRASES_DESERT[random(COUNT_DESERT)];
@@ -46,4 +47,5 @@ const char* selectPhrase(uint8_t act) {
     case 5: return PHRASES_SURVIVAL[random(COUNT_SURVIVAL)];
     default: return "TIME FLOWS";
   }
+}
 }
