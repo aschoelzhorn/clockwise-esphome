@@ -1,6 +1,682 @@
 // Minimal implementation - all functionality moved to header for guaranteed linking
 #include "dune_Clockface.h"
+#include <Adafruit_GFX.h>
+#include "Macros.h"
+#include "dune_font.h"
+
+static const char *const TAG = "dune_Clockface";
 
 namespace dune {
-// Empty implementation file - everything is in header to ensure linking
+
+class FB_GFX : public Adafruit_GFX {
+public:
+    FB_GFX() : Adafruit_GFX(64, 64) {}
+
+    void drawPixel(int16_t x, int16_t y, uint16_t color) override {
+        if (x < 0 || y < 0 || x >= 64 || y >= 64) return;
+        Clockface::framebuffer[y * 64 + x] = color;
+    }
+};
+
+static FB_GFX fbGfx;
+
+uint16_t Clockface::framebuffer[64 * 64];
+
+Clockface::Clockface(Adafruit_GFX* display) {
+  _display = display;
+  Locator::provide(_display);
+  
+  // Initialize pointers to nullptr - objects will be created in setup()
+  _eventBus = nullptr;
+  _dateTime = nullptr;
+}
+
+Clockface::~Clockface() {
+  delete _eventBus;
+}
+
+#define TEST_ACT_CYCLING
+
+Act Clockface::getCurrentAct(uint8_t hour) {
+
+#ifdef TEST_ACT_CYCLING
+    // Change act every 10 seconds
+    static constexpr uint32_t TEST_ACT_MS = 10 * 1000;
+    uint32_t slot = (_now / TEST_ACT_MS) % 6;
+    return _acts[slot];
+#else
+	// 6 phases, each 4 hours
+    uint8_t îdx = hour / 4; // 0-5
+    return _acts[îdx];
+#endif
+}
+
+void Clockface::setup(CWDateTime *dateTime) {
+	_dateTime = dateTime;
+
+    // Create objects here instead of in constructor to avoid initialization order issues
+    _eventBus = new EventBus();
+    // Provide EventBus after creation
+    Locator::provide(_eventBus);
+
+    initializeActs();
+    _activeAct = Act();  // Default empty act
+
+    _event.active = false;
+    _event.type = EVENT_NONE;
+}
+
+void Clockface::initializeActs() {
+	ESP_LOGD(TAG, "initializeActs() called");
+	_acts[0] = Act(ACT_I, "The Desert Sleeps", PHRASES_TIME, DIM_SAND, dune_act1);
+	_acts[1] = Act(ACT_II, "Spice Awakens", PHRASES_DESERT, SPICE_AMBER, dune_act2);
+	_acts[2] = Act(ACT_III, "The Watchers", PHRASES_POWER, HIGH_CONTRAST_WHITE, dune_act3);
+	_acts[3] = Act(ACT_IV, "The Maker Stirs", PHRASES_DANGER, BRIGHT_SAND, dune_act4);
+	_acts[4] = Act(ACT_V, "Storm of Fate", PHRASES_DANGER, RED_DANGER, dune_act5);
+	_acts[5] = Act(ACT_VI, "Silence & Survival", PHRASES_SURVIVAL, COOL_BROWN, dune_act6);
+    ESP_LOGD(TAG, "initializeActs() done");
+}
+
+void Clockface::flushFramebuffer() {
+    _display->drawRGBBitmap(0, 0, framebuffer, 64, 64);
+}
+
+
+void Clockface::update() {
+	if (!_dateTime) {
+		ESP_LOGE(TAG, "update() failed: _dateTime is nullptr");
+		return;
+	}
+	if (!_display) {
+		ESP_LOGE(TAG, "update() failed: _display is nullptr");
+		return;
+	}
+	
+    _now = millis();
+
+    setActiveAct(); // Update active Act based on current hour
+    
+    bool event_is_active = false; // Placeholder for event logic
+
+    layer_clear();        // L0 Clear / sky
+    layer_background();   // L1 Act background
+    layer_ambient();      // L2 Ambient effects
+    layer_event();        // L3 Major event overlay (Storm / Worm / Flight object)
+    layer_time();         // L4 Time (HH:MM)
+    layer_text();         // L5 Text overlay (phrases)
+
+    flushFramebuffer();
+}
+
+void Clockface::setActiveAct() {
+    Act newAct = getCurrentAct(_dateTime->getHour());
+    if (newAct.getId() != _activeAct.getId()) {
+        ESP_LOGD(TAG, "Act change: %s", newAct.getName());
+        _activeAct = newAct;
+        enterAct(_activeAct.getId());
+    }
+}
+
+void Clockface::layer_clear() {
+    fbClear(COLOR_COOL_BLACK);
+}
+
+void Clockface::layer_background() {
+
+  // No transition → draw normally
+  if (!_bgTransition.active) {
+    const uint16_t* bg = _activeAct.getBackground();
+	if (!bg) {
+		ESP_LOGE(TAG, "layer_background() failed: bg is nullptr");
+		return;
+	} 
+    memcpy(framebuffer, bg, 64 * 64 * sizeof(uint16_t));    
+    return;
+  }
+
+  // Transition active
+  uint32_t elapsed = _now - _bgTransition.start;
+
+  if (elapsed >= _bgTransition.duration) {
+    // End transition
+    _bgTransition.active = false;
+
+    const uint16_t* bg = _bgTransition.to;
+    for (uint8_t y = 0; y < 64; y++) {
+      for (uint8_t x = 0; x < 64; x++) {
+        fbSet(x, y, bg[y * 64 + x]);
+      }
+    }
+    return;
+  }
+
+  uint8_t alpha = (elapsed * 255) / _bgTransition.duration;
+
+  const uint16_t* a = _bgTransition.from;
+  const uint16_t* b = _bgTransition.to;
+
+  for (uint8_t y = 0; y < 64; y++) {
+    for (uint8_t x = 0; x < 64; x++) {
+      uint16_t blended =
+        blend565(a[y * 64 + x], b[y * 64 + x], alpha);
+      fbSet(x, y, blended);
+    }
+  }    
+
+}
+
+void Clockface::layer_ambient() {
+    /* TODO check this switch statement, see also code in enterAct()
+    _ambientHeat.enabled   = (actId == ACT_I);
+    _ambientSand.enabled   = (actId >= ACT_II);
+    _ambientTremor.enabled = (actId >= ACT_IV);
+    */
+   return; // disable for testing
+    switch (_activeAct.getId()) {
+        case ACT_I: ambient_heat(); break;
+        case ACT_II: ambient_spice(); break;
+        case ACT_III: ambient_shadow(); break;
+        case ACT_IV: ambient_tremor(); break;
+        case ACT_V: ambient_wind(); break;
+        case ACT_VI: ambient_dust(); break;
+    }
+}
+
+void Clockface::layer_event() {
+  if (!_event.active) {
+    maybeStartEvent();
+    return;
+  }
+
+  switch (_event.type) {
+  
+    case EVENT_STORM:
+      drawStorm();
+      break;
+
+    case EVENT_WORM:
+      drawWorm();
+      break;
+
+    case EVENT_FLIGHT:
+      drawFlight();
+      break;
+
+    default:
+      break;
+  }
+}
+
+void Clockface::layer_time() {
+  bool highContrast = (_event.active && _event.type == EVENT_STORM); // event overrides color, not act
+
+  drawTime(
+    _dateTime->getHour(),
+    _dateTime->getMinute(),
+    highContrast ? HIGH_CONTRAST_WHITE : _activeAct.getFontColor()
+  );
+}
+
+void Clockface::layer_text() {
+    if (eventSilencesText()) return;
+    //if (_now - _lastMinuteChange < MINUTE_GUARD) return;
+
+    uint32_t elapsed = _now - _text.phaseStart;
+
+    switch (_text.phase) {
+
+        case TEXT_IDLE: 
+            _text.phrase = _activeAct.getNewPhrase();
+            if (!_text.phrase) return;
+            _text.phase = TEXT_FADE_IN;
+            _text.phaseStart = _now;
+            break;
+
+        case TEXT_FADE_IN: {
+            uint8_t alpha = MIN(255, (elapsed * 255) / TEXT_FADE_MS);
+            drawPhraseBlended(
+                _text.phrase,
+                _activeAct.getFontColor(), 
+                alpha
+            );
+
+            if (elapsed >= TEXT_FADE_MS) {
+                _text.phase = TEXT_HOLD;
+                _text.phaseStart = _now;
+            }
+        } break;
+
+        case TEXT_HOLD:
+            drawPhraseBlended(_text.phrase, _activeAct.getFontColor(), 255);
+
+            if (_now - _text.phaseStart >= TEXT_HOLD_MS) {
+                _text.phase = TEXT_FADE_OUT;
+                _text.phaseStart = _now;
+            }
+            break;
+
+        case TEXT_FADE_OUT: {
+            uint8_t alpha = 255 - MIN(255, (elapsed * 255) / TEXT_FADE_MS);
+            drawPhraseBlended(
+                _text.phrase,
+                _activeAct.getFontColor(),
+                 alpha
+            );
+
+            if (elapsed >= TEXT_FADE_MS) {
+                _text.phase = TEXT_QUIET;
+                _text.phaseStart = _now;
+            }
+        } break;
+
+        case TEXT_QUIET:
+            if (_now - _text.phaseStart >= TEXT_QUIET_MS) {
+                _text.phase = TEXT_IDLE;
+            }
+            break;
+    }
+}
+
+void Clockface::maybeStartEvent() {
+
+  // No overlapping events
+  if (_event.active) return;
+
+  // Guard: don't start near minute change
+  // TODO implement _lastMinuteChange
+  //if (_now - _lastMinuteChange < 3000) return;
+
+  // Simple probability gate (tune later)
+  // if (random(1000) > 2) return; // disable for testing
+
+  // Act-based selection
+  uint8_t actId = _activeAct.getId();
+
+  // EVENT_FLIGHT missing    
+  if (actId >= ACT_IV) {
+    startEvent(EVENT_WORM);
+  } else if (actId >= ACT_II) {
+    startEvent(EVENT_STORM);
+  }
+}
+
+void Clockface::startEvent(EventType type) {
+  _event.active = true;
+  _event.type = type;
+  _event.phase = EP_ENTER;
+  _event.phaseStart = _now;
+
+  ESP_LOGD(TAG, "Event started: %d", type);
+}
+
+void Clockface::endEvent() {
+  _event.active = false;
+  _event.type = EVENT_NONE;
+  _event.phase = EP_IDLE;
+
+  ESP_LOGD(TAG, "Event ended");  
+}
+
+
+// TODO: move these utility functions to a common location
+inline uint8_t r5(uint16_t c) { return (c >> 11) & 0x1F; }
+inline uint8_t g6(uint16_t c) { return (c >> 5) & 0x3F; }
+inline uint8_t b5(uint16_t c) { return c & 0x1F; }
+
+inline uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
+  return (r << 11) | (g << 5) | b;
+}
+
+void Clockface::enterAct(uint8_t actId) {
+
+  int currentActId = actId;
+  int previousActId = currentActId - 1;
+
+  
+  if (currentActId < ACT_I) {
+    // No previous act, no transition, can never happen normally
+    ESP_LOGD(TAG, "enterAct with currentActId < 1 can never happen normally");
+    _bgTransition.active = false;
+    //memcpy(framebuffer, newBg, 64 * 64 * sizeof(uint16_t));
+    return;
+  }
+  
+  if (previousActId == 0) { // wrap around
+    previousActId = ACT_VI;
+  }
+
+  ESP_LOGD(TAG, "currentActId: %d, previousActId: %d", currentActId, previousActId);
+
+  // act id not identical to array index, but we could fix that by add in a dummy act at index 0
+  const uint16_t* newBg = _acts[currentActId - 1].getBackground();
+  const uint16_t* oldBg = _acts[previousActId - 1].getBackground();
+
+  _bgTransition.active = true;
+  _bgTransition.from = oldBg;
+  _bgTransition.to = newBg;
+  _bgTransition.start = _now;
+
+  _ambientHeat.enabled   = (actId == ACT_I);
+  _ambientSand.enabled   = (actId >= ACT_II);
+  _ambientTremor.enabled = (actId >= ACT_IV);
+
+  _ambientHeat.enabled   = false;  // disable for testing
+  _ambientSand.enabled   = false;  // disable for testing
+  _ambientTremor.enabled = false;  // disable for testing
+  
+  // Reset phases so visuals feel intentional
+  _ambientHeat.phase = 0.0f;
+  _ambientSand.phase = 0.0f;
+  _ambientTremor.phase = 0.0f;
+
+  _ambientHeat.lastUpdate = _now;
+  _ambientSand.lastUpdate = _now;
+  _ambientTremor.lastUpdate = _now;
+}
+
+void Clockface::ambient_heat() {
+
+//   ESP_LOGD(TAG, "_ambientHeat.enabled: %s", _ambientHeat.enabled ? "true" : "false");
+//   ESP_LOGD(TAG, "_ambientSand.enabled: %s", _ambientSand.enabled ? "true" : "false");
+//   ESP_LOGD(TAG, "_ambientTremor.enabled: %s", _ambientTremor.enabled ? "true" : "false");
+
+  if (!_ambientHeat.enabled) return;
+
+  // Cold desert = slow update
+  if (_now - _ambientHeat.lastUpdate < 120) return;
+  _ambientHeat.lastUpdate = _now;
+
+  _ambientHeat.phase += 0.08f;
+  if (_ambientHeat.phase > 6.28f)
+    _ambientHeat.phase -= 6.28f;
+
+  ESP_LOGD(TAG, "_ambientHeat.phase: %.2f", _ambientHeat.phase);
+
+  for (uint8_t y = 0; y < 64; y++) {
+
+    float rowWave = sinf(_ambientHeat.phase + y * 0.15f);
+
+    for (uint8_t x = 0; x < 64; x++) {
+
+      uint16_t c = fbGet(x, y);
+
+      uint8_t r = r5(c);
+      uint8_t g = g6(c);
+      uint8_t b = b5(c);
+
+      // Ignore sky / deep shadow
+      if (r + g + b < 12) continue;
+
+      int8_t delta =
+        (rowWave > 0.4f)  ? 1 :
+        (rowWave < -0.4f) ? -1 : 0;
+
+      if (!delta) continue;
+
+      r = constrain(r + delta, 0, 31);
+      g = constrain(g + delta, 0, 63);
+      b = constrain(b + delta, 0, 31);
+
+      fbSet(x, y, rgb565(r, g, b));
+    }
+  }
+}
+void Clockface::ambient_spice() {
+    // Placeholder for spice ambient effect
+}
+void Clockface::ambient_shadow() {
+    if (_now - _shadowLastUpdate < 80) return;
+    _shadowLastUpdate = _now;
+
+    _shadowX += _shadowDx;
+
+    if (_shadowX > 48 || _shadowX < 4) {
+        _shadowDx = -_shadowDx;
+        _shadowY = 8 + (_shadowX % 16);
+    }
+
+    ESP_LOGD(TAG, "shadowX=%d now=%lu", _shadowX, _now);
+
+    drawShadowBand(_shadowX, _shadowY);
+}
+void Clockface::ambient_tremor() {
+    if (_now - _tremorLastUpdate < TREMOR_UPDATE_MS) return;
+    _tremorLastUpdate = _now;
+
+    const uint16_t* bg = _activeAct.getBackground();
+
+    // Draw 8–12 small ripples per frame
+    for (uint8_t i = 0; i < 10; i++) {
+        // Random-ish positions using now for deterministic pseudo-random
+        uint8_t y = 32 + ((i * 7 + _now / 150) % 20); // avoid top-center (0–31)
+        uint8_t x = (i * 5 + (_now / 100)) % 48;      // ripple within safe width
+
+        drawTremorRipple(x, y, bg);
+    }
+}
+void Clockface::ambient_wind() {
+    // Placeholder for wind ambient effect
+}
+void Clockface::ambient_dust() {
+    // Placeholder for dust ambient effect
+}
+
+void Clockface::drawStorm() {
+  uint32_t elapsed = _now - _event.phaseStart;
+
+  switch (_event.phase) {
+
+    case EP_ENTER:
+      // TODO: wind buildup
+      if (elapsed > 2000) {
+        _event.phase = EP_ACTIVE;
+        _event.phaseStart = _now;
+      }
+      break;
+
+    case EP_ACTIVE:
+      // TODO: sandstorm visuals
+      if (elapsed > 5000) {
+        _event.phase = EP_EXIT;
+        _event.phaseStart = _now;
+      }
+      break;
+
+    case EP_EXIT:
+      // TODO: calm return
+      if (elapsed > 2000) {
+        endEvent();
+      }
+      break;
+
+    default:
+      break;
+  }
+}
+void Clockface::drawWorm() {
+    // Placeholder for worm drawing
+}
+void Clockface::drawFlight() {
+    // Placeholder for flight drawing
+}
+
+void Clockface::drawShadowBand(uint8_t xStart, uint8_t yStart) {
+    const uint8_t width = 16;
+    const uint8_t height = 6;
+    
+    const uint16_t* bg = _activeAct.getBackground();
+
+    for (uint8_t y = 0; y < height; y++) {
+        for (uint8_t x = 0; x < width; x++) {
+
+            uint8_t px = xStart + x;
+            uint8_t py = yStart + y;
+            if (px >= 64 || py >= 64) continue;
+
+            uint16_t base = bg[py * 64 + px];
+            uint16_t shaded = darken(base);
+
+            fbGfx.drawPixel(px, py, shaded);
+        }
+    }
+}
+
+uint16_t Clockface::darken(uint16_t color) {
+    uint8_t r = (color >> 11) & 0x1F;
+    uint8_t g = (color >> 5) & 0x3F;
+    uint8_t b = color & 0x1F;
+
+    r = (r * 3) / 4;
+    g = (g * 3) / 4;
+    b = (b * 3) / 4;
+
+    return (r << 11) | (g << 5) | b;
+}
+
+uint16_t Clockface::darken(uint16_t color, float factor) {
+    uint8_t r = (color >> 11) & 0x1F;
+    uint8_t g = (color >> 5) & 0x3F;
+    uint8_t b = color & 0x1F;
+
+    r = (uint8_t)(r * factor);
+    g = (uint8_t)(g * factor);
+    b = (uint8_t)(b * factor);
+
+    return (r << 11) | (g << 5) | b;
+}
+
+
+void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t* bg) {
+    const uint8_t width = 8;
+    const uint8_t height = 2;
+
+    for (uint8_t y = 0; y < height; y++) {
+        for (uint8_t x = 0; x < width; x++) {
+            uint8_t px = xStart + x;
+            uint8_t py = yStart + y;
+            if (px >= 64 || py >= 64) continue;
+
+            // Sample background
+            uint16_t base = bg[py * 64 + px];
+            // Darken for ripple
+            uint16_t ripple = darken(base, 0.8f); // darken 20%
+
+            fbGfx.drawPixel(px, py, ripple);
+        }
+    }
+}
+
+
+void Clockface::drawCharBlended(char c, int x, int y, uint16_t color, uint8_t alpha) {
+  uint8_t index = duneFontIndex(c);
+  const uint8_t* glyph = dune_font5x7[index];
+
+  for (int col = 0; col < FONT_W; col++) {
+    uint8_t bits = pgm_read_byte(&glyph[col]);
+
+    for (int row = 0; row < FONT_H; row++) {
+      if (bits & (1 << row)) {
+        int px = x + col;
+        int py = y + row;
+
+        uint16_t bg = fbGet(px, py);
+        uint16_t blended = blend565(bg, color, alpha);
+        fbSet(px, py, blended);
+      }
+    }
+  }
+}
+
+
+void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha) {
+    if (!phrase) return;
+
+    int w = textWidth(phrase);
+    int x = (64 - w) / 2;
+    int y = TEXT_Y;
+
+    for (size_t i = 0; i < strlen(phrase); i++) {
+        drawCharBlended(phrase[i], x, y, textColor, alpha);
+        x += FONT_W + CHAR_SPACING;
+  }
+}
+
+
+void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
+    fbGfx.setTextSize(1);
+    fbGfx.setTextColor(_activeAct.getFontColor());
+
+	// Placement
+	int x = 10; // x_start
+	int y = 34; // y_start
+
+    fbGfx.setCursor(x, y);
+
+    char buf[6];
+    bool showColon = (_now / 1000) % 2; // blink every second
+
+    snprintf(buf, sizeof(buf),
+             showColon ? "%02d:%02d" : "%02d %02d",
+             hour, minute);
+
+    fbGfx.print(buf);
+}
+
+void Clockface::externalEvent(int type) {
+	// TODO: Handle external events (storm, worm, etc.)
+}
+
+
+inline void Clockface::fbClear(uint16_t color) {
+    for (uint16_t i = 0; i < 64 * 64; i++) {
+        framebuffer[i] = color;
+    }
+}
+
+inline uint16_t Clockface::fbGet(uint8_t x, uint8_t y) {
+    return framebuffer[y * 64 + x];
+}
+
+inline void Clockface::fbSet(uint8_t x, uint8_t y, uint16_t color) {
+    framebuffer[y * 64 + x] = color;
+}
+
+bool Clockface::eventSilencesText() const {
+    if (!_event.active) return false;
+
+    switch (_event.type) {
+        case EVENT_STORM:
+        case EVENT_WORM:
+            return true;
+        default:
+            return false;
+    }
+}
+
+uint16_t Clockface::blend565(uint16_t bg, uint16_t fg, uint8_t alpha) {
+
+    if (alpha < 16) alpha = 16;
+
+    // alpha: 0 = bg, 255 = fg
+    uint8_t br = (bg >> 11) & 0x1F;
+    uint8_t bgc = (bg >> 5) & 0x3F;
+    uint8_t bb = bg & 0x1F;
+
+    uint8_t fr = (fg >> 11) & 0x1F;
+    uint8_t fg_c = (fg >> 5) & 0x3F;
+    uint8_t fb = fg & 0x1F;
+
+    uint8_t r = (br * (255 - alpha) + fr * alpha) / 255;
+    uint8_t g = (bgc * (255 - alpha) + fg_c * alpha) / 255;
+    uint8_t b = (bb * (255 - alpha) + fb * alpha) / 255;
+
+    return (r << 11) | (g << 5) | b;
+}
+
+int Clockface::textWidth(const char* s) {
+  return strlen(s) * (FONT_W + CHAR_SPACING) - CHAR_SPACING;
+}
+
+
+
 }  // namespace dune
