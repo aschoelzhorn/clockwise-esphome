@@ -1,6 +1,5 @@
 // Minimal implementation - all functionality moved to header for guaranteed linking
 #include "dune_Clockface.h"
-#include "dune_phrases.h"
 
 static const char *const TAG = "dune_Clockface";
 
