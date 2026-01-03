@@ -60,7 +60,7 @@
 
 
 // 5x7 font, digits only (columns, LSB = top)
-const uint8_t font5x7_digits[10][5] = {
+const uint8_t dune_font5x7_digits[10][5] = {
   // 0
   {0x3E, 0x51, 0x49, 0x45, 0x3E},
   // 1
@@ -83,7 +83,7 @@ const uint8_t font5x7_digits[10][5] = {
   {0x06, 0x49, 0x49, 0x29, 0x1E}
 };
 
-const uint8_t font5x7_colon[5] = {
+const uint8_t dune_font5x7_colon[5] = {
   0x00,
   0x14,
   0x00,
