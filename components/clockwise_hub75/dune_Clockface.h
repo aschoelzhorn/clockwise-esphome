@@ -69,7 +69,7 @@ class Clockface : public IClockface {
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
 
-    EventBus* eventBus;
+    EventBus* _eventBus;
 
     void drawTime(uint8_t hour, uint8_t minute, uint8_t act);
     void drawDigit(uint8_t digit, int x, int y, uint16_t color);
