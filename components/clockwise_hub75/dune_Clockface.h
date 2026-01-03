@@ -76,6 +76,7 @@ class Clockface : public IClockface {
     void drawColon(int x, int y, bool blink, uint16_t color);      
     uint8_t getActForHour(uint8_t hour);
     const char* selectPhrase(uint8_t act);
+    void updateTime();
 
 public:
     Clockface(Adafruit_GFX* display);
