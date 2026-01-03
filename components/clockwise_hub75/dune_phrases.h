@@ -2,35 +2,12 @@
 
 #include <Arduino.h>
 
-const char* PHRASES_TIME[] = {
-  "TIME FLOWS",
-  "THE HOUR TURNS",
-  "THE MOMENT PASSES"
-};
 
-const char* PHRASES_DESERT[] = {
-  "THE DESERT WATCHES",
-  "SAND REMEMBERS",
-  "WIND OVER DUNES"
-};
-
-const char* PHRASES_POWER[] = {
-  "SPICE MUST FLOW",
-  "TIME IS POWER",
-  "ALL EYES OPEN"
-};
-
-const char* PHRASES_DANGER[] = {
-  "THE MAKER STIRS",
-  "TREAD CAREFULLY",
-  "SILENCE BEFORE STORM"
-};
-
-const char* PHRASES_SURVIVAL[] = {
-  "ENDURE",
-  "ONLY THE PATIENT",
-  "TIME SURVIVES"
-};
+extern const char* PHRASES_TIME[3];
+extern const char* PHRASES_DESERT[3];
+extern const char* PHRASES_POWER[3];
+extern const char* PHRASES_DANGER[3];
+extern const char* PHRASES_SURVIVAL[3];
 
 
 #define COUNT_TIME      3
