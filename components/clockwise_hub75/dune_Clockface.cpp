@@ -2,6 +2,8 @@
 #include "dune_Clockface.h"
 #include "dune_phrases.h"
 
+static const char *const TAG = "dune_Clockface";
+
 namespace dune {
 
 // Helper: Get act/phase from hour
@@ -90,7 +92,7 @@ const char* Clockface::selectPhrase(uint8_t act) {
 void Clockface::drawDigit(uint8_t digit, int x, int y, uint16_t color) {
 	//extern const uint8_t font5x7_digits[][5];
 	for (int col = 0; col < 5; ++col) {
-		uint8_t bits = font5x7_digits[digit][col];
+		uint8_t bits = dune_font5x7_digits[digit][col];
 		for (int row = 0; row < 7; ++row) {
 			if (bits & (1 << row)) {
 				// Draw 2x2 block for scaling
