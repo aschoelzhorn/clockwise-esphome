@@ -63,7 +63,7 @@ void Clockface::update() {
 	static uint32_t lastPhraseUpdate = 0;
 	static const char* phrase = nullptr;
 	uint32_t now = millis();
-	if (phrase == nullptr || now - lastPhraseUpdate > 10000) {
+	if (now - lastPhraseUpdate > 10000) {
 		phrase = selectPhrase(act);
 		lastPhraseUpdate = now;
 	}

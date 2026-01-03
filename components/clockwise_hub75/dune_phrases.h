@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Arduino.h>
 
 const char* PHRASES_TIME[] = {
