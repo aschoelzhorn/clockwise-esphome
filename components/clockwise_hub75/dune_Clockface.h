@@ -12,6 +12,7 @@
 
 #include "dune_assets.h"
 #include "dune_font.h"
+#include "dune_phrases.h"
 
 namespace dune {
 
@@ -33,36 +34,6 @@ static const uint16_t* backgroundImages[10] = {
 #define TEXT_MIN_INTERVAL_MS   600000  // 10 minutes
 #define TEXT_DISPLAY_MS        2200
 #define TEXT_FADE_MS            400
-/*
-Event priority (highest wins)
-*Act change
-*Hour change
-*Storm / Worm
-*Manual wake
-*Ignored
-If a higher priority event happens:
-*Lower one is discarded
-*No queueing
-
-
-Hard rules (do not break)
-* Never show text:
-  *Within 2s of minute change
-  *During colon blink transition
-*Never overlap text
-*Never repeat same phrase twice in a row
-
-
-Timing summary (human-friendly)
-| Event       | When              |
-| ----------- | ----------------- |
-| Act change  | Immediately       |
-| Hour change | +500 ms           |
-| Storm       | Once per storm    |
-| Idle        | Max once / 10 min |
-
-
- */
 
 class Clockface : public IClockface {
   private:
