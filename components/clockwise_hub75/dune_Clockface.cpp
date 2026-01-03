@@ -10,17 +10,34 @@ uint8_t Clockface::getActForHour(uint8_t hour) {
 	return hour / 4; // 0-5
 }
 
-Clockface::Clockface(Adafruit_GFX* display) : _display(display), _dateTime(nullptr), eventBus(nullptr) {}
+Clockface::Clockface(Adafruit_GFX* display) {
+  _display = display;
+  Locator::provide(_display);
+  
+  // Initialize pointers to nullptr - objects will be created in setup()
+  _eventBus = nullptr;
+  _dateTime = nullptr;
+}
 
-Clockface::~Clockface() {}
+Clockface::~Clockface() {
+  delete _eventBus;
+}
 
 void Clockface::setup(CWDateTime *dateTime) {
 	_dateTime = dateTime;
+
+  // Create objects here instead of in constructor to avoid initialization order issues
+  _eventBus = new EventBus();
+  // Provide EventBus after creation
+  Locator::provide(_eventBus);
+
+  updateTime();  
+}
+void Clockface::updateTime() {
+  ESP_LOGD(TAG, "updateTime() called - Hour: %d, Minute: %02d", _dateTime->getHour(), _dateTime->getMinute());
 }
 
-
 void Clockface::update() {
-	if (!_dateTime) return;
 	uint8_t hour = _dateTime->getHour();
 	uint8_t minute = _dateTime->getMinute();
 	uint8_t act = getActForHour(hour);
