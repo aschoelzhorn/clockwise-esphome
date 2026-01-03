@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Arduino.h>
 
 // const uint8_t font5x7_alpha[][5] PROGMEM = {
