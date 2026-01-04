@@ -44,7 +44,7 @@ class Clockface : public IClockface {
 
     EventBus* _eventBus;
 
-    void drawTime(uint8_t hour, uint8_t minute, uint8_t act);
+    void drawTime(uint8_t hour, uint8_t minute, uint16_t color);
     void drawDigit(uint8_t digit, int x, int y, uint16_t color);
     void drawColon(int x, int y, bool blink, uint16_t color);      
     Act getCurrentAct(uint8_t hour);
