@@ -2,6 +2,13 @@
 
 #include <Arduino.h>
 
+const unsigned short DIM_SAND = 0xC618; // ACT I: Desert Sleeps (dim sand)
+const unsigned short SPICE_AMBER = 0xFCA0; // ACT II: Spice Awakens (spice amber)
+const unsigned short HIGH_CONTRAST_WHITE = 0xFFFF; // ACT III: Watchers (high contrast, white)
+const unsigned short BRIGHT_SAND = 0xFFE0; // ACT IV: Maker Stirs (bright sand)
+const unsigned short RED_DANGER = 0xF800; // ACT V: Storm of Fate (red, danger)
+const unsigned short COOL_BROWN = 0x8410; // ACT VI: Silence & Survival (cool brown)
+
 // const uint8_t font5x7_alpha[][5] PROGMEM = {
 //   // SPACE
 //   {0x00,0x00,0x00,0x00,0x00},
