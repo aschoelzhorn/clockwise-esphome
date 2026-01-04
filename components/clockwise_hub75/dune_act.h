@@ -19,13 +19,13 @@ private:
 public:
     Act();
     Act(uint8_t id, const char* name, const char** phrases, uint16_t fontColor, const uint16_t* background);
-    uint8_t getId();
-    const char* getName();
-    const char* getPhrase(size_t index);
+    uint8_t getId() const;
+    const char* getName() const;
+    const char* getPhrase(size_t index) const;
     const char* getPhrase();
-    size_t getPhraseCount();
-    const uint16_t* getBackground();
-    uint16_t getFontColor();
+    size_t getPhraseCount() const;
+    const uint16_t* getBackground() const;
+    uint16_t getFontColor() const;
 
 };
 
