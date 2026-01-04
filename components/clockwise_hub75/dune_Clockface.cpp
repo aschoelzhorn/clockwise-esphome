@@ -89,6 +89,11 @@ void Clockface::update() {
     }
 }
 
+void Clockface::drawBackgroundImage(const uint16_t* image) {
+    //Locator::getDisplay()->drawRGBBitmap(x, y, _image, _width, _height);
+    _display->drawRGBBitmap(0, 0, image, 64, 64);
+}
+
 void Clockface::printPhrase(const char* phrase) {
     if (!phrase) {
 		return;
