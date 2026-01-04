@@ -9,7 +9,7 @@ namespace dune {
 Act Clockface::getCurrentAct(uint8_t hour) {
 	// 6 phases, each 4 hours
     uint8_t îndex = hour / 4; // 0-5
-    ESP_LOGD(TAG, "getCurrentAct() called - Hour: %d -> Act: %d", hour, act);
+    ESP_LOGD(TAG, "getCurrentAct() called - Hour: %d -> Act: %d", hour, index + 1);
     return acts[index];
 }
 
