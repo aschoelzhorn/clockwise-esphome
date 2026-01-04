@@ -35,7 +35,7 @@ void Clockface::setup(CWDateTime *dateTime) {
   initializeActs();
 
   updateTime();  
-  _act = Act(0, "", 0, nullptr, nullptr, nullptr); 
+  _act = Act(); 
 }
 
 void Clockface::initializeActs() {
