@@ -62,6 +62,10 @@ void Clockface::update() {
 		ESP_LOGE(TAG, "update() failed: _display is nullptr");
 		return;
 	}
+	
+	// Clear display before redrawing
+	_display->fillScreen(0);
+	
 	uint8_t hour = _dateTime->getHour();
 	uint8_t minute = _dateTime->getMinute();
 	Act act = getCurrentAct(hour);
