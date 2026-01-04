@@ -41,6 +41,7 @@ class Clockface : public IClockface {
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
     Act _act;
+    Act acts[6];
 
     EventBus* _eventBus;
 
@@ -58,6 +59,5 @@ public:
     void setup(CWDateTime *dateTime);
     void update();
     void externalEvent(int type);
-    static Act acts[6];
 };
 }  // namespace dune

@@ -4,7 +4,6 @@
 static const char *const TAG = "dune_Clockface";
 
 namespace dune {
-Act Clockface::acts[6];
 
 Clockface::Clockface(Adafruit_GFX* display) {
   _display = display;
