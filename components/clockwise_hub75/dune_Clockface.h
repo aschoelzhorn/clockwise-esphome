@@ -36,6 +36,10 @@ static const uint16_t* backgroundImages[10] = {
 #define TEXT_DISPLAY_MS        2200
 #define TEXT_FADE_MS            400
 
+#define WIPE_STEP_MS   30
+#define WIPE_COL_JITTER 1
+
+
 class Clockface : public IClockface {
   private:
     Adafruit_GFX* _display;
@@ -54,6 +58,7 @@ class Clockface : public IClockface {
     void updateTime();
     void printPhrase(const char* phrase);
     void initializeActs();
+    void drawBackgroundImage(const uint16_t* image);
 
 public:
     Clockface(Adafruit_GFX* display);
