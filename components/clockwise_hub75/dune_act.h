@@ -24,6 +24,7 @@ public:
     const char* getPhrase() const;
     size_t getPhraseCount() const;
     const uint16_t* getBackground() const;
+    uint16_t getFontColor() const;
 
 };
 
