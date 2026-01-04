@@ -17,19 +17,19 @@
 
 namespace dune {
 
-// Array of pointers to background images - using only images from first half to avoid duplicates
-static const uint16_t* backgroundImages[10] = {
-  dune_baron64x64,
-  dune_baron_desert64x64,
-  dune_baron_chamber64x64,
-  dune_ornithopter64x64,
-  dune_chani64x64,
-  dune_sandworm64x64,
-  dune_paul_sandworm64x64,
-  dune_background64x64,
-  dune_background_264x64,
-  dune_baron_chamber_background64x64
-};
+// // Array of pointers to background images - using only images from first half to avoid duplicates
+// static const uint16_t* backgroundImages[10] = {
+//   dune_baron64x64,
+//   dune_baron_desert64x64,
+//   dune_baron_chamber64x64,
+//   dune_ornithopter64x64,
+//   dune_chani64x64,
+//   dune_sandworm64x64,
+//   dune_paul_sandworm64x64,
+//   dune_background64x64,
+//   dune_background_264x64,
+//   dune_baron_chamber_background64x64
+// };
 
 //  Global timing constants
 #define TEXT_MIN_INTERVAL_MS   600000  // 10 minutes
