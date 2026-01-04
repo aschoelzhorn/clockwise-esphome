@@ -44,7 +44,6 @@ uint16_t Act::getFontColor() const {
 
 const char* Act::getPhrase() {
     // Throttle phrase updates to every 10 seconds
-    _lastPhraseUpdate = 0;
     const char* phrase = nullptr;
     uint32_t now = millis();
     if (now - _lastPhraseUpdate > 10000) {
