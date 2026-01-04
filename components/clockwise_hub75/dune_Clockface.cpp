@@ -6,9 +6,11 @@ static const char *const TAG = "dune_Clockface";
 namespace dune {
 
 // Helper: Get act/phase from hour
-uint8_t Clockface::getActForHour(uint8_t hour) {
+Act Clockface::getCurrentAct(uint8_t hour) {
 	// 6 phases, each 4 hours
-	return hour / 4; // 0-5
+    uint8_t îndex = hour / 4; // 0-5
+    ESP_LOGD(TAG, "getCurrentAct() called - Hour: %d -> Act: %d", hour, act);
+    return acts[index];
 }
 
 Clockface::Clockface(Adafruit_GFX* display) {
@@ -32,39 +34,69 @@ void Clockface::setup(CWDateTime *dateTime) {
   // Provide EventBus after creation
   Locator::provide(_eventBus);
 
+  initializeActs();
+
   updateTime();  
+  _act = getCurrentAct(_dateTime->getHour());
 }
+
+void Clockface::initializeActs() {
+	ESP_LOGD(TAG, "initializeActs() called");
+	acts[0] = Act(1, "The Desert Sleeps", PHRASES_TIME, DIM_SAND, dune_baron64x64);
+	acts[1] = Act(2, "Spice Awakens", PHRASES_DESERT, SPICE_AMBER, dune_baron_desert64x64);
+	acts[2] = Act(3, "The Watchers", PHRASES_POWER, HIGH_CONTRAST_WHITE, dune_ornithopter64x64);
+	acts[3] = Act(4, "The Maker Stirs", PHRASES_DANGER, BRIGHT_SAND, dune_sandworm64x64);
+	acts[4] = Act(5, "Storm of Fate", PHRASES_DANGER, RED_DANGER, dune_background64x64);
+	acts[5] = Act(6, "Silence & Survival", PHRASES_SURVIVAL, COOL_BROWN, dune_chani64x64);
+    ESP_LOGD(TAG, "initializeActs() done");
+}
+
 void Clockface::updateTime() {
   ESP_LOGD(TAG, "updateTime() called - Hour: %d, Minute: %02d", _dateTime->getHour(), _dateTime->getMinute());
 }
 
 void Clockface::update() {
+	if (!_dateTime) {
+		ESP_LOGE(TAG, "update() failed: _dateTime is nullptr");
+		return;
+	}
+	if (!_display) {
+		ESP_LOGE(TAG, "update() failed: _display is nullptr");
+		return;
+	}
 	uint8_t hour = _dateTime->getHour();
 	uint8_t minute = _dateTime->getMinute();
-	uint8_t act = getActForHour(hour);
+	Act act = getCurrentAct(hour);
 
+	if (!_act) {
+		ESP_LOGE(TAG, "update() failed: _act is nullptr");
+		return;
+	}
 
-	// Act-specific background
-	extern const uint16_t* backgroundImages[10];
-	// Use act as index, wrap if needed
-	const uint16_t* bg = backgroundImages[act % 10];
-	// Draw background image (assume 64x64)
-	if (bg) {
-		// If using Adafruit_GFX, drawBitmap expects (x, y, bitmap, w, h, color)
-		// Here, color is ignored for color bitmaps, so use 0
-		_display->drawRGBBitmap(0, 0, bg, 64, 64);
+	if (act.getId() != _act.getId()) {
+		ESP_LOGD(TAG, "Act changed from %d to %d", _act.getId(), act.getId());
+		_act = act;
 	}
 
 	// Draw time (HH:MM) using 5x7 font, scaled ×2, at (x=10, y=34)
-	drawTime(hour, minute, act);
+	drawTime(hour, minute, _act.getFontColor());
 
-	// Throttle phrase updates to every 10 seconds
-	static uint32_t lastPhraseUpdate = 0;
-	static const char* phrase = nullptr;
-	uint32_t now = millis();
-	if (now - lastPhraseUpdate > 10000) {
-		phrase = selectPhrase(act);
-		lastPhraseUpdate = now;
+	if (!_act) {
+		ESP_LOGE(TAG, "update() failed: _act is nullptr");
+		return;
+	}
+	const char* phrase = _act->getPhrase();
+	printPhrase(phrase);
+}
+
+void Clockface::printPhrase(const char* phrase) {
+	if (!_display) {
+		ESP_LOGE(TAG, "printPhrase() failed: _display is nullptr");
+		return;
+	}
+	if (!phrase) {
+		ESP_LOGE(TAG, "printPhrase() failed: phrase is nullptr");
+		return;
 	}
 	// Display phrase at top (y=2), centered
 	_display->setTextSize(1); // Default size
@@ -77,19 +109,16 @@ void Clockface::update() {
 	_display->print(phrase);
 }
 
-const char* Clockface::selectPhrase(uint8_t act) {
-  switch (act) {
-    case 1: return PHRASES_DESERT[random(COUNT_DESERT)];
-    case 2: return PHRASES_TIME[random(COUNT_TIME)];
-    case 3: return PHRASES_POWER[random(COUNT_POWER)];
-    case 4: return PHRASES_DANGER[random(COUNT_DANGER)];
-    case 5: return PHRASES_SURVIVAL[random(COUNT_SURVIVAL)];
-    default: return "TIME FLOWS";
-  }
-}
-
 void Clockface::drawDigit(uint8_t digit, int x, int y, uint16_t color) {
 	//extern const uint8_t font5x7_digits[][5];
+	if (!_display) {
+		ESP_LOGE(TAG, "drawDigit() failed: _display is nullptr");
+		return;
+	}
+	if (digit > 9) {
+		ESP_LOGE(TAG, "drawDigit() failed: digit out of range: %d", digit);
+		return;
+	}
 	for (int col = 0; col < 5; ++col) {
 		uint8_t bits = dune_font5x7_digits[digit][col];
 		for (int row = 0; row < 7; ++row) {
@@ -103,6 +132,10 @@ void Clockface::drawDigit(uint8_t digit, int x, int y, uint16_t color) {
 
 // Helper: Draw colon
 void Clockface::drawColon(int x, int y, bool blink, uint16_t color) {
+	if (!_display) {
+		ESP_LOGE(TAG, "drawColon() failed: _display is nullptr");
+		return;
+	}
 	// Colon is 4x14 px, two dots
 	if (blink) {
 		// Draw upper dot
@@ -112,21 +145,14 @@ void Clockface::drawColon(int x, int y, bool blink, uint16_t color) {
 	}
 }
 
-void Clockface::drawTime(uint8_t hour, uint8_t minute, uint8_t act) {
+void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
+	if (!_display) {
+		ESP_LOGE(TAG, "drawTime() failed: _display is nullptr");
+		return;
+	}
 	// Placement
 	int x = 10; // x_start
 	int y = 34; // y_start
-
-	// Act-specific color palette
-	static const uint16_t actColors[6] = {
-		0xC618, // ACT I: Desert Sleeps (dim sand)
-		0xFCA0, // ACT II: Spice Awakens (spice amber)
-		0xFFFF, // ACT III: Watchers (high contrast, white)
-		0xFFE0, // ACT IV: Maker Stirs (bright sand)
-		0xF800, // ACT V: Storm of Fate (red, danger)
-		0x8410  // ACT VI: Silence & Survival (cool brown)
-	};
-	uint16_t color = actColors[act % 6];
 
 	// Format HH:MM
 	uint8_t digits[4] = {
