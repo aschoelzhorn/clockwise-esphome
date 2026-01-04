@@ -39,15 +39,18 @@ class Clockface : public IClockface {
   private:
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
+    uint8_t _act = 0;
 
     EventBus* _eventBus;
 
     void drawTime(uint8_t hour, uint8_t minute, uint8_t act);
     void drawDigit(uint8_t digit, int x, int y, uint16_t color);
     void drawColon(int x, int y, bool blink, uint16_t color);      
-    uint8_t getActForHour(uint8_t hour);
-    const char* selectPhrase(uint8_t act);
+    Act getCurrentAct(uint8_t hour);
+    //const char* selectPhrase(uint8_t act);
     void updateTime();
+    void printPhrase(const char* phrase);
+    void initializeActs();
 
 public:
     Clockface(Adafruit_GFX* display);
@@ -55,6 +58,6 @@ public:
     void setup(CWDateTime *dateTime);
     void update();
     void externalEvent(int type);
- 
+    static Act acts[6];
 };
 }  // namespace dune

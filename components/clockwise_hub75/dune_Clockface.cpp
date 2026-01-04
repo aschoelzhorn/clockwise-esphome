@@ -6,9 +6,11 @@ static const char *const TAG = "dune_Clockface";
 namespace dune {
 
 // Helper: Get act/phase from hour
-uint8_t Clockface::getActForHour(uint8_t hour) {
+uint8_t Clockface::getCurrentAct(uint8_t hour) {
 	// 6 phases, each 4 hours
-	return hour / 4; // 0-5
+    uint8_t act = hour / 4; // 0-5
+    ESP_LOGD(TAG, "getCurrentAct() called - Hour: %d -> Act: %d", hour, act);
+	return act;
 }
 
 Clockface::Clockface(Adafruit_GFX* display) {
@@ -32,8 +34,22 @@ void Clockface::setup(CWDateTime *dateTime) {
   // Provide EventBus after creation
   Locator::provide(_eventBus);
 
+  initializeActs();
+
   updateTime();  
+  _act = getCurrentAct(_dateTime->getHour());
 }
+
+void Clockface::initializeActs() {
+	ESP_LOGD(TAG, "initializeActs() called");
+	acts[0] = Act(0, "The Desert Sleeps", PHRASES_TIME, COUNT_TIME, dune_baron64x64);
+	acts[1] = Act(1, "Spice Awakens", PHRASES_DESERT, COUNT_DESERT, dune_baron_desert64x64);
+	acts[2] = Act(2, "The Watchers", PHRASES_POWER, COUNT_POWER, dune_ornithopter64x64);
+	acts[3] = Act(3, "The Maker Stirs", PHRASES_DANGER, COUNT_DANGER, dune_sandworm64x64);
+	acts[4] = Act(4, "Storm of Fate", PHRASES_DANGER, COUNT_DANGER, dune_background64x64);
+	acts[5] = Act(5, "Silence & Survival", PHRASES_SURVIVAL, COUNT_SURVIVAL, dune_chani64x64);
+}
+
 void Clockface::updateTime() {
   ESP_LOGD(TAG, "updateTime() called - Hour: %d, Minute: %02d", _dateTime->getHour(), _dateTime->getMinute());
 }
@@ -42,8 +58,12 @@ void Clockface::update() {
 	uint8_t hour = _dateTime->getHour();
 	uint8_t minute = _dateTime->getMinute();
 	uint8_t act = getActForHour(hour);
+    if (act != _act) {
+        ESP_LOGD(TAG, "Act changed from %d to %d", _act, act);
+        _act = act;
+    }
 
-
+    /* no background for testing purposes
 	// Act-specific background
 	extern const uint16_t* backgroundImages[10];
 	// Use act as index, wrap if needed
@@ -54,18 +74,28 @@ void Clockface::update() {
 		// Here, color is ignored for color bitmaps, so use 0
 		_display->drawRGBBitmap(0, 0, bg, 64, 64);
 	}
+    */
 
 	// Draw time (HH:MM) using 5x7 font, scaled ×2, at (x=10, y=34)
 	drawTime(hour, minute, act);
 
-	// Throttle phrase updates to every 10 seconds
-	static uint32_t lastPhraseUpdate = 0;
-	static const char* phrase = nullptr;
-	uint32_t now = millis();
-	if (now - lastPhraseUpdate > 10000) {
-		phrase = selectPhrase(act);
-		lastPhraseUpdate = now;
-	}
+    phrase = _act->getPhrase();
+    printPhrase(phrase);
+}
+
+static const char* getPhrase(uint8_t act) {
+    // Throttle phrase updates to every 10 seconds
+    static uint32_t lastPhraseUpdate = 0;
+     phrase = nullptr;
+    uint32_t now = millis();
+    if (now - lastPhraseUpdate > 10000) {
+        phrase = selectPhrase(act);
+        lastPhraseUpdate = now;
+    }
+    return phrase;
+}
+
+void Clockface::printPhrase(const char* phrase) {
 	// Display phrase at top (y=2), centered
 	_display->setTextSize(1); // Default size
 	_display->setTextColor(0xFFFF); // White for visibility

@@ -1,0 +1,10 @@
+WiFi
+adafruit/Adafruit BusIO
+DNSServer
+adafruit/Adafruit GFX Library
+ESPmDNS
+FS
+esphome/ESPAsyncWebServer-esphome@3.3.0
+esphome/AsyncTCP-esphome@2.1.4
+stuartparmenter/esp-hub75@0.1.2
+Update
