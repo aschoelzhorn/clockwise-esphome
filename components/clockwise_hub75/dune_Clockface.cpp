@@ -83,14 +83,10 @@ void Clockface::update() {
 }
 
 void Clockface::printPhrase(const char* phrase) {
-	if (!_display) {
-		ESP_LOGE(TAG, "printPhrase() failed: _display is nullptr");
+    if (!phrase) {
 		return;
 	}
-	if (!phrase) {
-		ESP_LOGE(TAG, "printPhrase() failed: phrase is nullptr");
-		return;
-	}
+
 	// Display phrase at top (y=2), centered
 	_display->setTextSize(1); // Default size
 	_display->setTextColor(0xFFFF); // White for visibility
