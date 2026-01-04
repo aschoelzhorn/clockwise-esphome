@@ -17,6 +17,8 @@ Act::Act(uint8_t id, const char* name, const char** phrases, uint16_t fontColor,
     _lastPhraseIndex = -1;
     _lastPhraseUpdate = 0;
 }
+    Act::Act()
+        : _id(0), _name(nullptr), _phrases(nullptr), _fontColor(0), _background(nullptr), _lastPhraseIndex(-1) {}
 
 uint8_t Act::getId() const {
     return _id;
