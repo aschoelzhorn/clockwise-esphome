@@ -22,23 +22,24 @@ Act::Act() : _id(0), _name(nullptr), _phrases(nullptr), _fontColor(0), _backgrou
     // Default constructor  
 }
 
-uint8_t Act::getId() {
+
+uint8_t Act::getId() const {
     return _id;
 }
 
-const char* Act::getName() {
+const char* Act::getName() const {
     return _name;
 }
 
-const char* Act::getPhrase(size_t index) {
+const char* Act::getPhrase(size_t index) const {
     if (index < _phraseCount) {
         return _phrases[index];
     }
     return nullptr;
 }
 
-uint16_t Act::getFontColor() {
-    return _fontColor; // Return the font color for text
+uint16_t Act::getFontColor() const {
+    return _fontColor;
 }
 
 const char* Act::getPhrase() {
@@ -64,11 +65,11 @@ const char* Act::getPhrase() {
     return phrase;
 }
 
-size_t Act::getPhraseCount() {
+size_t Act::getPhraseCount() const {
     return _phraseCount;
 }
 
-const uint16_t* Act::getBackground() {
+const uint16_t* Act::getBackground() const {
     return _background;
 }
 
