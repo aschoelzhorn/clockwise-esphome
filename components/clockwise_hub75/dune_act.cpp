@@ -44,7 +44,6 @@ uint16_t Act::getFontColor() const {
 
 const char* Act::getPhrase() {
     // Throttle phrase updates to every 10 seconds
-    const char* phrase = nullptr;
     uint32_t now = millis();
     if (now - _lastPhraseUpdate > 10000) {
         int idx = -1;
@@ -57,11 +56,10 @@ const char* Act::getPhrase() {
             } while (idx == _lastPhraseIndex && _phraseCount > 1);
         }
         _lastPhraseIndex = idx;
-        phrase = getPhrase(idx);
         _lastPhraseUpdate = now;
+        ESP_LOGD(TAG, "Random phrase index %d", _lastPhraseIndex);        
     }
-    ESP_LOGD(TAG, "Random phrase index %d", _lastPhraseIndex);
-    return phrase;
+    return getPhrase(_lastPhraseIndex);
 }
 
 size_t Act::getPhraseCount() const {
