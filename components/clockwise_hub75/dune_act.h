@@ -17,6 +17,7 @@ private:
     uint16_t _fontColor;
 
 public:
+    Act();
     Act(uint8_t id, const char* name, const char** phrases, uint16_t fontColor, const uint16_t* background);
     uint8_t getId() const;
     const char* getName() const;
