@@ -35,16 +35,16 @@ void Clockface::setup(CWDateTime *dateTime) {
   initializeActs();
 
   updateTime();  
-  _act = getCurrentAct(_dateTime->getHour());
+  _act = Act(0, "", 0, nullptr, nullptr, nullptr); 
 }
 
 void Clockface::initializeActs() {
 	ESP_LOGD(TAG, "initializeActs() called");
-	acts[0] = Act(1, "The Desert Sleeps", PHRASES_TIME, DIM_SAND, dune_baron64x64);
-	acts[1] = Act(2, "Spice Awakens", PHRASES_DESERT, SPICE_AMBER, dune_baron_desert64x64);
+	acts[0] = Act(1, "The Desert Sleeps", PHRASES_TIME, DIM_SAND, dune_moons64x64);
+	acts[1] = Act(2, "Spice Awakens", PHRASES_DESERT, SPICE_AMBER, dune_background64x64);
 	acts[2] = Act(3, "The Watchers", PHRASES_POWER, HIGH_CONTRAST_WHITE, dune_ornithopter64x64);
 	acts[3] = Act(4, "The Maker Stirs", PHRASES_DANGER, BRIGHT_SAND, dune_sandworm64x64);
-	acts[4] = Act(5, "Storm of Fate", PHRASES_DANGER, RED_DANGER, dune_background64x64);
+	acts[4] = Act(5, "Storm of Fate", PHRASES_DANGER, RED_DANGER, dune_paul_sandworm64x64);
 	acts[5] = Act(6, "Silence & Survival", PHRASES_SURVIVAL, COOL_BROWN, dune_chani64x64);
     ESP_LOGD(TAG, "initializeActs() done");
 }
@@ -63,8 +63,10 @@ void Clockface::update() {
 		return;
 	}
 	
+    uint32_t now = millis();
+
 	// Clear display before redrawing
-	_display->fillScreen(0);
+	_display->fillScreen(0);  // TODO: not good, causes flicker
 	
 	uint8_t hour = _dateTime->getHour();
 	uint8_t minute = _dateTime->getMinute();
@@ -73,13 +75,18 @@ void Clockface::update() {
 	if (act.getId() != _act.getId()) {
 		ESP_LOGD(TAG, "Act changed from %d to %d", _act.getId(), act.getId());
 		_act = act;
+        drawBackgroundImage(_act.getBackground());
 	}
 
 	// Draw time (HH:MM) using 5x7 font, scaled ×2, at (x=10, y=34)
 	drawTime(hour, minute, _act.getFontColor());
 
-	const char* phrase = _act.getPhrase();
-	printPhrase(phrase);
+    // Update phrase every 10 seconds
+    if (now - _lastPhraseUpdate > 10000) {
+        _lastPhraseUpdate = now;
+	    const char* phrase = _act.getNewPhrase();
+	    printPhrase(phrase);
+    }
 }
 
 void Clockface::printPhrase(const char* phrase) {

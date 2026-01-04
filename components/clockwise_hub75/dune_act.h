@@ -23,7 +23,7 @@ public:
     uint8_t getId() const;
     const char* getName() const;
     const char* getPhrase(size_t index) const;
-    const char* getPhrase();
+    const char* getNewPhrase();
     size_t getPhraseCount() const;
     const uint16_t* getBackground() const;
     uint16_t getFontColor() const;

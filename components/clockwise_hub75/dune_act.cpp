@@ -42,23 +42,18 @@ uint16_t Act::getFontColor() const {
     return _fontColor;
 }
 
-const char* Act::getPhrase() {
-    // Throttle phrase updates to every 10 seconds
-    uint32_t now = millis();
-    if (now - _lastPhraseUpdate > 10000) {
-        int idx = -1;
-        if (_phraseCount == 1) {
-            idx = 0;
-        } else {
-            // Try until we get a different index
-            do {
-                idx = random(_phraseCount);
-            } while (idx == _lastPhraseIndex && _phraseCount > 1);
-        }
-        _lastPhraseIndex = idx;
-        _lastPhraseUpdate = now;
-        ESP_LOGD(TAG, "Random phrase index %d", _lastPhraseIndex);        
+const char* Act::getNewPhrase() {
+    int idx = -1;
+    if (_phraseCount == 1) {
+        idx = 0;
+    } else {
+        // Try until we get a different index
+        do {
+            idx = random(_phraseCount);
+        } while (idx == _lastPhraseIndex && _phraseCount > 1);
     }
+    _lastPhraseIndex = idx;
+    ESP_LOGD(TAG, "Random phrase index %d", _lastPhraseIndex);        
     return getPhrase(_lastPhraseIndex);
 }
 
