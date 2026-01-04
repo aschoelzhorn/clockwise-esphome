@@ -21,7 +21,6 @@ Clockface::~Clockface() {
 Act Clockface::getCurrentAct(uint8_t hour) {
 	// 6 phases, each 4 hours
     uint8_t îdx = hour / 4; // 0-5
-    ESP_LOGD(TAG, "getCurrentAct() called - Hour: %d -> Act: %d", hour, îdx + 1);
     return acts[îdx];
 }
 
