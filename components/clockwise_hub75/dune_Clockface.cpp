@@ -63,14 +63,32 @@ void Clockface::update() {
 		return;
 	}
 	
-    uint32_t now = millis();
+    uint32_t now_ms = millis();
+	uint8_t current_hour = _dateTime->getHour();
+	uint8_t current_minute = _dateTime->getMinute();
+	Act current_act = getCurrentAct(current_hour);
+    bool colon_visible = (now_ms / 1000) % 2 == 0;
+    bool text_is_active = (now_ms - _lastPhraseUpdate) < TEXT_DISPLAY_MS;
+    bool event_is_active = false; // Placeholder for event logic
 
-	// Clear display before redrawing
-	_display->fillScreen(0);  // TODO: not good, causes flicker
-	
-	uint8_t hour = _dateTime->getHour();
-	uint8_t minute = _dateTime->getMinute();
-	Act act = getCurrentAct(hour);
+    RenderContext ctx = {
+        .now_ms = now_ms,
+        .act = current_act,
+        .hour = current_hour,
+        .minute = current_minute,
+        .colon_on = colon_visible,
+        .text_active = text_is_active,
+        .event_active = event_is_active
+    };
+
+    layer_clear(&ctx);        // L0
+    layer_background(&ctx);   // L1
+    layer_ambient(&ctx);      // L2
+    layer_event(&ctx);        // L3
+    layer_time(&ctx);         // L4
+    layer_text(&ctx);         // L5
+
+    //display_swap();           // push framebuffer
 
 	if (act.getId() != _act.getId()) {
 		ESP_LOGD(TAG, "Act changed from %d to %d", _act.getId(), act.getId());
@@ -89,10 +107,67 @@ void Clockface::update() {
     }
 }
 
-void Clockface::drawBackgroundImage(const uint16_t* image) {
-    //Locator::getDisplay()->drawRGBBitmap(x, y, _image, _width, _height);
-    _display->drawRGBBitmap(0, 0, image, 64, 64);
+
+void Clockface::layer_clear(const RenderContext* ctx) {
+  // Fill framebuffer
+  // Use night color if act == I or VI
+  //display_fill(COLOR_SKY);
+  //framebuffer_fill(ctx->act.getBaseColor());
 }
+
+void Clockface::layer_background(const RenderContext* ctx) {
+  const uint16_t* bg = ctx->act.getBackground();
+   _display->drawRGBBitmap(0, 0, bg, 64, 64);
+}
+
+void Clockface::layer_ambient(const RenderContext* ctx) {
+  switch (ctx->act) {
+    case ACT_I: ambient_heat(ctx); break;
+    case ACT_II: ambient_spice(ctx); break;
+    case ACT_III: ambient_shadow(ctx); break;
+    case ACT_IV: ambient_tremor(ctx); break;
+    case ACT_V: ambient_wind(ctx); break;
+    case ACT_VI: ambient_dust(ctx); break;
+  }
+}
+
+void Clockface::layer_event(const RenderContext* ctx) {
+  if (!ctx->event_active) return;
+/*
+  switch (event.type) {
+    case EVENT_STORM:
+      draw_storm(ctx);
+      break;
+
+    case EVENT_WORM:
+      draw_worm(ctx);
+      break;
+
+    case EVENT_FLIGHT:
+      draw_flight(ctx);
+      break;
+  }
+*/      
+}
+
+void Clockface::layer_time(const RenderContext* ctx) {
+  bool high_contrast = ctx->event_active || ctx->act.getId() == 5; // Storm of Fate
+
+  drawtime(
+    ctx->hour,
+    ctx->minute,
+    //ctx->colon_on,
+    ctx->act.getFontColor()
+  );
+}
+
+void Clockface::layer_text(const RenderContext* ctx) {
+  if (!ctx->text_active) return;
+
+  draw_phrase_with_wipe(ctx->now_ms);
+}
+
+
 
 void Clockface::printPhrase(const char* phrase) {
     if (!phrase) {
