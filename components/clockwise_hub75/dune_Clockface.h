@@ -43,6 +43,8 @@ class Clockface : public IClockface {
     Act _act;
     Act acts[6];
 
+    uint32_t _lastPhraseUpdate = 0;
+
     EventBus* _eventBus;
 
     void drawTime(uint8_t hour, uint8_t minute, uint16_t color);
