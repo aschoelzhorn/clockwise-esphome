@@ -5,14 +5,6 @@ static const char *const TAG = "dune_Clockface";
 
 namespace dune {
 
-// Helper: Get act/phase from hour
-Act Clockface::getCurrentAct(uint8_t hour) {
-	// 6 phases, each 4 hours
-    uint8_t îdx = hour / 4; // 0-5
-    ESP_LOGD(TAG, "getCurrentAct() called - Hour: %d -> Act: %d", hour, îdx + 1);
-    return acts[îdx];
-}
-
 Clockface::Clockface(Adafruit_GFX* display) {
   _display = display;
   Locator::provide(_display);
@@ -24,6 +16,13 @@ Clockface::Clockface(Adafruit_GFX* display) {
 
 Clockface::~Clockface() {
   delete _eventBus;
+}
+
+Act Clockface::getCurrentAct(uint8_t hour) {
+	// 6 phases, each 4 hours
+    uint8_t îdx = hour / 4; // 0-5
+    ESP_LOGD(TAG, "getCurrentAct() called - Hour: %d -> Act: %d", hour, îdx + 1);
+    return acts[îdx];
 }
 
 void Clockface::setup(CWDateTime *dateTime) {
@@ -68,11 +67,6 @@ void Clockface::update() {
 	uint8_t minute = _dateTime->getMinute();
 	Act act = getCurrentAct(hour);
 
-	if (!_act) {
-		ESP_LOGE(TAG, "update() failed: _act is nullptr");
-		return;
-	}
-
 	if (act.getId() != _act.getId()) {
 		ESP_LOGD(TAG, "Act changed from %d to %d", _act.getId(), act.getId());
 		_act = act;
@@ -81,11 +75,7 @@ void Clockface::update() {
 	// Draw time (HH:MM) using 5x7 font, scaled ×2, at (x=10, y=34)
 	drawTime(hour, minute, _act.getFontColor());
 
-	if (!_act) {
-		ESP_LOGE(TAG, "update() failed: _act is nullptr");
-		return;
-	}
-	const char* phrase = _act->getPhrase();
+	const char* phrase = _act.getPhrase();
 	printPhrase(phrase);
 }
 
