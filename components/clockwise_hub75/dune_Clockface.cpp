@@ -149,7 +149,6 @@ void Clockface::layer_text() {
     //if (_now - _lastMinuteChange < MINUTE_GUARD) return;
 
     uint32_t elapsed = _now - _text.phaseStart;
-    uint8_t alpha = MIN(255, (elapsed * 255) / TEXT_FADE_MS);
 
     switch (_text.phase) {
 
@@ -160,7 +159,8 @@ void Clockface::layer_text() {
             _text.phaseStart = _now;
             break;
 
-        case TEXT_FADE_IN: 
+        case TEXT_FADE_IN: {
+            uint8_t alpha = MIN(255, (elapsed * 255) / TEXT_FADE_MS);
             drawPhraseBlended(
                 _text.phrase,
                 _activeAct.getFontColor(), 
@@ -171,7 +171,7 @@ void Clockface::layer_text() {
                 _text.phase = TEXT_HOLD;
                 _text.phaseStart = _now;
             }
-            break;
+        } break;
 
         case TEXT_HOLD:
             drawPhraseBlended(_text.phrase, _activeAct.getFontColor(), 255);
@@ -182,7 +182,8 @@ void Clockface::layer_text() {
             }
             break;
 
-        case TEXT_FADE_OUT:
+        case TEXT_FADE_OUT: {
+            uint8_t alpha = 255 - min(255, (elapsed * 255) / TEXT_FADE_MS);
             drawPhraseBlended(
                 _text.phrase,
                 _activeAct.getFontColor(),
@@ -193,7 +194,7 @@ void Clockface::layer_text() {
                 _text.phase = TEXT_QUIET;
                 _text.phaseStart = _now;
             }
-            break;
+        } break;
 
         case TEXT_QUIET:
             if (_now - _text.phaseStart >= TEXT_QUIET_MS) {
