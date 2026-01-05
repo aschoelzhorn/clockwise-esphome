@@ -86,7 +86,6 @@ void Clockface::update() {
 	_activeAct = getCurrentAct(_dateTime->getHour());
     _activeAct = _acts[0]; // FOR TESTING ONLY - FORCE ACT I
     
-    // bool text_is_active = (_now - _lastPhraseUpdate) < TEXT_DISPLAY_MS;
     bool event_is_active = false; // Placeholder for event logic
 
     layer_clear();        // L0 Clear / sky
@@ -111,9 +110,7 @@ void Clockface::layer_background() {
 		ESP_LOGE(TAG, "layer_background() failed: bg is nullptr");
 		return;
 	} 
-
     memcpy(framebuffer, bg, 64 * 64 * sizeof(uint16_t));
-   //_display->drawRGBBitmap(0, 0, bg, 64, 64);
 }
 
 void Clockface::layer_ambient() {
@@ -150,12 +147,11 @@ void Clockface::layer_time() {
 }
 
 void Clockface::layer_text() {
-    // Global silencing rules
     if (eventSilencesText()) return;
     //if (_now - _lastMinuteChange < MINUTE_GUARD) return;
 
-    // uint32_t elapsed = _now - _textPhaseStartMs;
-    // uint16_t baseColor = _activeAct.getFontColor();
+    uint32_t elapsed = _now - _text.phaseStart;
+    uint8_t alpha = MIN(255, (elapsed * 255) / TEXT_FADE_IN_MS);
 
     switch (_text.phase) {
 
@@ -167,8 +163,6 @@ void Clockface::layer_text() {
             break;
 
         case TEXT_FADE_IN: 
-            uint32_t elapsed = _now - _text.phaseStart;
-            uint8_t alpha = MIN(255, (elapsed * 255) / TEXT_FADE_IN_MS);
             drawPhraseBlended(
                 _text.phrase,
                 _activeAct.getFontColor(), 
@@ -191,8 +185,6 @@ void Clockface::layer_text() {
             break;
 
         case TEXT_FADE_OUT:
-            uint32_t elapsed = _now - _text.phaseStart;
-            uint8_t alpha = 255 - MIN(255, (elapsed * 255) / TEXT_FADE_OUT_MS);
             drawPhraseBlended(
                 _text.phrase,
                 _activeAct.getFontColor(),
@@ -368,50 +360,50 @@ void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t*
     }
 }
 
-void Clockface::drawTestLetter(char c, int x, int y, uint16_t color, uint8_t alpha) {
-    int index = 0;
-    if (c >= 'A' && c <= 'J') index = (c - 'A') + 1;
+// void Clockface::drawTestLetter(char c, int x, int y, uint16_t color, uint8_t alpha) {
+//     int index = 0;
+//     if (c >= 'A' && c <= 'J') index = (c - 'A') + 1;
 
-    const uint8_t* glyph = dune_font5x7_letters[index];
+//     const uint8_t* glyph = dune_font5x7_letters[index];
 
-    for (int col = 0; col < 5; col++) {
-        uint8_t bits = pgm_read_byte(&glyph[col]);
-        for (int row = 0; row < 7; row++) {
-            if (bits & (1 << row)) {
-                int px = x + col;
-                int py = y + row;
-                if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
-                uint16_t bg = fbGet(px, py);
-                uint16_t blended = blend565(bg, color, alpha);
-                fbSet(px, py, blended);
-            }
-        }
-    }
-}
+//     for (int col = 0; col < 5; col++) {
+//         uint8_t bits = pgm_read_byte(&glyph[col]);
+//         for (int row = 0; row < 7; row++) {
+//             if (bits & (1 << row)) {
+//                 int px = x + col;
+//                 int py = y + row;
+//                 if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
+//                 uint16_t bg = fbGet(px, py);
+//                 uint16_t blended = blend565(bg, color, alpha);
+//                 fbSet(px, py, blended);
+//             }
+//         }
+//     }
+// }
 
-void Clockface::drawTestLetterScaled(char c, int x, int y, uint16_t color, uint8_t alpha) {
-    int index = (c >= 'A' && c <= 'J') ? (c - 'A') + 1 : 0;
-    const uint8_t* glyph = dune_font5x7_letters[index];
-    const int scale = 2;
+// void Clockface::drawTestLetterScaled(char c, int x, int y, uint16_t color, uint8_t alpha) {
+//     int index = (c >= 'A' && c <= 'J') ? (c - 'A') + 1 : 0;
+//     const uint8_t* glyph = dune_font5x7_letters[index];
+//     const int scale = 2;
 
-    for (int col = 0; col < 5; col++) {
-        uint8_t bits = pgm_read_byte(&glyph[col]);
-        for (int row = 0; row < 7; row++) {
-            if (!(bits & (1 << row))) continue;
+//     for (int col = 0; col < 5; col++) {
+//         uint8_t bits = pgm_read_byte(&glyph[col]);
+//         for (int row = 0; row < 7; row++) {
+//             if (!(bits & (1 << row))) continue;
 
-            for (int dx = 0; dx < scale; dx++) {
-                for (int dy = 0; dy < scale; dy++) {
-                    int px = x + col * scale + dx;
-                    int py = y + row * scale + dy;
-                    if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
-                    uint16_t bg = fbGet(px, py);
-                    uint16_t blended = blend565(bg, color, alpha);
-                    fbSet(px, py, blended);
-                }
-            }
-        }
-    }
-}
+//             for (int dx = 0; dx < scale; dx++) {
+//                 for (int dy = 0; dy < scale; dy++) {
+//                     int px = x + col * scale + dx;
+//                     int py = y + row * scale + dy;
+//                     if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
+//                     uint16_t bg = fbGet(px, py);
+//                     uint16_t blended = blend565(bg, color, alpha);
+//                     fbSet(px, py, blended);
+//                 }
+//             }
+//         }
+//     }
+// }
 
 
 void Clockface::drawCharBlended(char c, int x, int y, uint16_t color, uint8_t alpha) {
@@ -500,14 +492,14 @@ bool Clockface::eventSilencesText() const {
     }
 }
 
-uint16_t Clockface::fadeColor(uint16_t color, uint8_t alpha) {
-    // alpha: 0–255
-    uint8_t r = ((color >> 11) & 0x1F) * alpha / 255;
-    uint8_t g = ((color >> 5)  & 0x3F) * alpha / 255;
-    uint8_t b = ( color        & 0x1F) * alpha / 255;
+// uint16_t Clockface::fadeColor(uint16_t color, uint8_t alpha) {
+//     // alpha: 0–255
+//     uint8_t r = ((color >> 11) & 0x1F) * alpha / 255;
+//     uint8_t g = ((color >> 5)  & 0x3F) * alpha / 255;
+//     uint8_t b = ( color        & 0x1F) * alpha / 255;
 
-    return (r << 11) | (g << 5) | b;
-}
+//     return (r << 11) | (g << 5) | b;
+// }
 
 uint16_t Clockface::blend565(uint16_t bg, uint16_t fg, uint8_t alpha) {
 

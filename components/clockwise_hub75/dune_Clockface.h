@@ -75,27 +75,12 @@ int computeTextStartX(const char* phrase);
     #define QUIET_TIME  2000
     #define MINUTE_GUARD 2000
 
-    //  Global timing constants
-    // #define TEXT_MIN_INTERVAL_MS   600000  // 10 minutes
-    // #define TEXT_DISPLAY_MS        2200
-    // #define TEXT_FADE_MS            400
-
-
-    // TextPhase _textPhase = TEXT_IDLE;
-    // uint32_t _textPhaseStartMs = 0;
-    // const char* _currentPhrase = nullptr;
-
     static constexpr uint32_t TEXT_FADE_IN_MS  = 500;
     static constexpr uint32_t TEXT_HOLD_MS     = 2000;
     static constexpr uint32_t TEXT_FADE_OUT_MS = 500;
-    static constexpr uint32_t TEXT_QUIET_MS    = 1500;
+    static constexpr uint32_t TEXT_QUIET_MS    = 1500; //600000; // 10 minutes
 
     TextState _text;
-    // //  Global timing constants
-    // #define TEXT_MIN_INTERVAL_MS   600000  // 10 minutes
-    // #define TEXT_DISPLAY_MS        2200
-    // #define TEXT_FADE_MS            400
-
 
     typedef enum {
       VS_IDLE,
@@ -172,8 +157,8 @@ int computeTextStartX(const char* phrase);
 
     void flushFramebuffer();
 
-    void drawTestLetter(char c, int x, int y, uint16_t color, uint8_t alpha);
-    void drawTestLetterScaled(char c, int x, int y, uint16_t color, uint8_t alpha);
+    // void drawTestLetter(char c, int x, int y, uint16_t color, uint8_t alpha);
+    // void drawTestLetterScaled(char c, int x, int y, uint16_t color, uint8_t alpha);
 
     void layer_clear();
     void layer_background();
