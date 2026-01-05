@@ -327,9 +327,10 @@ void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
 		return;
 	}
 
+    bool redraw = true;
     if (hour == _lastHour && minute == _lastMinute) {
         // No change, avoids flicker
-        return;
+        redraw = false;
     }
 
     ESP_LOGD(TAG, "drawTime() updating time %02d:%02d", hour, minute);
@@ -348,17 +349,19 @@ void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
 		static_cast<uint8_t>(minute % 10)
 	};
 
-	// Draw digits
-	for (int i = 0; i < 2; ++i) {
-		drawDigit(digits[i], x + i*10, y, color);
-	}
+    if (redraw ) {
+        // Draw digits
+	    for (int i = 0; i < 2; ++i) {
+		    drawDigit(digits[i], x + i*10, y, color);
+	    }
+	    // Last two digits
+	    for (int i = 2; i < 4; ++i) {
+		    drawDigit(digits[i], x + 24 + (i-2)*10, y, color);
+	    }
+    }
 	// Colon
 	bool blink = (millis() / 1000) % 2 == 0;
 	drawColon(x + 20, y, blink, color);
-	// Last two digits
-	for (int i = 2; i < 4; ++i) {
-		drawDigit(digits[i], x + 24 + (i-2)*10, y, color);
-	}
 }
 
 void Clockface::externalEvent(int type) {
