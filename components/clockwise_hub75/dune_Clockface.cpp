@@ -167,8 +167,9 @@ void Clockface::layer_time() {
 void Clockface::layer_text() {
 
     //drawPhraseBlended("HELLO", 0xFFFF, 255);
-    drawTestLetter('H', 10, 10, 0xFFFF);
-    drawTestLetterScaled('H', 10, 40, 0xFFFF);
+    uint8_t alpha = MIN(255, (elapsed * 255) / TEXT_FADE_IN_MS);
+    drawTestLetter('H', 10, 10, 0xFFFF, alpha);
+    drawTestLetterScaled('H', 10, 40, 0xFFFF, alpha);
 
     return;
     
@@ -396,7 +397,7 @@ void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t*
     }
 }
 
-void Clockface::drawTestLetter(char c, int x, int y, uint16_t color) {
+void Clockface::drawTestLetter(char c, int x, int y, uint16_t color, uint8_t alpha) {
     int index = 0;
     if (c >= 'A' && c <= 'J') index = (c - 'A') + 1;
 
@@ -417,7 +418,7 @@ void Clockface::drawTestLetter(char c, int x, int y, uint16_t color) {
     }
 }
 
-void Clockface::drawTestLetterScaled(char c, int x, int y, uint16_t color) {
+void Clockface::drawTestLetterScaled(char c, int x, int y, uint16_t color, uint8_t alpha) {
     int index = (c >= 'A' && c <= 'J') ? (c - 'A') + 1 : 0;
     const uint8_t* glyph = dune_font5x7_letters[index];
     const int scale = 2;
@@ -432,7 +433,9 @@ void Clockface::drawTestLetterScaled(char c, int x, int y, uint16_t color) {
                     int px = x + col * scale + dx;
                     int py = y + row * scale + dy;
                     if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
-                    fbSet(px, py, color);
+                    uint16_t bg = fbGet(px, py);
+                    uint16_t blended = blend565(bg, color, alpha);
+                    fbSet(px, py, blended);
                 }
             }
         }
