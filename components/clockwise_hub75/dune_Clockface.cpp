@@ -1,6 +1,7 @@
 // Minimal implementation - all functionality moved to header for guaranteed linking
 #include "dune_Clockface.h"
 #include <Adafruit_GFX.h>
+#include "Macros.h"
 
 static const char *const TAG = "dune_Clockface";
 
