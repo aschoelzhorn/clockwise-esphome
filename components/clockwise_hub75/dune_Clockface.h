@@ -17,41 +17,16 @@
 
 namespace dune {
 
-// // Array of pointers to background images - using only images from first half to avoid duplicates
-// static const uint16_t* backgroundImages[10] = {
-//   dune_baron64x64,
-//   dune_baron_desert64x64,
-//   dune_baron_chamber64x64,
-//   dune_ornithopter64x64,
-//   dune_chani64x64,
-//   dune_sandworm64x64,
-//   dune_paul_sandworm64x64,
-//   dune_background64x64,
-//   dune_background_264x64,
-//   dune_baron_chamber_background64x64
-// };
-
-#define WIPE_STEP_MS   30
-#define WIPE_COL_JITTER 1
-
 class Clockface : public IClockface {
   private:
 
-static constexpr int TEXT_Y = 2;
-static constexpr int FONT_W = 5;
-static constexpr int FONT_H = 7;
-static constexpr int CHAR_SPACING = 1;
-int textWidth(const char* s);
+    static constexpr int TEXT_Y = 2;
+    static constexpr int FONT_W = 5;
+    static constexpr int FONT_H = 7;
+    static constexpr int CHAR_SPACING = 1;
+    int textWidth(const char* s);
 
-
-int computeTextStartX(const char* phrase);
-// #define TEXT_Y 2
-// #define FONT_W 5
-// #define FONT_H 7
-// #define CHAR_SPACING 1
-
-
-
+    #define COLOR_COOL_BLACK   0x18C3 // Dark, cool black for clearing
     #define COLOR_SHADOW_DARK  0x4208  // dark brown/gray
     #define COLOR_SHADOW_SOFT  0x630C  // softer edge
 
@@ -70,14 +45,8 @@ int computeTextStartX(const char* phrase);
       uint32_t phaseStart = 0;
     };
 
-    #define FADE_TIME   1200
-    #define HOLD_TIME   4000
-    #define QUIET_TIME  2000
-    #define MINUTE_GUARD 2000
-
-    static constexpr uint32_t TEXT_FADE_IN_MS  = 500;
+    static constexpr uint32_t TEXT_FADE_MS  = 500;
     static constexpr uint32_t TEXT_HOLD_MS     = 2000;
-    static constexpr uint32_t TEXT_FADE_OUT_MS = 500;
     static constexpr uint32_t TEXT_QUIET_MS    = 1500; //600000; // 10 minutes
 
     TextState _text;
@@ -88,6 +57,7 @@ int computeTextStartX(const char* phrase);
       VS_ACTIVE,
       VS_EXIT
     } VisualPhase;
+
 
     #define STORM_ENTER_MS   800
     #define STORM_ACTIVE_MS 3000
@@ -106,6 +76,7 @@ int computeTextStartX(const char* phrase);
       VisualPhase phase = VS_IDLE;
       uint32_t phaseStart = 0;
     } Event;
+    Event _event;
 
     #define ACT_I 1
     #define ACT_II 2
@@ -114,14 +85,12 @@ int computeTextStartX(const char* phrase);
     #define ACT_V 5
     #define ACT_VI 6
 
-    Event _event;
-
-
+    // framebuffer for double buffering
     inline void fbClear(uint16_t color);
     inline uint16_t fbGet(uint8_t x, uint8_t y);
     inline void fbSet(uint8_t x, uint8_t y, uint16_t color);
 
-
+    // Shadow state
     uint32_t _shadowLastUpdate = 0;
     uint8_t  _shadowX = 0;
     uint8_t  _shadowY = 10;
@@ -131,17 +100,11 @@ int computeTextStartX(const char* phrase);
     uint32_t _tremorLastUpdate = 0;
     static const uint8_t TREMOR_UPDATE_MS = 100; // 10 fps for ripples
 
-    // time state
-    //uint32_t _lastHour = 0;
-    //uint32_t _lastMinute = 0;
-
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
     Act _activeAct;
     Act _acts[6];
 
-    uint32_t _lastPhraseUpdate = 0;
-    
     uint32_t _now;
 
     EventBus* _eventBus;
@@ -151,14 +114,11 @@ int computeTextStartX(const char* phrase);
     void drawColon(int x, int y, bool blink, uint16_t color);
 
     Act getCurrentAct(uint8_t hour);
-    // void drawPhraseWithSandWipe(const char* phrase, uint16_t color);
+
     void initializeActs();
     void drawBackgroundImage(const uint16_t* image);
 
     void flushFramebuffer();
-
-    // void drawTestLetter(char c, int x, int y, uint16_t color, uint8_t alpha);
-    // void drawTestLetterScaled(char c, int x, int y, uint16_t color, uint8_t alpha);
 
     void layer_clear();
     void layer_background();
@@ -185,7 +145,6 @@ int computeTextStartX(const char* phrase);
 
     bool eventSilencesText() const;
 
-    // uint16_t fadeColor(uint16_t color, uint8_t alpha);
     uint16_t blend565(uint16_t bg, uint16_t fg, uint8_t alpha);
     void drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha);
     void drawCharBlended(char c, int x, int y, uint16_t color, uint8_t alpha);
