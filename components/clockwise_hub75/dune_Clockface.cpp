@@ -33,24 +33,18 @@ void Clockface::setup(CWDateTime *dateTime) {
   Locator::provide(_eventBus);
 
   initializeActs();
-
-  updateTime();  
-  _act = Act(); 
+  _activeAct = Act();  // Default empty act
 }
 
 void Clockface::initializeActs() {
 	ESP_LOGD(TAG, "initializeActs() called");
-	acts[0] = Act(1, "The Desert Sleeps", PHRASES_TIME, DIM_SAND, dune_moons64x64);
-	acts[1] = Act(2, "Spice Awakens", PHRASES_DESERT, SPICE_AMBER, dune_background64x64);
-	acts[2] = Act(3, "The Watchers", PHRASES_POWER, HIGH_CONTRAST_WHITE, dune_ornithopter64x64);
-	acts[3] = Act(4, "The Maker Stirs", PHRASES_DANGER, BRIGHT_SAND, dune_sandworm64x64);
-	acts[4] = Act(5, "Storm of Fate", PHRASES_DANGER, RED_DANGER, dune_paul_sandworm64x64);
-	acts[5] = Act(6, "Silence & Survival", PHRASES_SURVIVAL, COOL_BROWN, dune_chani64x64);
+	acts[0] = Act(ACT_I, "The Desert Sleeps", PHRASES_TIME, DIM_SAND, dune_moons64x64);
+	acts[1] = Act(ACT_II, "Spice Awakens", PHRASES_DESERT, SPICE_AMBER, dune_background64x64);
+	acts[2] = Act(ACT_III, "The Watchers", PHRASES_POWER, HIGH_CONTRAST_WHITE, dune_ornithopter64x64);
+	acts[3] = Act(ACT_IV, "The Maker Stirs", PHRASES_DANGER, BRIGHT_SAND, dune_sandworm64x64);
+	acts[4] = Act(ACT_V, "Storm of Fate", PHRASES_DANGER, RED_DANGER, dune_paul_sandworm64x64);
+	acts[5] = Act(ACT_VI, "Silence & Survival", PHRASES_SURVIVAL, COOL_BROWN, dune_chani64x64);
     ESP_LOGD(TAG, "initializeActs() done");
-}
-
-void Clockface::updateTime() {
-  ESP_LOGD(TAG, "updateTime() called - Hour: %d, Minute: %02d", _dateTime->getHour(), _dateTime->getMinute());
 }
 
 void Clockface::update() {
@@ -63,121 +57,134 @@ void Clockface::update() {
 		return;
 	}
 	
-    uint32_t now_ms = millis();
-	uint8_t current_hour = _dateTime->getHour();
-	uint8_t current_minute = _dateTime->getMinute();
-	Act current_act = getCurrentAct(current_hour);
-    bool colon_visible = (now_ms / 1000) % 2 == 0;
-    bool text_is_active = (now_ms - _lastPhraseUpdate) < TEXT_DISPLAY_MS;
+    uint32_t now = millis();
+	_activeAct = getCurrentAct(_dateTime->getHour());
+    
+    bool text_is_active = (now - _lastPhraseUpdate) < TEXT_DISPLAY_MS;
     bool event_is_active = false; // Placeholder for event logic
 
-    RenderContext ctx = {
-        .now_ms = now_ms,
-        .act = current_act,
-        .hour = current_hour,
-        .minute = current_minute,
-        .colon_on = colon_visible,
-        .text_active = text_is_active,
-        .event_active = event_is_active
-    };
-
-    layer_clear(&ctx);        // L0
-    layer_background(&ctx);   // L1
-    layer_ambient(&ctx);      // L2
-    layer_event(&ctx);        // L3
-    layer_time(&ctx);         // L4
-    layer_text(&ctx);         // L5
+    layer_clear();        // L0 Clear / sky
+    layer_background();   // L1 Act background
+    layer_ambient();      // L2 Ambient effects
+    layer_event();        // L3 Major event overlay (Storm / Worm / Flight object)
+    layer_time();         // L4 Time (HH:MM)
+    layer_text();         // L5 Text overlay (phrases)
 
     //display_swap();           // push framebuffer
 
-	// if (act.getId() != _act.getId()) {
-	// 	ESP_LOGD(TAG, "Act changed from %d to %d", _act.getId(), act.getId());
-	// 	_act = act;
-    //     drawBackgroundImage(_act.getBackground());  // moved to layer_background()
+	// if (act.getId() != _activeAct.getId()) {
+	// 	ESP_LOGD(TAG, "Act changed from %d to %d", _activeAct.getId(), act.getId());
+	// 	_activeAct = act;
+    //     drawBackgroundImage(_activeAct.getBackground());  // moved to layer_background()
 	// }
 
 	// Draw time (HH:MM) using 5x7 font, scaled ×2, at (x=10, y=34)
-	//drawTime(hour, minute, _act.getFontColor()); // mooved to layer_time()
-
+	//drawTime(hour, minute, _activeAct.getFontColor()); // mooved to layer_time()
     // Update phrase every 10 seconds
-    if (now - _lastPhraseUpdate > 10000) {
-        _lastPhraseUpdate = now;
-	    const char* phrase = _act.getNewPhrase();
+    //if (now - _lastPhraseUpdate > 10000) {
+        //_lastPhraseUpdate = now;
+	    //const char* phrase = _activeAct.getNewPhrase();
 	    //printPhrase(phrase); // moved to layer_text()
     }
 }
 
 
-void Clockface::layer_clear(const RenderContext* ctx) {
+void Clockface::layer_clear() {
+    // no act involved ??? but shoudn't the sky color depend on the act?
   // Fill framebuffer
   // Use night color if act == I or VI
-  //display_fill(COLOR_SKY);
-  //framebuffer_fill(_acts[ctx->act_index].getBaseColor());
+  //framebufferFill(COLOR_SKY_DARK); // or act-based color
 }
 
-void Clockface::layer_background(const RenderContext* ctx) {
-  const uint16_t* bg = _acts[ctx->act_index].getBackground();
+void Clockface::layer_background() {
+  const uint16_t* bg = _activeAct.getBackground();
+	if (!bg) {
+		ESP_LOGE(TAG, "layer_background() failed: bg is nullptr");
+		return;
+	} 
    _display->drawRGBBitmap(0, 0, bg, 64, 64);
 }
 
-void Clockface::layer_ambient(const RenderContext* ctx) {
-  //_acts[ctx->act_index];
-  switch (ctx->act_index) {
-    // case ACT_I: ambient_heat(ctx); break;
-    // case ACT_II: ambient_spice(ctx); break;
-    // case ACT_III: ambient_shadow(ctx); break;
-    // case ACT_IV: ambient_tremor(ctx); break;
-    // case ACT_V: ambient_wind(ctx); break;
-    // case ACT_VI: ambient_dust(ctx); break;
+void Clockface::layer_ambient() {
+  switch (_activeAct.getId()) {
+    case ACT_I: ambient_heat(); break;
+    case ACT_II: ambient_spice(); break;
+    case ACT_III: ambient_shadow(); break;
+    case ACT_IV: ambient_tremor(); break;
+    case ACT_V: ambient_wind(); break;
+    case ACT_VI: ambient_dust(); break;
   }
 }
 
-void Clockface::layer_event(const RenderContext* ctx) {
-  if (!ctx->event_active) return;
-/*
-  switch (event.type) {
-    case EVENT_STORM:
-      draw_storm(ctx);
-      break;
+void Clockface::layer_event() {
+    if (!_event.active) return;
 
-    case EVENT_WORM:
-      draw_worm(ctx);
-      break;
-
-    case EVENT_FLIGHT:
-      draw_flight(ctx);
-      break;
-  }
-*/      
+    if (_event.type == EVENT_STORM) {
+        drawStorm();
+    } else if (_event.type == EVENT_WORM) {
+        drawWorm();
+    } else if (_event.type == EVENT_FLIGHT) {
+        drawFlight();
+    }
 }
 
-void Clockface::layer_time(const RenderContext* ctx) {
-  bool high_contrast = ctx->event_active || ctx->act_index == 5; // Storm of Fate
+void Clockface::layer_time() {
+  bool highContrast = (_event.active && _event.type == EVENT_STORM); // event overrides color, not act
 
-  drawtime(
-    ctx->hour,
-    ctx->minute,
-    //ctx->colon_on,
-    _acts[ctx->act_index].getFontColor()
+  drawTime(
+    _dateTime->getHour(),
+    _dateTime->getMinute(),
+    highContrast ? HIGH_CONTRAST_WHITE : _activeAct.getFontColor()
   );
 }
 
-void Clockface::layer_text(const RenderContext* ctx) {
-  if (!ctx->text_active) return;
+void Clockface::layer_text() {
+    if (_event.active) return;   // events silence text
 
-  draw_phrase_with_wipe(ctx->now_ms);
+    const char* phrase = _activeAct.getNewPhrase();
+    if (phrase) {
+        drawPhraseWithSandWipe(phrase, _activeAct.getFontColor());
+    }
 }
 
 
+void Clockface::ambient_heat() {
+    // Placeholder for heat ambient effect
+}
+void Clockface::ambient_spice() {
+    // Placeholder for spice ambient effect
+}
+void Clockface::ambient_shadow() {
+    // Placeholder for shadow ambient effect
+}
+void Clockface::ambient_tremor() {
+    // Placeholder for tremor ambient effect
+}
+void Clockface::ambient_wind() {
+    // Placeholder for wind ambient effect
+}
+void Clockface::ambient_dust() {
+    // Placeholder for dust ambient effect
+}
 
-void Clockface::printPhrase(const char* phrase) {
+void Clockface::drawStorm() {
+    // Placeholder for storm drawing
+}
+void Clockface::drawWorm() {
+    // Placeholder for worm drawing
+}
+void Clockface::drawFlight() {
+    // Placeholder for flight drawing
+}
+
+void Clockface::drawPhraseWithSandWipe(const char* phrase, uint16_t color) {
     if (!phrase) {
 		return;
 	}
 
 	// Display phrase at top (y=2), centered
 	_display->setTextSize(1); // Default size
-	_display->setTextColor(0xFFFF); // White for visibility
+	_display->setTextColor(color); // Use passed color
 	int16_t x1, y1;
 	uint16_t w, h;
 	_display->getTextBounds(phrase, 0, 0, &x1, &y1, &w, &h);
