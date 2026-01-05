@@ -168,7 +168,7 @@ void Clockface::layer_text() {
     if (eventSilencesText()) return;
     //if (_nowMs - _lastMinuteChangeMs < 2000) return;
 
-    uint32_t elapsed = _nowMs - _textPhaseStartMs;
+    uint32_t elapsed = _now - _textPhaseStartMs;
     uint16_t baseColor = _activeAct.getFontColor();
 
     switch (_textPhase) {
@@ -177,16 +177,16 @@ void Clockface::layer_text() {
             const char* phrase = _activeAct.getNewPhrase();
             if (!phrase) return;
 
-            if (_currentPhrase && strcmp(phrase, _currentPhrase) == 0) return;
+           //if (_currentPhrase && strcmp(phrase, _currentPhrase) == 0) return;
 
             _currentPhrase = phrase;
             _textPhase = TEXT_FADE_IN;
-            _textPhaseStartMs = _nowMs;
+            _textPhaseStartMs = _now;
             break;
         }
 
         case TEXT_FADE_IN: {
-            uint8_t alpha = min(255, (elapsed * 255) / TEXT_FADE_IN_MS);
+            uint8_t alpha = MIN(255, (elapsed * 255) / TEXT_FADE_IN_MS);
             drawPhraseWithSandWipe(
                 _currentPhrase,
                 fadeColor(baseColor, alpha)
@@ -194,7 +194,7 @@ void Clockface::layer_text() {
 
             if (elapsed >= TEXT_FADE_IN_MS) {
                 _textPhase = TEXT_HOLD;
-                _textPhaseStartMs = _nowMs;
+                _textPhaseStartMs = _now;
             }
             break;
         }
@@ -204,12 +204,12 @@ void Clockface::layer_text() {
 
             if (elapsed >= TEXT_HOLD_MS) {
                 _textPhase = TEXT_FADE_OUT;
-                _textPhaseStartMs = _nowMs;
+                _textPhaseStartMs = _now;
             }
             break;
 
         case TEXT_FADE_OUT: {
-            uint8_t alpha = 255 - min(255, (elapsed * 255) / TEXT_FADE_OUT_MS);
+            uint8_t alpha = 255 - MIN(255, (elapsed * 255) / TEXT_FADE_OUT_MS);
             drawPhraseWithSandWipe(
                 _currentPhrase,
                 fadeColor(baseColor, alpha)
@@ -217,7 +217,7 @@ void Clockface::layer_text() {
 
             if (elapsed >= TEXT_FADE_OUT_MS) {
                 _textPhase = TEXT_QUIET;
-                _textPhaseStartMs = _nowMs;
+                _textPhaseStartMs = _now;
             }
             break;
         }
@@ -225,7 +225,7 @@ void Clockface::layer_text() {
         case TEXT_QUIET:
             if (elapsed >= TEXT_QUIET_MS) {
                 _textPhase = TEXT_IDLE;
-                _textPhaseStartMs = _nowMs;
+                _textPhaseStartMs = _now;
             }
             break;
     }
