@@ -42,13 +42,16 @@ Act Clockface::getCurrentAct(uint8_t hour) {
 void Clockface::setup(CWDateTime *dateTime) {
 	_dateTime = dateTime;
 
-  // Create objects here instead of in constructor to avoid initialization order issues
-  _eventBus = new EventBus();
-  // Provide EventBus after creation
-  Locator::provide(_eventBus);
+    // Create objects here instead of in constructor to avoid initialization order issues
+    _eventBus = new EventBus();
+    // Provide EventBus after creation
+    Locator::provide(_eventBus);
 
-  initializeActs();
-  _activeAct = Act();  // Default empty act
+    initializeActs();
+    _activeAct = Act();  // Default empty act
+
+    _event.active = false;
+    _event.type = EVENT_NONE;
 }
 
 void Clockface::initializeActs() {
@@ -160,7 +163,11 @@ void Clockface::layer_time() {
 }
 
 void Clockface::layer_text() {
-    if (_event.active) return;   // events silence text
+    // events silence text
+    if (_event.active) {
+        ESP_LOGD(TAG, "layer_text() aborted due to active event");
+        return;
+    }    
 
     const char* phrase = _activeAct.getNewPhrase();
     if (phrase) {
@@ -306,8 +313,6 @@ void Clockface::drawPhraseWithSandWipe(const char* phrase, uint16_t color) {
 }
 
 void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
-    ESP_LOGD(TAG, "drawTime() updating time %02d:%02d", hour, minute);
-
     fbGfx.setTextSize(1);
     fbGfx.setTextColor(_activeAct.getFontColor());
 
