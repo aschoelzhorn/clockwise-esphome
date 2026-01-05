@@ -156,9 +156,6 @@ class Clockface : public IClockface {
     void drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t* bg);
 
     bool eventSilencesText() const;
-}
-
-
 
 public:
     Clockface(Adafruit_GFX* display);
