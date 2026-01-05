@@ -188,9 +188,10 @@ void Clockface::layer_text() {
 
         case TEXT_FADE_IN: {
             uint8_t alpha = MIN(255, (elapsed * 255) / TEXT_FADE_IN_MS);
-            drawPhraseWithSandWipe(
+            drawPhraseBlended(
                 _currentPhrase,
-                fadeColor(baseColor, alpha)
+                baseColor, 
+                alpha
             );
 
             if (elapsed >= TEXT_FADE_IN_MS) {
@@ -201,7 +202,7 @@ void Clockface::layer_text() {
         }
 
         case TEXT_HOLD:
-            drawPhraseWithSandWipe(_currentPhrase, baseColor);
+            drawPhraseBlended(_currentPhrase, baseColor, 255);
 
             if (elapsed >= TEXT_HOLD_MS) {
                 _textPhase = TEXT_FADE_OUT;
@@ -211,9 +212,10 @@ void Clockface::layer_text() {
 
         case TEXT_FADE_OUT: {
             uint8_t alpha = 255 - MIN(255, (elapsed * 255) / TEXT_FADE_OUT_MS);
-            drawPhraseWithSandWipe(
+            drawPhraseBlended(
                 _currentPhrase,
-                fadeColor(baseColor, alpha)
+                baseColor,
+                 alpha
             );
 
             if (elapsed >= TEXT_FADE_OUT_MS) {
@@ -387,6 +389,43 @@ void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t*
     }
 }
 
+void Clockface::drawPhraseBlended(const char* phrase, uint16_t color, uint8_t alpha) {
+    if (!phrase) {
+        return;
+    }
+
+    if (alpha < 16) alpha = 16;
+
+    // Display phrase at top (y=2), centered
+    fbGfx.setTextSize(1); // Default size
+    fbGfx.setTextColor(color); // Use passed color
+    int16_t x1, y1;
+    uint16_t w, h;
+    fbGfx.getTextBounds(phrase, 0, 0, &x1, &y1, &w, &h);
+    int x = (64 - w) / 2;
+    fbGfx.setCursor(x, 2);
+
+    // Draw each character with blending
+    for (size_t i = 0; i < strlen(phrase); i++) {
+        char c = phrase[i];
+        int16_t cx = fbGfx.getCursorX();
+        int16_t cy = fbGfx.getCursorY();
+
+        // Draw character to temporary buffer
+        fbGfx.print(c);
+        int16_t nx = fbGfx.getCursorX();
+
+        // Blend character pixels
+        for (int16_t px = cx; px < nx; px++) {
+            for (int16_t py = cy; py < cy + 8; py++) { // assuming 8 pixel height
+                uint16_t fg = fbGfx.getPixel(px, py);
+                uint16_t bg = Clockface::framebuffer[py * 64 + px];
+                uint16_t blended = blend565(bg, fg, alpha);
+                Clockface::framebuffer[py * 64 + px] = blended;
+            }
+        }
+    }
+}
 
 void Clockface::drawPhraseWithSandWipe(const char* phrase, uint16_t color) {
     if (!phrase) {
@@ -463,5 +502,27 @@ uint16_t Clockface::fadeColor(uint16_t color, uint8_t alpha) {
 
     return (r << 11) | (g << 5) | b;
 }
+
+uint16_t Clockface::blend565(uint16_t bg, uint16_t fg, uint8_t alpha) {
+
+    if (alpha < 16) alpha = 16;
+
+    // alpha: 0 = bg, 255 = fg
+    uint8_t br = (bg >> 11) & 0x1F;
+    uint8_t bgc = (bg >> 5) & 0x3F;
+    uint8_t bb = bg & 0x1F;
+
+    uint8_t fr = (fg >> 11) & 0x1F;
+    uint8_t fg_c = (fg >> 5) & 0x3F;
+    uint8_t fb = fg & 0x1F;
+
+    uint8_t r = (br * (255 - alpha) + fr * alpha) / 255;
+    uint8_t g = (bgc * (255 - alpha) + fg_c * alpha) / 255;
+    uint8_t b = (bb * (255 - alpha) + fb * alpha) / 255;
+
+    return (r << 11) | (g << 5) | b;
+}
+
+
 
 }  // namespace dune
