@@ -149,8 +149,8 @@ int computeTextStartX(const char* phrase);
 
     void flushFramebuffer();
 
-    void drawTestLetter(char c, int x, int y, uint16_t color);
-    void drawTestLetterScaled(char c, int x, int y, uint16_t color);
+    void drawTestLetter(char c, int x, int y, uint16_t color, uint8_t alpha);
+    void drawTestLetterScaled(char c, int x, int y, uint16_t color, uint8_t alpha);
 
     void layer_clear();
     void layer_background();
