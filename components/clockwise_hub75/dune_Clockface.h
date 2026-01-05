@@ -89,7 +89,9 @@ class Clockface : public IClockface {
     uint32_t _tremorLastUpdate = 0;
     static const uint8_t TREMOR_UPDATE_MS = 100; // 10 fps for ripples
 
-
+    // time state
+    uint32_t _lastHour = 0;
+    uint32_t _lastMinute = 0;
 
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
