@@ -418,7 +418,7 @@ void Clockface::drawPhraseBlended(const char* phrase, uint16_t color, uint8_t al
         // Blend character pixels
         for (int16_t px = cx; px < nx; px++) {
             for (int16_t py = cy; py < cy + 8; py++) { // assuming 8 pixel height
-                uint16_t fg = fbGfx.getPixel(px, py);
+                uint16_t fg = fbGet(px, py);
                 uint16_t bg = Clockface::framebuffer[py * 64 + px];
                 uint16_t blended = blend565(bg, fg, alpha);
                 Clockface::framebuffer[py * 64 + px] = blended;
