@@ -85,7 +85,7 @@ void Clockface::update() {
         //_lastPhraseUpdate = now;
 	    //const char* phrase = _activeAct.getNewPhrase();
 	    //printPhrase(phrase); // moved to layer_text()
-    }
+    //}
 }
 
 
