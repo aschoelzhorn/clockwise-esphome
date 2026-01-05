@@ -1,9 +1,23 @@
 // Minimal implementation - all functionality moved to header for guaranteed linking
 #include "dune_Clockface.h"
+#include <Adafruit_GFX.h>
 
 static const char *const TAG = "dune_Clockface";
 
 namespace dune {
+
+class FB_GFX : public Adafruit_GFX {
+public:
+    FB_GFX() : Adafruit_GFX(64, 64) {}
+
+    void drawPixel(int16_t x, int16_t y, uint16_t color) override {
+        if (x < 0 || y < 0 || x >= 64 || y >= 64) return;
+        Clockface::framebuffer[y * 64 + x] = color;
+    }
+};
+
+static FB_GFX fbGfx;
+
 
 Clockface::Clockface(Adafruit_GFX* display) {
   _display = display;
@@ -47,6 +61,11 @@ void Clockface::initializeActs() {
     ESP_LOGD(TAG, "initializeActs() done");
 }
 
+void Clockface::flushFramebuffer() {
+    _display->drawRGBBitmap(0, 0, framebuffer, 64, 64);
+}
+
+
 void Clockface::update() {
 	if (!_dateTime) {
 		ESP_LOGE(TAG, "update() failed: _dateTime is nullptr");
@@ -57,11 +76,11 @@ void Clockface::update() {
 		return;
 	}
 	
-    uint32_t now = millis();
+    _now = millis();
 	_activeAct = getCurrentAct(_dateTime->getHour());
     _activeAct = _acts[0]; // FOR TESTING ONLY - FORCE ACT I
     
-    bool text_is_active = (now - _lastPhraseUpdate) < TEXT_DISPLAY_MS;
+    bool text_is_active = (_now - _lastPhraseUpdate) < TEXT_DISPLAY_MS;
     bool event_is_active = false; // Placeholder for event logic
 
     layer_clear();        // L0 Clear / sky
@@ -71,7 +90,7 @@ void Clockface::update() {
     layer_time();         // L4 Time (HH:MM)
     layer_text();         // L5 Text overlay (phrases)
 
-    //display_swap();           // push framebuffer
+    flushFramebuffer();
 
 	// if (act.getId() != _activeAct.getId()) {
 	// 	ESP_LOGD(TAG, "Act changed from %d to %d", _activeAct.getId(), act.getId());
@@ -91,8 +110,7 @@ void Clockface::update() {
 
 
 void Clockface::layer_clear() {
-    // not needed with direct drawing
-    //_display->fillScreen(COLOR_SKY_DARK);
+    fbClear(COLOR_SKY_DARK);
 }
 
 void Clockface::layer_background() {
@@ -101,7 +119,9 @@ void Clockface::layer_background() {
 		ESP_LOGE(TAG, "layer_background() failed: bg is nullptr");
 		return;
 	} 
-   _display->drawRGBBitmap(0, 0, bg, 64, 64);
+
+    memcpy(framebuffer, bg, 64 * 64 * sizeof(uint16_t));
+   //_display->drawRGBBitmap(0, 0, bg, 64, 64);
 }
 
 void Clockface::layer_ambient() {
@@ -154,9 +174,8 @@ void Clockface::ambient_spice() {
     // Placeholder for spice ambient effect
 }
 void Clockface::ambient_shadow() {
-    uint32_t now = millis();
-    if (now - _shadowLastUpdate < 80) return;
-    _shadowLastUpdate = now;
+    if (_now - _shadowLastUpdate < 80) return;
+    _shadowLastUpdate = _now;
 
     _shadowX += _shadowDx;
 
@@ -165,22 +184,21 @@ void Clockface::ambient_shadow() {
         _shadowY = 8 + (_shadowX % 16);
     }
 
-    ESP_LOGD(TAG, "shadowX=%d now=%lu", _shadowX, now);
+    ESP_LOGD(TAG, "shadowX=%d now=%lu", _shadowX, _now);
 
     drawShadowBand(_shadowX, _shadowY);
 }
 void Clockface::ambient_tremor() {
-    uint32_t now = millis();
-    if (now - _tremorLastUpdate < TREMOR_UPDATE_MS) return;
-    _tremorLastUpdate = now;
+    if (_now - _tremorLastUpdate < TREMOR_UPDATE_MS) return;
+    _tremorLastUpdate = _now;
 
     const uint16_t* bg = _activeAct.getBackground();
 
     // Draw 8–12 small ripples per frame
     for (uint8_t i = 0; i < 10; i++) {
         // Random-ish positions using now for deterministic pseudo-random
-        uint8_t y = 32 + ((i * 7 + now / 150) % 20); // avoid top-center (0–31)
-        uint8_t x = (i * 5 + (now / 100)) % 48;      // ripple within safe width
+        uint8_t y = 32 + ((i * 7 + _now / 150) % 20); // avoid top-center (0–31)
+        uint8_t x = (i * 5 + (_now / 100)) % 48;      // ripple within safe width
 
         drawTremorRipple(x, y, bg);
     }
@@ -285,87 +303,46 @@ void Clockface::drawPhraseWithSandWipe(const char* phrase, uint16_t color) {
 	_display->print(phrase);
 }
 
-void Clockface::drawDigit(uint8_t digit, int x, int y, uint16_t color) {
-	//extern const uint8_t font5x7_digits[][5];
-	if (!_display) {
-		ESP_LOGE(TAG, "drawDigit() failed: _display is nullptr");
-		return;
-	}
-	if (digit > 9) {
-		ESP_LOGE(TAG, "drawDigit() failed: digit out of range: %d", digit);
-		return;
-	}
-	for (int col = 0; col < 5; ++col) {
-		uint8_t bits = dune_font5x7_digits[digit][col];
-		for (int row = 0; row < 7; ++row) {
-			if (bits & (1 << row)) {
-				// Draw 2x2 block for scaling
-				_display->fillRect(x + col*2, y + row*2, 2, 2, color);
-			}
-		}
-	}
-}
-
-// Helper: Draw colon
-void Clockface::drawColon(int x, int y, bool blink, uint16_t color) {
-	if (!_display) {
-		ESP_LOGE(TAG, "drawColon() failed: _display is nullptr");
-		return;
-	}
-	// Colon is 4x14 px, two dots
-	if (blink) {
-		// Draw upper dot
-		_display->fillRect(x, y+4, 4, 4, color);
-		// Draw lower dot
-		_display->fillRect(x, y+10, 4, 4, color);
-	}
-}
-
 void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
-	if (!_display) {
-		ESP_LOGE(TAG, "drawTime() failed: _display is nullptr");
-		return;
-	}
-
-    bool redraw = true;
-    if (hour == _lastHour && minute == _lastMinute) {
-        // No change, avoids flicker
-        redraw = false;
-    }
-
     ESP_LOGD(TAG, "drawTime() updating time %02d:%02d", hour, minute);
-    _lastHour = hour;
-    _lastMinute = minute;
+
+    fbGfx.setTextSize(1);
+    fbGfx.setTextColor(_act.getFontColor());
 
 	// Placement
 	int x = 10; // x_start
 	int y = 34; // y_start
 
-	// Format HH:MM
-	uint8_t digits[4] = {
-		static_cast<uint8_t>(hour / 10),
-		static_cast<uint8_t>(hour % 10),
-		static_cast<uint8_t>(minute / 10),
-		static_cast<uint8_t>(minute % 10)
-	};
+    fbGfx.setCursor(x, y);
 
-    if (redraw ) {
-        // Draw digits
-	    for (int i = 0; i < 2; ++i) {
-		    drawDigit(digits[i], x + i*10, y, color);
-	    }
-	    // Last two digits
-	    for (int i = 2; i < 4; ++i) {
-		    drawDigit(digits[i], x + 24 + (i-2)*10, y, color);
-	    }
-    }
-	// Colon
-	bool blink = (millis() / 1000) % 2 == 0;
-	drawColon(x + 20, y, blink, color);
+    char buf[6];
+    bool showColon = (_now / 1000) % 2; // blink every second
+
+    snprintf(buf, sizeof(buf),
+             showColon ? "%02d:%02d" : "%02d %02d",
+             _hour, _minute);
+
+    fbGfx.print(buf);
 }
 
 void Clockface::externalEvent(int type) {
 	// TODO: Handle external events (storm, worm, etc.)
 }
+
+
+inline void Clockface::fbClear(uint16_t color) {
+    for (uint16_t i = 0; i < 64 * 64; i++) {
+        _framebuffer[i] = color;
+    }
+}
+
+inline uint16_t Clockface::fbGet(uint8_t x, uint8_t y) {
+    return _framebuffer[y * 64 + x];
+}
+
+inline void Clockface::fbSet(uint8_t x, uint8_t y, uint16_t color) {
+    _framebuffer[y * 64 + x] = color;
+}
+
 
 }  // namespace dune
