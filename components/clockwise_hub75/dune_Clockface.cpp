@@ -199,8 +199,8 @@ void Clockface::layer_text() {
         case TEXT_HOLD:
             drawPhraseBlended(_text.phrase, _activeAct.getFontColor(), 255);
 
-            if (now - _text.phaseStart >= HOLD_TIME) {
-                _text.phase = TP_FADE_OUT;
+            if (now - _text.phaseStart >= TEXT_HOLD_MS) {
+                _text.phase = TEXT_FADE_OUT;
                 _text.phaseStart = now;
             }
             break;
@@ -222,8 +222,8 @@ void Clockface::layer_text() {
         }
 
         case TEXT_QUIET:
-            if (now - _text.phaseStart >= QUIET_TIME) {
-                _text.phase = TP_IDLE;
+            if (now - _text.phaseStart >= QUIET_TIME_MS) {
+                _text.phase = TEXT_IDLE;
             }
             break;
     }
