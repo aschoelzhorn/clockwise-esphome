@@ -86,7 +86,7 @@ void Clockface::update() {
 	_activeAct = getCurrentAct(_dateTime->getHour());
     _activeAct = _acts[0]; // FOR TESTING ONLY - FORCE ACT I
     
-    bool text_is_active = (_now - _lastPhraseUpdate) < TEXT_DISPLAY_MS;
+    // bool text_is_active = (_now - _lastPhraseUpdate) < TEXT_DISPLAY_MS;
     bool event_is_active = false; // Placeholder for event logic
 
     layer_clear();        // L0 Clear / sky
@@ -97,21 +97,6 @@ void Clockface::update() {
     layer_text();         // L5 Text overlay (phrases)
 
     flushFramebuffer();
-
-	// if (act.getId() != _activeAct.getId()) {
-	// 	ESP_LOGD(TAG, "Act changed from %d to %d", _activeAct.getId(), act.getId());
-	// 	_activeAct = act;
-    //     drawBackgroundImage(_activeAct.getBackground());  // moved to layer_background()
-	// }
-
-	// Draw time (HH:MM) using 5x7 font, scaled ×2, at (x=10, y=34)
-	//drawTime(hour, minute, _activeAct.getFontColor()); // mooved to layer_time()
-    // Update phrase every 10 seconds
-    //if (now - _lastPhraseUpdate > 10000) {
-        //_lastPhraseUpdate = now;
-	    //const char* phrase = _activeAct.getNewPhrase();
-	    //printPhrase(phrase); // moved to layer_text()
-    //}
 }
 
 const unsigned short COOL_BLACK = 0x18C3; // Dark, cool black for clearing
@@ -205,7 +190,7 @@ void Clockface::layer_text() {
             }
             break;
 
-        case TEXT_FADE_OUT: {
+        case TEXT_FADE_OUT:
             uint32_t elapsed = _now - _text.phaseStart;
             uint8_t alpha = 255 - MIN(255, (elapsed * 255) / TEXT_FADE_OUT_MS);
             drawPhraseBlended(
@@ -219,7 +204,6 @@ void Clockface::layer_text() {
                 _textPhaseStartMs = _now;
             }
             break;
-        }
 
         case TEXT_QUIET:
             if (_now - _text.phaseStart >= TEXT_QUIET_MS) {
