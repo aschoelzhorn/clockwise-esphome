@@ -2,6 +2,7 @@
 #include "dune_Clockface.h"
 #include <Adafruit_GFX.h>
 #include "Macros.h"
+#include "dune_font.h"
 
 static const char *const TAG = "dune_Clockface";
 
