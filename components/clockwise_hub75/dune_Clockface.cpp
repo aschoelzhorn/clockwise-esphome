@@ -98,10 +98,8 @@ void Clockface::update() {
     flushFramebuffer();
 }
 
-const unsigned short COOL_BLACK = 0x18C3; // Dark, cool black for clearing
-
 void Clockface::layer_clear() {
-    fbClear(COOL_BLACK);
+    fbClear(COLOR_COOL_BLACK);
 }
 
 void Clockface::layer_background() {
@@ -151,7 +149,7 @@ void Clockface::layer_text() {
     //if (_now - _lastMinuteChange < MINUTE_GUARD) return;
 
     uint32_t elapsed = _now - _text.phaseStart;
-    uint8_t alpha = MIN(255, (elapsed * 255) / TEXT_FADE_IN_MS);
+    uint8_t alpha = MIN(255, (elapsed * 255) / TEXT_FADE_MS);
 
     switch (_text.phase) {
 
@@ -169,7 +167,7 @@ void Clockface::layer_text() {
                 alpha
             );
 
-            if (elapsed >= TEXT_FADE_IN_MS) {
+            if (elapsed >= TEXT_FADE_MS) {
                 _text.phase = TEXT_HOLD;
                 _text.phaseStart = _now;
             }
@@ -191,7 +189,7 @@ void Clockface::layer_text() {
                  alpha
             );
 
-            if (elapsed >= TEXT_FADE_OUT_MS) {
+            if (elapsed >= TEXT_FADE_MS) {
                 _text.phase = TEXT_QUIET;
                 _text.phaseStart = _now;
             }
@@ -204,42 +202,6 @@ void Clockface::layer_text() {
             break;
     }
 }
-
-// void Clockface::layer_text() {
-//     // Rule 1: never show text during silencing events
-//     if (eventSilencesText()) return;
-
-//     // Rule 2: never show text within 2s of minute change
-//     //if (_now - _lastMinuteChange < 2000) return;
-
-//     uint32_t elapsed = _now - _textPhaseStartMs;
-//     uint16_t baseColor = _activeAct.getFontColor();
-
-//     // Rule 3: if text is active, keep showing it
-//     if (_textActive) {
-//         drawPhraseWithSandWipe(_currentPhrase, _activeAct.getFontColor());
-
-//         // End text after duration
-//         if (_now - _textStartTime > TEXT_DURATION_MS) {
-//             _textActive = false;
-//         }
-//         return;
-//     }
-
-//     // Rule 4: only request a new phrase when idle
-//     const char* phrase = _activeAct.getNewPhrase();
-//     if (!phrase) return;
-
-//     // Rule 5: never repeat same phrase twice -> this is already handled in Act::getNewPhrase()
-
-//     // Activate new phrase
-//     _currentPhrase = phrase;
-//     _textStartTime = _now;
-//     _textActive = true;
-
-//     drawPhraseWithSandWipe(_currentPhrase, _activeAct.getFontColor());
-// }
-
 
 void Clockface::ambient_heat() {
     // Placeholder for heat ambient effect
@@ -360,51 +322,6 @@ void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t*
     }
 }
 
-// void Clockface::drawTestLetter(char c, int x, int y, uint16_t color, uint8_t alpha) {
-//     int index = 0;
-//     if (c >= 'A' && c <= 'J') index = (c - 'A') + 1;
-
-//     const uint8_t* glyph = dune_font5x7_letters[index];
-
-//     for (int col = 0; col < 5; col++) {
-//         uint8_t bits = pgm_read_byte(&glyph[col]);
-//         for (int row = 0; row < 7; row++) {
-//             if (bits & (1 << row)) {
-//                 int px = x + col;
-//                 int py = y + row;
-//                 if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
-//                 uint16_t bg = fbGet(px, py);
-//                 uint16_t blended = blend565(bg, color, alpha);
-//                 fbSet(px, py, blended);
-//             }
-//         }
-//     }
-// }
-
-// void Clockface::drawTestLetterScaled(char c, int x, int y, uint16_t color, uint8_t alpha) {
-//     int index = (c >= 'A' && c <= 'J') ? (c - 'A') + 1 : 0;
-//     const uint8_t* glyph = dune_font5x7_letters[index];
-//     const int scale = 2;
-
-//     for (int col = 0; col < 5; col++) {
-//         uint8_t bits = pgm_read_byte(&glyph[col]);
-//         for (int row = 0; row < 7; row++) {
-//             if (!(bits & (1 << row))) continue;
-
-//             for (int dx = 0; dx < scale; dx++) {
-//                 for (int dy = 0; dy < scale; dy++) {
-//                     int px = x + col * scale + dx;
-//                     int py = y + row * scale + dy;
-//                     if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
-//                     uint16_t bg = fbGet(px, py);
-//                     uint16_t blended = blend565(bg, color, alpha);
-//                     fbSet(px, py, blended);
-//                 }
-//             }
-//         }
-//     }
-// }
-
 
 void Clockface::drawCharBlended(char c, int x, int y, uint16_t color, uint8_t alpha) {
   uint8_t index = duneFontIndex(c);
@@ -492,15 +409,6 @@ bool Clockface::eventSilencesText() const {
     }
 }
 
-// uint16_t Clockface::fadeColor(uint16_t color, uint8_t alpha) {
-//     // alpha: 0–255
-//     uint8_t r = ((color >> 11) & 0x1F) * alpha / 255;
-//     uint8_t g = ((color >> 5)  & 0x3F) * alpha / 255;
-//     uint8_t b = ( color        & 0x1F) * alpha / 255;
-
-//     return (r << 11) | (g << 5) | b;
-// }
-
 uint16_t Clockface::blend565(uint16_t bg, uint16_t fg, uint8_t alpha) {
 
     if (alpha < 16) alpha = 16;
@@ -519,10 +427,6 @@ uint16_t Clockface::blend565(uint16_t bg, uint16_t fg, uint8_t alpha) {
     uint8_t b = (bb * (255 - alpha) + fb * alpha) / 255;
 
     return (r << 11) | (g << 5) | b;
-}
-
-int Clockface::computeTextStartX(const char* phrase) {
-    return (64 - textWidth(phrase)) / 2;
 }
 
 int Clockface::textWidth(const char* s) {
