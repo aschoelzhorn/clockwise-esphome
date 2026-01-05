@@ -65,6 +65,7 @@ void Clockface::update() {
 
     layer_clear();        // L0 Clear / sky
     layer_background();   // L1 Act background
+    return;
     layer_ambient();      // L2 Ambient effects
     layer_event();        // L3 Major event overlay (Storm / Worm / Flight object)
     layer_time();         // L4 Time (HH:MM)
