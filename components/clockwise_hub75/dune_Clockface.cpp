@@ -396,7 +396,7 @@ void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_
     if (!phrase) return;
 
     int x = computeTextStartX(phrase);
-    int y = TEXT_Y;
+    //int y = TEXT_Y;
     int x = 2; // TEMPORARY FIX FOR TESTING
 
     for (size_t i = 0; i < strlen(phrase); i++) {
