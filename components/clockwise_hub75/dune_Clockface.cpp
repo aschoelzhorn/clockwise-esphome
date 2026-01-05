@@ -165,64 +165,52 @@ void Clockface::layer_time() {
 }
 
 void Clockface::layer_text() {
-
-    //drawPhraseBlended("HELLO", 0xFFFF, 255);
-    uint8_t alpha = MIN(255, (elapsed * 255) / TEXT_FADE_IN_MS);
-    drawTestLetter('H', 10, 10, 0xFFFF, alpha);
-    drawTestLetterScaled('H', 10, 40, 0xFFFF, alpha);
-
-    return;
-    
     // Global silencing rules
     if (eventSilencesText()) return;
-    //if (_nowMs - _lastMinuteChangeMs < 2000) return;
+    //if (_now - _lastMinuteChange < MINUTE_GUARD) return;
 
-    uint32_t elapsed = _now - _textPhaseStartMs;
-    uint16_t baseColor = _activeAct.getFontColor();
+    // uint32_t elapsed = _now - _textPhaseStartMs;
+    // uint16_t baseColor = _activeAct.getFontColor();
 
-    switch (_textPhase) {
+    switch (_text.phase) {
 
-        case TEXT_IDLE: {
-            const char* phrase = _activeAct.getNewPhrase();
-            if (!phrase) return;
-
-           //if (_currentPhrase && strcmp(phrase, _currentPhrase) == 0) return;
-
-            _currentPhrase = phrase;
-            _textPhase = TEXT_FADE_IN;
-            _textPhaseStartMs = _now;
+        case TEXT_IDLE: 
+            _text.phrase = _activeAct.getNewPhrase();
+            if (!_text.phrase) return;
+            _text.phase = TEXT_FADE_IN;
+            _text.phaseStart = _now;
             break;
-        }
 
-        case TEXT_FADE_IN: {
+        case TEXT_FADE_IN: 
+            uint32_t elapsed = _now - _text.phaseStart;
             uint8_t alpha = MIN(255, (elapsed * 255) / TEXT_FADE_IN_MS);
             drawPhraseBlended(
-                _currentPhrase,
-                baseColor, 
+                _text.phrase,
+                _activeAct.getFontColor(), 
                 alpha
             );
 
             if (elapsed >= TEXT_FADE_IN_MS) {
-                _textPhase = TEXT_HOLD;
-                _textPhaseStartMs = _now;
+                _text.phase = TEXT_HOLD;
+                _text.phaseStart = _now;
             }
             break;
-        }
 
         case TEXT_HOLD:
-            drawPhraseBlended(_currentPhrase, baseColor, 255);
+            drawPhraseBlended(_text.phrase, _activeAct.getFontColor(), 255);
 
-            if (elapsed >= TEXT_HOLD_MS) {
-                _textPhase = TEXT_FADE_OUT;
-                _textPhaseStartMs = _now;
+            if (now - _text.phaseStart >= HOLD_TIME) {
+                _text.phase = TP_FADE_OUT;
+                _text.phaseStart = now;
             }
             break;
 
         case TEXT_FADE_OUT: {
+            uint32_t elapsed = _now - _text.phaseStart;
             uint8_t alpha = 255 - MIN(255, (elapsed * 255) / TEXT_FADE_OUT_MS);
             drawPhraseBlended(
-                _currentPhrase,
-                baseColor,
+                _text.phrase,
+                _activeAct.getFontColor(),
                  alpha
             );
 
@@ -234,9 +222,8 @@ void Clockface::layer_text() {
         }
 
         case TEXT_QUIET:
-            if (elapsed >= TEXT_QUIET_MS) {
-                _textPhase = TEXT_IDLE;
-                _textPhaseStartMs = _now;
+            if (now - _text.phaseStart >= QUIET_TIME) {
+                _text.phase = TP_IDLE;
             }
             break;
     }
@@ -443,50 +430,38 @@ void Clockface::drawTestLetterScaled(char c, int x, int y, uint16_t color, uint8
 }
 
 
+void Clockface::drawCharBlended(char c, int x, int y, uint16_t color, uint8_t alpha) {
+  uint8_t index = duneFontIndex(c);
+  const uint8_t* glyph = dune_font5x7[index];
+
+  for (int col = 0; col < FONT_W; col++) {
+    uint8_t bits = pgm_read_byte(&glyph[col]);
+
+    for (int row = 0; row < FONT_H; row++) {
+      if (bits & (1 << row)) {
+        int px = x + col;
+        int py = y + row;
+
+        uint16_t bg = fbGet(px, py);
+        uint16_t blended = blend565(bg, color, alpha);
+        fbSet(px, py, blended);
+      }
+    }
+  }
+}
+
+
 void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha) {
     if (!phrase) return;
 
-    //int x = computeTextStartX(phrase);
+    int w = textWidth(phrase);
+    int x = (64 - w) / 2;
     int y = TEXT_Y;
-    int x = 2; // TEMPORARY FIX FOR TESTING
-
-    const int scale = 2;  // same as digits
 
     for (size_t i = 0; i < strlen(phrase); i++) {
-        char c = phrase[i];
-        if (c < 32 || c > 126) {
-            x += (FONT_W + FONT_SPACING) * scale;
-            continue;
-        }
-
-        const uint8_t* glyph = font5x7[c - 32];
-
-        for (int col = 0; col < FONT_W; col++) {
-            uint8_t bits = pgm_read_byte(&glyph[col]);
-
-            for (int row = 0; row < FONT_H; row++) {
-                if (!(bits & (1 << row))) continue;
-
-                int px = x + col * scale;
-                int py = y + row * scale;
-
-                // Draw scaled block
-                for (int dx = 0; dx < scale; dx++) {
-                    for (int dy = 0; dy < scale; dy++) {
-                        int fx = px + dx;
-                        int fy = py + dy;
-                        if (fx < 0 || fy < 0 || fx >= 64 || fy >= 64) continue;
-
-                        uint16_t bg = fbGet(fx, fy);
-                        uint16_t blended = blend565(bg, textColor, alpha);
-                        fbSet(fx, fy, blended);
-                    }
-                }
-            }
-        }
-
-        x += (FONT_W + FONT_SPACING) * scale;
-    }
+        drawCharBlended(phrase[i], x, y, textColor, alpha);
+        x += FONT_W + CHAR_SPACING;
+  }
 }
 
 
@@ -571,9 +546,13 @@ uint16_t Clockface::blend565(uint16_t bg, uint16_t fg, uint8_t alpha) {
 }
 
 int Clockface::computeTextStartX(const char* phrase) {
-    int textWidth = strlen(phrase) * (FONT_W + FONT_SPACING);
-    return (64 - textWidth) / 2;
+    return (64 - textWidth(phrase)) / 2;
 }
+
+int Clockface::textWidth(const char* s) {
+  return strlen(s) * (FONT_W + CHAR_SPACING) - CHAR_SPACING;
+}
+
 
 
 }  // namespace dune

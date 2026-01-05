@@ -31,11 +31,6 @@ namespace dune {
 //   dune_baron_chamber_background64x64
 // };
 
-//  Global timing constants
-#define TEXT_MIN_INTERVAL_MS   600000  // 10 minutes
-#define TEXT_DISPLAY_MS        2200
-#define TEXT_FADE_MS            400
-
 #define WIPE_STEP_MS   30
 #define WIPE_COL_JITTER 1
 
@@ -45,8 +40,17 @@ class Clockface : public IClockface {
 static constexpr int TEXT_Y = 2;
 static constexpr int FONT_W = 5;
 static constexpr int FONT_H = 7;
-static constexpr int FONT_SPACING = 1;
+static constexpr int CHAR_SPACING = 1;
+int textWidth(const char* s);
+
+
 int computeTextStartX(const char* phrase);
+// #define TEXT_Y 2
+// #define FONT_W 5
+// #define FONT_H 7
+// #define CHAR_SPACING 1
+
+
 
     #define COLOR_SHADOW_DARK  0x4208  // dark brown/gray
     #define COLOR_SHADOW_SOFT  0x630C  // softer edge
@@ -59,15 +63,34 @@ int computeTextStartX(const char* phrase);
         TEXT_FADE_OUT,
         TEXT_QUIET
     };
-    TextPhase _textPhase = TEXT_IDLE;
-    uint32_t _textPhaseStartMs = 0;
-    const char* _currentPhrase = nullptr;
+
+    struct TextState {
+      TextPhase phase = TEXT_IDLE;
+      const char* phrase = nullptr;
+      uint32_t phaseStart = 0;
+    };
+
+    #define FADE_TIME   1200
+    #define HOLD_TIME   4000
+    #define QUIET_TIME  2000
+    #define MINUTE_GUARD 2000
+
+    //  Global timing constants
+    // #define TEXT_MIN_INTERVAL_MS   600000  // 10 minutes
+    // #define TEXT_DISPLAY_MS        2200
+    // #define TEXT_FADE_MS            400
+
+
+    // TextPhase _textPhase = TEXT_IDLE;
+    // uint32_t _textPhaseStartMs = 0;
+    // const char* _currentPhrase = nullptr;
 
     static constexpr uint32_t TEXT_FADE_IN_MS  = 500;
     static constexpr uint32_t TEXT_HOLD_MS     = 2000;
     static constexpr uint32_t TEXT_FADE_OUT_MS = 500;
     static constexpr uint32_t TEXT_QUIET_MS    = 1500;
 
+    TextState _text;
     // //  Global timing constants
     // #define TEXT_MIN_INTERVAL_MS   600000  // 10 minutes
     // #define TEXT_DISPLAY_MS        2200
