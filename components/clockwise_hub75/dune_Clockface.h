@@ -80,9 +80,12 @@ class Clockface : public IClockface {
 
     Event _event;
 
+    static uint16_t framebuffer[64 * 64];
+   
 
-    static uint16_t _framebuffer[64 * 64];
-
+    inline void fbClear(uint16_t color);
+    inline uint16_t fbGet(uint8_t x, uint8_t y);
+    inline void fbSet(uint8_t x, uint8_t y, uint16_t color);
 
 
     uint32_t _shadowLastUpdate = 0;

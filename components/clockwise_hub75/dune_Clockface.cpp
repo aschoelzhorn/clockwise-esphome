@@ -12,12 +12,13 @@ public:
 
     void drawPixel(int16_t x, int16_t y, uint16_t color) override {
         if (x < 0 || y < 0 || x >= 64 || y >= 64) return;
-        Clockface::_framebuffer[y * 64 + x] = color;
+        Clockface::framebuffer[y * 64 + x] = color;
     }
 };
 
 static FB_GFX fbGfx;
 
+uint16_t Clockface::framebuffer[64 * 64];
 
 Clockface::Clockface(Adafruit_GFX* display) {
   _display = display;
@@ -62,7 +63,7 @@ void Clockface::initializeActs() {
 }
 
 void Clockface::flushFramebuffer() {
-    _display->drawRGBBitmap(0, 0, _framebuffer, 64, 64);
+    _display->drawRGBBitmap(0, 0, framebuffer, 64, 64);
 }
 
 
@@ -120,7 +121,7 @@ void Clockface::layer_background() {
 		return;
 	} 
 
-    memcpy(_framebuffer, bg, 64 * 64 * sizeof(uint16_t));
+    memcpy(framebuffer, bg, 64 * 64 * sizeof(uint16_t));
    //_display->drawRGBBitmap(0, 0, bg, 64, 64);
 }
 
@@ -332,16 +333,16 @@ void Clockface::externalEvent(int type) {
 
 inline void Clockface::fbClear(uint16_t color) {
     for (uint16_t i = 0; i < 64 * 64; i++) {
-        _framebuffer[i] = color;
+        framebuffer[i] = color;
     }
 }
 
 inline uint16_t Clockface::fbGet(uint8_t x, uint8_t y) {
-    return _framebuffer[y * 64 + x];
+    return framebuffer[y * 64 + x];
 }
 
 inline void Clockface::fbSet(uint8_t x, uint8_t y, uint16_t color) {
-    _framebuffer[y * 64 + x] = color;
+    framebuffer[y * 64 + x] = color;
 }
 
 
