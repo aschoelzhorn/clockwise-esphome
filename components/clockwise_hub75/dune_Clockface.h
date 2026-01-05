@@ -80,8 +80,7 @@ class Clockface : public IClockface {
 
     Event _event;
 
-    static uint16_t framebuffer[64 * 64];
-   
+ 
 
     inline void fbClear(uint16_t color);
     inline uint16_t fbGet(uint8_t x, uint8_t y);
@@ -154,5 +153,7 @@ public:
     void setup(CWDateTime *dateTime);
     void update();
     void externalEvent(int type);
+
+    static uint16_t framebuffer[64 * 64];    
 };
 }  // namespace dune
