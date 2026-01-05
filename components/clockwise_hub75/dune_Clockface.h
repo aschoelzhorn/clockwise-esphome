@@ -65,10 +65,10 @@ class Clockface : public IClockface {
     } EventType;
 
     typedef struct {
-      bool active;
-      EventType type;
-      VisualPhase phase;
-      uint32_t phaseStart;
+      bool active = false;
+      EventType type = EVENT_NONE;
+      VisualPhase phase = VS_IDLE;
+      uint32_t phaseStart = 0;
     } Event;
 
     #define ACT_I 1
