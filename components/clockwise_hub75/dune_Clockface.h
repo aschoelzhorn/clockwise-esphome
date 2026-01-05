@@ -39,12 +39,34 @@ namespace dune {
 #define WIPE_STEP_MS   30
 #define WIPE_COL_JITTER 1
 
-
 class Clockface : public IClockface {
   private:
 
     #define COLOR_SHADOW_DARK  0x4208  // dark brown/gray
     #define COLOR_SHADOW_SOFT  0x630C  // softer edge
+
+    // Text state
+    enum TextPhase {
+        TEXT_IDLE,
+        TEXT_FADE_IN,
+        TEXT_HOLD,
+        TEXT_FADE_OUT,
+        TEXT_QUIET
+    };
+    TextPhase _textPhase = TEXT_IDLE;
+    uint32_t _textPhaseStartMs = 0;
+    const char* _currentPhrase = nullptr;
+
+    static constexpr uint32_t TEXT_FADE_IN_MS  = 500;
+    static constexpr uint32_t TEXT_HOLD_MS     = 2000;
+    static constexpr uint32_t TEXT_FADE_OUT_MS = 500;
+    static constexpr uint32_t TEXT_QUIET_MS    = 1500;
+
+    // //  Global timing constants
+    // #define TEXT_MIN_INTERVAL_MS   600000  // 10 minutes
+    // #define TEXT_DISPLAY_MS        2200
+    // #define TEXT_FADE_MS            400
+
 
     typedef enum {
       VS_IDLE,
@@ -79,15 +101,6 @@ class Clockface : public IClockface {
     #define ACT_VI 6
 
     Event _event;
-
-
-    // Text state
-    bool _textActive = false;
-    uint32_t _textStartTime = 0;
-    static constexpr uint32_t TEXT_DURATION_MS = 2500;
-    uint32_t _lastMinuteChange = 0;
-    const char* _currentPhrase = nullptr;
-
 
 
     inline void fbClear(uint16_t color);
@@ -156,6 +169,8 @@ class Clockface : public IClockface {
     void drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t* bg);
 
     bool eventSilencesText() const;
+
+    uint16_t fadeColor(uint16_t color, uint8_t alpha);
 
 public:
     Clockface(Adafruit_GFX* display);

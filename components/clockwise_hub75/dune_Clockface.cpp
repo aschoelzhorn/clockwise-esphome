@@ -163,36 +163,108 @@ void Clockface::layer_time() {
 }
 
 void Clockface::layer_text() {
-    // Rule 1: never show text during silencing events
+
+    // Global silencing rules
     if (eventSilencesText()) return;
+    //if (_nowMs - _lastMinuteChangeMs < 2000) return;
 
-    // Rule 2: never show text within 2s of minute change
-    //if (_now - _lastMinuteChange < 2000) return;
+    uint32_t elapsed = _nowMs - _textPhaseStartMs;
+    uint16_t baseColor = _activeAct.getFontColor();
 
-    // Rule 3: if text is active, keep showing it
-    if (_textActive) {
-        drawPhraseWithSandWipe(_currentPhrase, _activeAct.getFontColor());
+    switch (_textPhase) {
 
-        // End text after duration
-        if (_now - _textStartTime > TEXT_DURATION_MS) {
-            _textActive = false;
+        case TEXT_IDLE: {
+            const char* phrase = _activeAct.getNewPhrase();
+            if (!phrase) return;
+
+            if (_currentPhrase && strcmp(phrase, _currentPhrase) == 0) return;
+
+            _currentPhrase = phrase;
+            _textPhase = TEXT_FADE_IN;
+            _textPhaseStartMs = _nowMs;
+            break;
         }
-        return;
+
+        case TEXT_FADE_IN: {
+            uint8_t alpha = min(255, (elapsed * 255) / TEXT_FADE_IN_MS);
+            drawPhraseWithSandWipe(
+                _currentPhrase,
+                fadeColor(baseColor, alpha)
+            );
+
+            if (elapsed >= TEXT_FADE_IN_MS) {
+                _textPhase = TEXT_HOLD;
+                _textPhaseStartMs = _nowMs;
+            }
+            break;
+        }
+
+        case TEXT_HOLD:
+            drawPhraseWithSandWipe(_currentPhrase, baseColor);
+
+            if (elapsed >= TEXT_HOLD_MS) {
+                _textPhase = TEXT_FADE_OUT;
+                _textPhaseStartMs = _nowMs;
+            }
+            break;
+
+        case TEXT_FADE_OUT: {
+            uint8_t alpha = 255 - min(255, (elapsed * 255) / TEXT_FADE_OUT_MS);
+            drawPhraseWithSandWipe(
+                _currentPhrase,
+                fadeColor(baseColor, alpha)
+            );
+
+            if (elapsed >= TEXT_FADE_OUT_MS) {
+                _textPhase = TEXT_QUIET;
+                _textPhaseStartMs = _nowMs;
+            }
+            break;
+        }
+
+        case TEXT_QUIET:
+            if (elapsed >= TEXT_QUIET_MS) {
+                _textPhase = TEXT_IDLE;
+                _textPhaseStartMs = _nowMs;
+            }
+            break;
     }
-
-    // Rule 4: only request a new phrase when idle
-    const char* phrase = _activeAct.getNewPhrase();
-    if (!phrase) return;
-
-    // Rule 5: never repeat same phrase twice -> this is already handled in Act::getNewPhrase()
-
-    // Activate new phrase
-    _currentPhrase = phrase;
-    _textStartTime = _now;
-    _textActive = true;
-
-    drawPhraseWithSandWipe(_currentPhrase, _activeAct.getFontColor());
 }
+
+// void Clockface::layer_text() {
+//     // Rule 1: never show text during silencing events
+//     if (eventSilencesText()) return;
+
+//     // Rule 2: never show text within 2s of minute change
+//     //if (_now - _lastMinuteChange < 2000) return;
+
+//     uint32_t elapsed = _now - _textPhaseStartMs;
+//     uint16_t baseColor = _activeAct.getFontColor();
+
+//     // Rule 3: if text is active, keep showing it
+//     if (_textActive) {
+//         drawPhraseWithSandWipe(_currentPhrase, _activeAct.getFontColor());
+
+//         // End text after duration
+//         if (_now - _textStartTime > TEXT_DURATION_MS) {
+//             _textActive = false;
+//         }
+//         return;
+//     }
+
+//     // Rule 4: only request a new phrase when idle
+//     const char* phrase = _activeAct.getNewPhrase();
+//     if (!phrase) return;
+
+//     // Rule 5: never repeat same phrase twice -> this is already handled in Act::getNewPhrase()
+
+//     // Activate new phrase
+//     _currentPhrase = phrase;
+//     _textStartTime = _now;
+//     _textActive = true;
+
+//     drawPhraseWithSandWipe(_currentPhrase, _activeAct.getFontColor());
+// }
 
 
 void Clockface::ambient_heat() {
@@ -382,5 +454,13 @@ bool Clockface::eventSilencesText() const {
     }
 }
 
+uint16_t Clockface::fadeColor(uint16_t color, uint8_t alpha) {
+    // alpha: 0–255
+    uint8_t r = ((color >> 11) & 0x1F) * alpha / 255;
+    uint8_t g = ((color >> 5)  & 0x3F) * alpha / 255;
+    uint8_t b = ( color        & 0x1F) * alpha / 255;
+
+    return (r << 11) | (g << 5) | b;
+}
 
 }  // namespace dune
