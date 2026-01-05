@@ -164,7 +164,7 @@ void Clockface::ambient_shadow() {
         _shadowY = 8 + (_shadowX % 16);
     }
 
-    ESP_LOGD(TAG, "shadowX=%d now=%lu", _shadowX, _nowMs);
+    ESP_LOGD(TAG, "shadowX=%d now=%lu", _shadowX, now);
 
     drawShadowBand(_shadowX, _shadowY);
 }
