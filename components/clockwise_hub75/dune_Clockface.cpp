@@ -90,20 +90,20 @@ void Clockface::update() {
 
     //display_swap();           // push framebuffer
 
-	if (act.getId() != _act.getId()) {
-		ESP_LOGD(TAG, "Act changed from %d to %d", _act.getId(), act.getId());
-		_act = act;
-        drawBackgroundImage(_act.getBackground());
-	}
+	// if (act.getId() != _act.getId()) {
+	// 	ESP_LOGD(TAG, "Act changed from %d to %d", _act.getId(), act.getId());
+	// 	_act = act;
+    //     drawBackgroundImage(_act.getBackground());  // moved to layer_background()
+	// }
 
 	// Draw time (HH:MM) using 5x7 font, scaled ×2, at (x=10, y=34)
-	drawTime(hour, minute, _act.getFontColor());
+	//drawTime(hour, minute, _act.getFontColor()); // mooved to layer_time()
 
     // Update phrase every 10 seconds
     if (now - _lastPhraseUpdate > 10000) {
         _lastPhraseUpdate = now;
 	    const char* phrase = _act.getNewPhrase();
-	    printPhrase(phrase);
+	    //printPhrase(phrase); // moved to layer_text()
     }
 }
 
@@ -112,22 +112,23 @@ void Clockface::layer_clear(const RenderContext* ctx) {
   // Fill framebuffer
   // Use night color if act == I or VI
   //display_fill(COLOR_SKY);
-  //framebuffer_fill(ctx->act.getBaseColor());
+  //framebuffer_fill(_acts[ctx->act_index].getBaseColor());
 }
 
 void Clockface::layer_background(const RenderContext* ctx) {
-  const uint16_t* bg = ctx->act.getBackground();
+  const uint16_t* bg = _acts[ctx->act_index].getBackground();
    _display->drawRGBBitmap(0, 0, bg, 64, 64);
 }
 
 void Clockface::layer_ambient(const RenderContext* ctx) {
-  switch (ctx->act) {
-    case ACT_I: ambient_heat(ctx); break;
-    case ACT_II: ambient_spice(ctx); break;
-    case ACT_III: ambient_shadow(ctx); break;
-    case ACT_IV: ambient_tremor(ctx); break;
-    case ACT_V: ambient_wind(ctx); break;
-    case ACT_VI: ambient_dust(ctx); break;
+  //_acts[ctx->act_index];
+  switch (ctx->act_index) {
+    // case ACT_I: ambient_heat(ctx); break;
+    // case ACT_II: ambient_spice(ctx); break;
+    // case ACT_III: ambient_shadow(ctx); break;
+    // case ACT_IV: ambient_tremor(ctx); break;
+    // case ACT_V: ambient_wind(ctx); break;
+    // case ACT_VI: ambient_dust(ctx); break;
   }
 }
 
@@ -151,13 +152,13 @@ void Clockface::layer_event(const RenderContext* ctx) {
 }
 
 void Clockface::layer_time(const RenderContext* ctx) {
-  bool high_contrast = ctx->event_active || ctx->act.getId() == 5; // Storm of Fate
+  bool high_contrast = ctx->event_active || ctx->act_index == 5; // Storm of Fate
 
   drawtime(
     ctx->hour,
     ctx->minute,
     //ctx->colon_on,
-    ctx->act.getFontColor()
+    _acts[ctx->act_index].getFontColor()
   );
 }
 
