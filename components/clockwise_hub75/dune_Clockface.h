@@ -171,6 +171,8 @@ class Clockface : public IClockface {
     bool eventSilencesText() const;
 
     uint16_t fadeColor(uint16_t color, uint8_t alpha);
+    uint16_t blend565(uint16_t bg, uint16_t fg, uint8_t alpha);
+    void drawPhraseBlended(const char* phrase, uint16_t color, uint8_t alpha);
 
 public:
     Clockface(Adafruit_GFX* display);
