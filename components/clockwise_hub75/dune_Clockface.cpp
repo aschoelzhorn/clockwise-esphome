@@ -395,8 +395,8 @@ void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t*
 void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha) {
     if (!phrase) return;
 
-    int x = computeTextStartX(phrase);
-    //int y = TEXT_Y;
+    //int x = computeTextStartX(phrase);
+    int y = TEXT_Y;
     int x = 2; // TEMPORARY FIX FOR TESTING
 
     for (size_t i = 0; i < strlen(phrase); i++) {
