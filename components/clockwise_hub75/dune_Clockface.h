@@ -42,6 +42,55 @@ namespace dune {
 
 class Clockface : public IClockface {
   private:
+
+typedef struct {
+  uint32_t now_ms;
+
+  uint8_t act_index;              // 0..5
+  uint8_t hour, minute;
+  bool colon_on;
+
+  bool text_active;
+  bool event_active;
+
+} RenderContext;
+
+typedef enum {
+  VS_IDLE,
+  VS_ENTER,
+  VS_ACTIVE,
+  VS_EXIT
+} VisualPhase;
+
+typedef struct {
+  bool active;
+  VisualPhase phase;
+  uint32_t phase_start_ms;
+} VisualEvent;
+
+typedef struct {
+  bool active;
+  EventType type;
+
+  VisualPhase phase;
+  uint32_t phase_start_ms;
+} EventState;
+
+EventState event = {0};
+
+#define STORM_ENTER_MS   800
+#define STORM_ACTIVE_MS 3000
+#define STORM_EXIT_MS   1200
+
+
+typedef enum {
+  EVENT_NONE = 0,
+  EVENT_STORM,
+  EVENT_WORM,
+  EVENT_FLIGHT
+} EventType;
+
+
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
     Act _act;
@@ -59,6 +108,14 @@ class Clockface : public IClockface {
     void printPhrase(const char* phrase);
     void initializeActs();
     void drawBackgroundImage(const uint16_t* image);
+
+    void layer_clear(const RenderContext* ctx);
+    void layer_background(const RenderContext* ctx);
+    void layer_ambient(const RenderContext* ctx);
+    void layer_event(const RenderContext* ctx);
+    void layer_time(const RenderContext* ctx);
+    void layer_text(const RenderContext* ctx);
+
 
 public:
     Clockface(Adafruit_GFX* display);
