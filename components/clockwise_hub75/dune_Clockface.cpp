@@ -399,10 +399,12 @@ void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_
     int y = TEXT_Y;
     int x = 2; // TEMPORARY FIX FOR TESTING
 
+    const int scale = 2;  // same as digits
+
     for (size_t i = 0; i < strlen(phrase); i++) {
         char c = phrase[i];
         if (c < 32 || c > 126) {
-            x += FONT_W + FONT_SPACING;
+            x += (FONT_W + FONT_SPACING) * scale;
             continue;
         }
 
@@ -412,21 +414,27 @@ void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_
             uint8_t bits = pgm_read_byte(&glyph[col]);
 
             for (int row = 0; row < FONT_H; row++) {
-                // YOUR FONT: bit0 = top, bit6 = bottom
                 if (!(bits & (1 << row))) continue;
 
-                int px = x + col;
-                int py = y + row;
+                int px = x + col * scale;
+                int py = y + row * scale;
 
-                if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
+                // Draw scaled block
+                for (int dx = 0; dx < scale; dx++) {
+                    for (int dy = 0; dy < scale; dy++) {
+                        int fx = px + dx;
+                        int fy = py + dy;
+                        if (fx < 0 || fy < 0 || fx >= 64 || fy >= 64) continue;
 
-                uint16_t bg = fbGet(px, py);
-                uint16_t blended = blend565(bg, textColor, alpha);
-                fbSet(px, py, blended);
+                        uint16_t bg = fbGet(fx, fy);
+                        uint16_t blended = blend565(bg, textColor, alpha);
+                        fbSet(fx, fy, blended);
+                    }
+                }
             }
         }
 
-        x += FONT_W + FONT_SPACING;
+        x += (FONT_W + FONT_SPACING) * scale;
     }
 }
 
