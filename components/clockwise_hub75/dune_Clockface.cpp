@@ -192,8 +192,8 @@ void Clockface::layer_text() {
             );
 
             if (elapsed >= TEXT_FADE_OUT_MS) {
-                _textPhase = TEXT_QUIET;
-                _textPhaseStartMs = _now;
+                _text.phase = TEXT_QUIET;
+                _text.phaseStart = _now;
             }
             break;
 
