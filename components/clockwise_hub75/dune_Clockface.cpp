@@ -183,7 +183,7 @@ void Clockface::layer_text() {
             break;
 
         case TEXT_FADE_OUT: {
-            uint8_t alpha = 255 - min(255, (elapsed * 255) / TEXT_FADE_MS);
+            uint8_t alpha = 255 - MIN(255, (elapsed * 255) / TEXT_FADE_MS);
             drawPhraseBlended(
                 _text.phrase,
                 _activeAct.getFontColor(),
