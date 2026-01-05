@@ -43,17 +43,6 @@ namespace dune {
 class Clockface : public IClockface {
   private:
 
-typedef struct {
-  uint32_t now_ms;
-
-  uint8_t act_index;              // 0..5
-  uint8_t hour, minute;
-  bool colon_on;
-
-  bool text_active;
-  bool event_active;
-
-} RenderContext;
 
 typedef enum {
   VS_IDLE,
@@ -62,11 +51,11 @@ typedef enum {
   VS_EXIT
 } VisualPhase;
 
-typedef struct {
-  bool active;
-  VisualPhase phase;
-  uint32_t phase_start_ms;
-} VisualEvent;
+// typedef struct {
+//   bool active;
+//   VisualPhase phase;
+//   uint32_t phase_start_ms;
+// } VisualEvent;
 
 typedef struct {
   bool active;
@@ -76,7 +65,7 @@ typedef struct {
   uint32_t phase_start_ms;
 } EventState;
 
-EventState event = {0};
+//EventState event = {0};
 
 #define STORM_ENTER_MS   800
 #define STORM_ACTIVE_MS 3000
@@ -90,10 +79,27 @@ typedef enum {
   EVENT_FLIGHT
 } EventType;
 
+struct Event {
+    bool active;
+    EventType type;
+    VisualPhase phase;
+    uint32_t phaseStart;
+};
+
+
+#define ACT_I 1
+#define ACT_II 2
+#define ACT_III 3
+#define ACT_IV 4
+#define ACT_V 5
+#define ACT_VI 6
+
+    Event _event;
+
 
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
-    Act _act;
+    Act _activeAct;
     Act acts[6];
 
     uint32_t _lastPhraseUpdate = 0;
@@ -102,20 +108,30 @@ typedef enum {
 
     void drawTime(uint8_t hour, uint8_t minute, uint16_t color);
     void drawDigit(uint8_t digit, int x, int y, uint16_t color);
-    void drawColon(int x, int y, bool blink, uint16_t color);      
+    void drawColon(int x, int y, bool blink, uint16_t color);
+
     Act getCurrentAct(uint8_t hour);
-    void updateTime();
-    void printPhrase(const char* phrase);
+    void drawPhraseWithSandWipe(const char* phrase, uint16_t color);
     void initializeActs();
     void drawBackgroundImage(const uint16_t* image);
 
-    void layer_clear(const RenderContext* ctx);
-    void layer_background(const RenderContext* ctx);
-    void layer_ambient(const RenderContext* ctx);
-    void layer_event(const RenderContext* ctx);
-    void layer_time(const RenderContext* ctx);
-    void layer_text(const RenderContext* ctx);
+    void layer_clear();
+    void layer_background();
+    void layer_ambient();
+    void layer_event();
+    void layer_time();
+    void layer_text();
+ 
+    void ambient_heat();
+    void ambient_spice();
+    void ambient_shadow();
+    void ambient_tremor();
+    void ambient_wind();
+    void ambient_dust();
 
+    void drawStorm();
+    void drawWorm();
+    void drawFlight();    
 
 public:
     Clockface(Adafruit_GFX* display);
