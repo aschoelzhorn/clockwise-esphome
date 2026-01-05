@@ -80,6 +80,11 @@ class Clockface : public IClockface {
 
     Event _event;
 
+
+    static uint16_t _framebuffer[64 * 64];
+
+
+
     uint32_t _shadowLastUpdate = 0;
     uint8_t  _shadowX = 0;
     uint8_t  _shadowY = 10;
@@ -99,6 +104,8 @@ class Clockface : public IClockface {
     Act _acts[6];
 
     uint32_t _lastPhraseUpdate = 0;
+    
+    uint32_t _now;
 
     EventBus* _eventBus;
 
@@ -110,6 +117,10 @@ class Clockface : public IClockface {
     void drawPhraseWithSandWipe(const char* phrase, uint16_t color);
     void initializeActs();
     void drawBackgroundImage(const uint16_t* image);
+
+    void flushFramebuffer();
+
+
 
     void layer_clear();
     void layer_background();
