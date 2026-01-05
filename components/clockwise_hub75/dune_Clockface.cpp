@@ -109,9 +109,10 @@ void Clockface::update() {
     //}
 }
 
+const unsigned short COOL_BLACK = 0x18C3; // Dark, cool black for clearing
 
 void Clockface::layer_clear() {
-    fbClear(COLOR_SKY_DARK);
+    fbClear(COOL_BLACK);
 }
 
 void Clockface::layer_background() {
@@ -308,7 +309,7 @@ void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
     ESP_LOGD(TAG, "drawTime() updating time %02d:%02d", hour, minute);
 
     fbGfx.setTextSize(1);
-    fbGfx.setTextColor(_act.getFontColor());
+    fbGfx.setTextColor(_activeAct.getFontColor());
 
 	// Placement
 	int x = 10; // x_start
