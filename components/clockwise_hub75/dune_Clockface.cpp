@@ -238,7 +238,7 @@ void Clockface::drawShadowBand(uint8_t xStart, uint8_t yStart) {
             uint16_t base = bg[py * 64 + px];
             uint16_t shaded = darken(base);
 
-            _display->drawPixel(px, py, shaded);
+            fbGfx->drawPixel(px, py, shaded);
         }
     }
 }
@@ -283,7 +283,7 @@ void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t*
             // Darken for ripple
             uint16_t ripple = darken(base, 0.8f); // darken 20%
 
-            _display->drawPixel(px, py, ripple);
+            fbGfx->drawPixel(px, py, ripple);
         }
     }
 }
@@ -295,14 +295,14 @@ void Clockface::drawPhraseWithSandWipe(const char* phrase, uint16_t color) {
 	}
 
 	// Display phrase at top (y=2), centered
-	_display->setTextSize(1); // Default size
-	_display->setTextColor(color); // Use passed color
+	fbGfx->setTextSize(1); // Default size
+	fbGfx->setTextColor(color); // Use passed color
 	int16_t x1, y1;
 	uint16_t w, h;
-	_display->getTextBounds(phrase, 0, 0, &x1, &y1, &w, &h);
+	fbGfx->getTextBounds(phrase, 0, 0, &x1, &y1, &w, &h);
 	int x = (64 - w) / 2;
-	_display->setCursor(x, 2);
-	_display->print(phrase);
+	fbGfx->setCursor(x, 2);
+	fbGfx->print(phrase);
 }
 
 void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
