@@ -174,10 +174,11 @@ void Clockface::layer_text() {
         drawPhraseWithSandWipe(_currentPhrase, _activeAct.getFontColor());
 
         // End text after duration
-        if (_now - _textStart > TEXT_DURATION_MS) {
+        if (_now - _textStartTime > TEXT_DURATION_MS) {
             _textActive = false;
         }
         return;
+    }
 
     // Rule 4: only request a new phrase when idle
     const char* phrase = _activeAct.getNewPhrase();
