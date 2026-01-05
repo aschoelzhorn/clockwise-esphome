@@ -80,7 +80,15 @@ class Clockface : public IClockface {
 
     Event _event;
 
- 
+
+    // Text state
+    bool _textActive = false;
+    uint32_t _textStartTime = 0;
+    static constexpr uint32_t TEXT_DURATION_MS = 2500;
+    uint32_t _lastMinuteChange = 0;
+    const char* _currentPhrase = nullptr;
+
+
 
     inline void fbClear(uint16_t color);
     inline uint16_t fbGet(uint8_t x, uint8_t y);
@@ -97,8 +105,8 @@ class Clockface : public IClockface {
     static const uint8_t TREMOR_UPDATE_MS = 100; // 10 fps for ripples
 
     // time state
-    uint32_t _lastHour = 0;
-    uint32_t _lastMinute = 0;
+    //uint32_t _lastHour = 0;
+    //uint32_t _lastMinute = 0;
 
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
@@ -146,6 +154,11 @@ class Clockface : public IClockface {
     uint16_t darken(uint16_t color);
     uint16_t darken(uint16_t color, float factor);
     void drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t* bg);
+
+    bool eventSilencesText() const;
+}
+
+
 
 public:
     Clockface(Adafruit_GFX* display);
