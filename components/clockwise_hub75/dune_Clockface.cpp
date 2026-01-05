@@ -389,59 +389,46 @@ void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t*
     }
 }
 
-void Clockface::drawPhraseBlended(const char* phrase, uint16_t color, uint8_t alpha) {
+void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha) {
     if (!phrase) {
         return;
     }
 
-    if (alpha < 16) alpha = 16;
+    //if (alpha < 16) alpha = 16;
 
-    // Display phrase at top (y=2), centered
-    fbGfx.setTextSize(1); // Default size
-    fbGfx.setTextColor(color); // Use passed color
-    int16_t x1, y1;
-    uint16_t w, h;
-    fbGfx.getTextBounds(phrase, 0, 0, &x1, &y1, &w, &h);
-    int x = (64 - w) / 2;
-    fbGfx.setCursor(x, 2);
+    int x = computeTextStartX(phrase);
+    int y = TEXT_Y;
 
-    // Draw each character with blending
     for (size_t i = 0; i < strlen(phrase); i++) {
         char c = phrase[i];
-        int16_t cx = fbGfx.getCursorX();
-        int16_t cy = fbGfx.getCursorY();
+        if (c < 32 || c > 126) {
+            x += FONT_W + FONT_SPACING;
+            continue;
+        }
 
-        // Draw character to temporary buffer
-        fbGfx.print(c);
-        int16_t nx = fbGfx.getCursorX();
+        const uint8_t* glyph = font5x7[c - 32];
 
-        // Blend character pixels
-        for (int16_t px = cx; px < nx; px++) {
-            for (int16_t py = cy; py < cy + 8; py++) { // assuming 8 pixel height
-                uint16_t fg = fbGet(px, py);
-                uint16_t bg = Clockface::framebuffer[py * 64 + px];
-                uint16_t blended = blend565(bg, fg, alpha);
-                Clockface::framebuffer[py * 64 + px] = blended;
+        for (int col = 0; col < FONT_W; col++) {
+            uint8_t bits = glyph[col];
+
+            for (int row = 0; row < FONT_H; row++) {
+                if (bits & (1 << row)) {
+                    int px = x + col;
+                    int py = y + row;
+
+                    if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
+
+                    uint16_t bg = fbGet(px, py);
+                    uint16_t blended = blend565(bg, textColor, alpha);
+                    fbSet(px, py, blended);
+                }
             }
         }
+
+        x += FONT_W + FONT_SPACING;
     }
 }
 
-void Clockface::drawPhraseWithSandWipe(const char* phrase, uint16_t color) {
-    if (!phrase) {
-		return;
-	}
-
-	// Display phrase at top (y=2), centered
-	fbGfx.setTextSize(1); // Default size
-	fbGfx.setTextColor(color); // Use passed color
-	int16_t x1, y1;
-	uint16_t w, h;
-	fbGfx.getTextBounds(phrase, 0, 0, &x1, &y1, &w, &h);
-	int x = (64 - w) / 2;
-	fbGfx.setCursor(x, 2);
-	fbGfx.print(phrase);
-}
 
 void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
     fbGfx.setTextSize(1);
@@ -523,6 +510,10 @@ uint16_t Clockface::blend565(uint16_t bg, uint16_t fg, uint8_t alpha) {
     return (r << 11) | (g << 5) | b;
 }
 
+int Clockface::computeTextStartX(const char* phrase) {
+    int textWidth = strlen(phrase) * (FONT_W + FONT_SPACING);
+    return (64 - textWidth) / 2;
+}
 
 
 }  // namespace dune

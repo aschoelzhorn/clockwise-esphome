@@ -42,6 +42,12 @@ namespace dune {
 class Clockface : public IClockface {
   private:
 
+static constexpr int TEXT_Y = 2;
+static constexpr int FONT_W = 5;
+static constexpr int FONT_H = 7;
+static constexpr int FONT_SPACING = 1;
+int computeTextStartX(const char* phrase);
+
     #define COLOR_SHADOW_DARK  0x4208  // dark brown/gray
     #define COLOR_SHADOW_SOFT  0x630C  // softer edge
 
@@ -137,7 +143,7 @@ class Clockface : public IClockface {
     void drawColon(int x, int y, bool blink, uint16_t color);
 
     Act getCurrentAct(uint8_t hour);
-    void drawPhraseWithSandWipe(const char* phrase, uint16_t color);
+    // void drawPhraseWithSandWipe(const char* phrase, uint16_t color);
     void initializeActs();
     void drawBackgroundImage(const uint16_t* image);
 
@@ -172,7 +178,7 @@ class Clockface : public IClockface {
 
     uint16_t fadeColor(uint16_t color, uint8_t alpha);
     uint16_t blend565(uint16_t bg, uint16_t fg, uint8_t alpha);
-    void drawPhraseBlended(const char* phrase, uint16_t color, uint8_t alpha);
+    void drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha);
 
 public:
     Clockface(Adafruit_GFX* display);
