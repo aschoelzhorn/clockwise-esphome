@@ -45,8 +45,8 @@ class Clockface : public IClockface {
       uint32_t phaseStart = 0;
     };
 
-    static constexpr uint32_t TEXT_FADE_MS  = 500;
-    static constexpr uint32_t TEXT_HOLD_MS     = 2000;
+    static constexpr uint32_t TEXT_FADE_MS  = 1000;
+    static constexpr uint32_t TEXT_HOLD_MS     = 3000;
     static constexpr uint32_t TEXT_QUIET_MS    = 1500; //600000; // 10 minutes
 
     TextState _text;
