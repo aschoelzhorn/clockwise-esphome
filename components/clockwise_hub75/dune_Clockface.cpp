@@ -70,7 +70,7 @@ void Clockface::update() {
     layer_time();         // L4 Time (HH:MM)
     layer_text();         // L5 Text overlay (phrases)
 
-    display_swap();           // push framebuffer
+    //display_swap();           // push framebuffer
 
 	// if (act.getId() != _activeAct.getId()) {
 	// 	ESP_LOGD(TAG, "Act changed from %d to %d", _activeAct.getId(), act.getId());
@@ -233,6 +233,19 @@ uint16_t Clockface::darken(uint16_t color) {
 
     return (r << 11) | (g << 5) | b;
 }
+
+uint16_t Clockface::darken(uint16_t color, float factor) {
+    uint8_t r = (color >> 11) & 0x1F;
+    uint8_t g = (color >> 5) & 0x3F;
+    uint8_t b = color & 0x1F;
+
+    r = (uint8_t)(r * factor);
+    g = (uint8_t)(g * factor);
+    b = (uint8_t)(b * factor);
+
+    return (r << 11) | (g << 5) | b;
+}
+
 
 void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t* bg) {
     const uint8_t width = 8;
