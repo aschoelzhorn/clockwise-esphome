@@ -97,7 +97,7 @@ void Clockface::layer_clear() {
 }
 
 void Clockface::layer_background() {
-  const uint16_t* bg = _activeAct.getBackground();
+    const uint16_t* bg = _activeAct.getBackground();
 	if (!bg) {
 		ESP_LOGE(TAG, "layer_background() failed: bg is nullptr");
 		return;
@@ -106,14 +106,14 @@ void Clockface::layer_background() {
 }
 
 void Clockface::layer_ambient() {
-  switch (_activeAct.getId()) {
-    case ACT_I: ambient_heat(); break;
-    case ACT_II: ambient_spice(); break;
-    case ACT_III: ambient_shadow(); break;
-    case ACT_IV: ambient_tremor(); break;
-    case ACT_V: ambient_wind(); break;
-    case ACT_VI: ambient_dust(); break;
-  }
+    switch (_activeAct.getId()) {
+        case ACT_I: ambient_heat(); break;
+        case ACT_II: ambient_spice(); break;
+        case ACT_III: ambient_shadow(); break;
+        case ACT_IV: ambient_tremor(); break;
+        case ACT_V: ambient_wind(); break;
+        case ACT_VI: ambient_dust(); break;
+    }
 }
 
 void Clockface::layer_event() {
