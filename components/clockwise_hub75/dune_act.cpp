@@ -15,7 +15,6 @@ Act::Act(uint8_t id, const char* name, const char** phrases, uint16_t fontColor,
     _fontColor = fontColor;
     _background = background;
     _lastPhraseIndex = -1;
-    _lastPhraseUpdate = 0;
 }
 
 Act::Act() : _id(0), _name(nullptr), _phrases(nullptr), _fontColor(0), _background(nullptr), _lastPhraseIndex(-1) {
@@ -29,13 +28,6 @@ uint8_t Act::getId() const {
 
 const char* Act::getName() const {
     return _name;
-}
-
-const char* Act::getPhrase(size_t index) const {
-    if (index < _phraseCount) {
-        return _phrases[index];
-    }
-    return nullptr;
 }
 
 uint16_t Act::getFontColor() const {
@@ -54,7 +46,7 @@ const char* Act::getNewPhrase() {
     }
     _lastPhraseIndex = idx;
     ESP_LOGD(TAG, "Random phrase index %d", _lastPhraseIndex);        
-    return getPhrase(_lastPhraseIndex);
+    return _phrases[_lastPhraseIndex];
 }
 
 size_t Act::getPhraseCount() const {

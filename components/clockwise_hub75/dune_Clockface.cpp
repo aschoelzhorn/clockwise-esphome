@@ -163,16 +163,34 @@ void Clockface::layer_time() {
 }
 
 void Clockface::layer_text() {
-    // events silence text
-    if (_event.active) {
-        ESP_LOGD(TAG, "layer_text() aborted due to active event");
-        return;
-    }    
+    // Rule 1: never show text during silencing events
+    if (eventSilencesText()) return;
 
+    // Rule 2: never show text within 2s of minute change
+    //if (_now - _lastMinuteChange < 2000) return;
+
+    // Rule 3: if text is active, keep showing it
+    if (_textActive) {
+        drawPhraseWithSandWipe(_currentPhrase, _activeAct.getFontColor());
+
+        // End text after duration
+        if (_now - _textStart > TEXT_DURATION_MS) {
+            _textActive = false;
+        }
+        return;
+
+    // Rule 4: only request a new phrase when idle
     const char* phrase = _activeAct.getNewPhrase();
-    if (phrase) {
-        drawPhraseWithSandWipe(phrase, _activeAct.getFontColor());
-    }
+    if (!phrase) return;
+
+    // Rule 5: never repeat same phrase twice -> this is already handled in Act::getNewPhrase()
+
+    // Activate new phrase
+    _currentPhrase = phrase;
+    _textStartTime = _now;
+    _textActive = true;
+
+    drawPhraseWithSandWipe(_currentPhrase, _activeAct.getFontColor());
 }
 
 
@@ -349,6 +367,18 @@ inline uint16_t Clockface::fbGet(uint8_t x, uint8_t y) {
 
 inline void Clockface::fbSet(uint8_t x, uint8_t y, uint16_t color) {
     framebuffer[y * 64 + x] = color;
+}
+
+bool Clockface::eventSilencesText() const {
+    if (!_event.active) return false;
+
+    switch (_event.type) {
+        case EVENT_STORM:
+        case EVENT_WORM:
+            return true;
+        default:
+            return false;
+    }
 }
 
 

@@ -14,11 +14,9 @@ private:
     size_t _phraseCount = COUNT_PHRASES;
     const uint16_t* _background;
     int _lastPhraseIndex = -1;
-    uint32_t _lastPhraseUpdate = 0;
     uint16_t _fontColor;
 
     size_t getPhraseCount() const;
-    const char* getPhrase(size_t index) const;
 
 public:
     Act();
