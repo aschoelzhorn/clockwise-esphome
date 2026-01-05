@@ -409,7 +409,9 @@ void Clockface::drawTestLetter(char c, int x, int y, uint16_t color) {
                 int px = x + col;
                 int py = y + row;
                 if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
-                fbSet(px, py, color);
+                uint16_t bg = fbGet(px, py);
+                uint16_t blended = blend565(bg, color, alpha);
+                fbSet(px, py, blended);
             }
         }
     }
