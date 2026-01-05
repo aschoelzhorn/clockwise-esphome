@@ -43,56 +43,37 @@ namespace dune {
 class Clockface : public IClockface {
   private:
 
+    typedef enum {
+      VS_IDLE,
+      VS_ENTER,
+      VS_ACTIVE,
+      VS_EXIT
+    } VisualPhase;
 
-typedef enum {
-  VS_IDLE,
-  VS_ENTER,
-  VS_ACTIVE,
-  VS_EXIT
-} VisualPhase;
+    #define STORM_ENTER_MS   800
+    #define STORM_ACTIVE_MS 3000
+    #define STORM_EXIT_MS   1200
 
-// typedef struct {
-//   bool active;
-//   VisualPhase phase;
-//   uint32_t phase_start_ms;
-// } VisualEvent;
+    typedef enum {
+      EVENT_NONE = 0,
+      EVENT_STORM,
+      EVENT_WORM,
+      EVENT_FLIGHT
+    } EventType;
 
-typedef struct {
-  bool active;
-  EventType type;
+    typedef struct {
+      bool active;
+      EventType type;
+      VisualPhase phase;
+      uint32_t phaseStart;
+    } Event;
 
-  VisualPhase phase;
-  uint32_t phase_start_ms;
-} EventState;
-
-//EventState event = {0};
-
-#define STORM_ENTER_MS   800
-#define STORM_ACTIVE_MS 3000
-#define STORM_EXIT_MS   1200
-
-
-typedef enum {
-  EVENT_NONE = 0,
-  EVENT_STORM,
-  EVENT_WORM,
-  EVENT_FLIGHT
-} EventType;
-
-struct Event {
-    bool active;
-    EventType type;
-    VisualPhase phase;
-    uint32_t phaseStart;
-};
-
-
-#define ACT_I 1
-#define ACT_II 2
-#define ACT_III 3
-#define ACT_IV 4
-#define ACT_V 5
-#define ACT_VI 6
+    #define ACT_I 1
+    #define ACT_II 2
+    #define ACT_III 3
+    #define ACT_IV 4
+    #define ACT_V 5
+    #define ACT_VI 6
 
     Event _event;
 
