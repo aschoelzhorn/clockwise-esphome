@@ -165,7 +165,7 @@ void Clockface::layer_time() {
 
 void Clockface::layer_text() {
 
-    drawPhraseBlended("H", 0xFFFF, 255);
+    drawPhraseBlended("HELLO", 0xFFFF, 255);
     return;
     
     // Global silencing rules
@@ -397,6 +397,7 @@ void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_
 
     int x = computeTextStartX(phrase);
     int y = TEXT_Y;
+    int x = 2; // TEMPORARY FIX FOR TESTING
 
     for (size_t i = 0; i < strlen(phrase); i++) {
         char c = phrase[i];
@@ -408,20 +409,20 @@ void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_
         const uint8_t* glyph = font5x7[c - 32];
 
         for (int col = 0; col < FONT_W; col++) {
-            uint8_t bits = pgm_read_byte(&glyph[col]);  // use PROGMEM
+            uint8_t bits = pgm_read_byte(&glyph[col]);
 
             for (int row = 0; row < FONT_H; row++) {
-                // MSB = top
-                if (bits & (1 << (7 - row))) {
-                    int px = x + col;
-                    int py = y + row;
+                // YOUR FONT: bit0 = top, bit6 = bottom
+                if (!(bits & (1 << row))) continue;
 
-                    if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
+                int px = x + col;
+                int py = y + row;
 
-                    uint16_t bg = fbGet(px, py);
-                    uint16_t blended = blend565(bg, textColor, alpha);
-                    fbSet(px, py, blended);
-                }
+                if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
+
+                uint16_t bg = fbGet(px, py);
+                uint16_t blended = blend565(bg, textColor, alpha);
+                fbSet(px, py, blended);
             }
         }
 

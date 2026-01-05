@@ -103,12 +103,12 @@ const uint8_t dune_font5x7_colon[5] = {
 
 
 
-// #define FONT_SPACE 0
-// #define FONT_A     1
+#define FONT_SPACE 0
+#define FONT_A     1
 
-// uint8_t getFontIndex(char c) {
-//   if (c == ' ') return FONT_SPACE;
-//   if (c >= 'A' && c <= 'Z') return (c - 'A') + FONT_A;
-//   return FONT_SPACE;
-// }
+uint8_t getFontIndex(char c) {
+  if (c == ' ') return FONT_SPACE;
+  if (c >= 'A' && c <= 'Z') return (c - 'A') + FONT_A;
+  return FONT_SPACE;
+}
 
