@@ -327,14 +327,14 @@ void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
 		return;
 	}
 
-    if (hour != _lastHour || minute != _lastMinute) {
-        ESP_LOGD(TAG, "drawTime() updating time %02d:%02d", hour, minute);
-        _lastHour = hour;
-        _lastMinute = minute;
-    } else {
+    if (hour == _lastHour && minute == _lastMinute) {
         // No change, avoids flicker
         return;
     }
+
+    ESP_LOGD(TAG, "drawTime() updating time %02d:%02d", hour, minute);
+    _lastHour = hour;
+    _lastMinute = minute;
 
 	// Placement
 	int x = 10; // x_start
