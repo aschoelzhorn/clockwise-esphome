@@ -390,11 +390,7 @@ void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t*
 }
 
 void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha) {
-    if (!phrase) {
-        return;
-    }
-
-    //if (alpha < 16) alpha = 16;
+    if (!phrase) return;
 
     int x = computeTextStartX(phrase);
     int y = TEXT_Y;
@@ -409,10 +405,11 @@ void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_
         const uint8_t* glyph = font5x7[c - 32];
 
         for (int col = 0; col < FONT_W; col++) {
-            uint8_t bits = glyph[col];
+            uint8_t bits = pgm_read_byte(&glyph[col]);  // use PROGMEM
 
             for (int row = 0; row < FONT_H; row++) {
-                if (bits & (1 << row)) {
+                // MSB = top
+                if (bits & (1 << (7 - row))) {
                     int px = x + col;
                     int py = y + row;
 
