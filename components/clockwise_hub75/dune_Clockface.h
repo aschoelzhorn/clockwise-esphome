@@ -43,6 +43,9 @@ namespace dune {
 class Clockface : public IClockface {
   private:
 
+    #define COLOR_SHADOW_DARK  0x4208  // dark brown/gray
+    #define COLOR_SHADOW_SOFT  0x630C  // softer edge
+
     typedef enum {
       VS_IDLE,
       VS_ENTER,
@@ -76,6 +79,16 @@ class Clockface : public IClockface {
     #define ACT_VI 6
 
     Event _event;
+
+    uint32_t _shadowLastUpdate = 0;
+    uint8_t  _shadowX = 0;
+    uint8_t  _shadowY = 10;
+    int8_t   _shadowDx = 1;
+
+    // Tremor state
+    uint32_t _tremorLastUpdate = 0;
+    static const uint8_t TREMOR_UPDATE_MS = 100; // 10 fps for ripples
+
 
 
     Adafruit_GFX* _display;
@@ -112,7 +125,12 @@ class Clockface : public IClockface {
 
     void drawStorm();
     void drawWorm();
-    void drawFlight();    
+    void drawFlight();
+
+    void drawShadowBand(uint8_t xStart, uint8_t yStart);
+    uint16_t darken(uint16_t color);
+    uint16_t darken(uint16_t color, float factor);
+    void drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t* bg);
 
 public:
     Clockface(Adafruit_GFX* display);

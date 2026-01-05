@@ -38,12 +38,12 @@ void Clockface::setup(CWDateTime *dateTime) {
 
 void Clockface::initializeActs() {
 	ESP_LOGD(TAG, "initializeActs() called");
-	acts[0] = Act(ACT_I, "The Desert Sleeps", PHRASES_TIME, DIM_SAND, dune_moons64x64);
-	acts[1] = Act(ACT_II, "Spice Awakens", PHRASES_DESERT, SPICE_AMBER, dune_background64x64);
-	acts[2] = Act(ACT_III, "The Watchers", PHRASES_POWER, HIGH_CONTRAST_WHITE, dune_ornithopter64x64);
-	acts[3] = Act(ACT_IV, "The Maker Stirs", PHRASES_DANGER, BRIGHT_SAND, dune_sandworm64x64);
-	acts[4] = Act(ACT_V, "Storm of Fate", PHRASES_DANGER, RED_DANGER, dune_paul_sandworm64x64);
-	acts[5] = Act(ACT_VI, "Silence & Survival", PHRASES_SURVIVAL, COOL_BROWN, dune_chani64x64);
+	acts[0] = Act(ACT_I, "The Desert Sleeps", PHRASES_TIME, DIM_SAND, dune_act1);
+	acts[1] = Act(ACT_II, "Spice Awakens", PHRASES_DESERT, SPICE_AMBER, dune_act2);
+	acts[2] = Act(ACT_III, "The Watchers", PHRASES_POWER, HIGH_CONTRAST_WHITE, dune_act3);
+	acts[3] = Act(ACT_IV, "The Maker Stirs", PHRASES_DANGER, BRIGHT_SAND, dune_act4);
+	acts[4] = Act(ACT_V, "Storm of Fate", PHRASES_DANGER, RED_DANGER, dune_act5);
+	acts[5] = Act(ACT_VI, "Silence & Survival", PHRASES_SURVIVAL, COOL_BROWN, dune_act6);
     ESP_LOGD(TAG, "initializeActs() done");
 }
 
@@ -70,7 +70,7 @@ void Clockface::update() {
     layer_time();         // L4 Time (HH:MM)
     layer_text();         // L5 Text overlay (phrases)
 
-    //display_swap();           // push framebuffer
+    display_swap();           // push framebuffer
 
 	// if (act.getId() != _activeAct.getId()) {
 	// 	ESP_LOGD(TAG, "Act changed from %d to %d", _activeAct.getId(), act.getId());
@@ -90,10 +90,8 @@ void Clockface::update() {
 
 
 void Clockface::layer_clear() {
-    // no act involved ??? but shoudn't the sky color depend on the act?
-  // Fill framebuffer
-  // Use night color if act == I or VI
-  //framebufferFill(COLOR_SKY_DARK); // or act-based color
+    // not needed with direct drawing
+    //_display->fillScreen(COLOR_SKY_DARK);
 }
 
 void Clockface::layer_background() {
@@ -155,10 +153,36 @@ void Clockface::ambient_spice() {
     // Placeholder for spice ambient effect
 }
 void Clockface::ambient_shadow() {
-    // Placeholder for shadow ambient effect
+    uint32_t now = millis();
+    if (now - _shadowLastUpdate < 80) return;
+    _shadowLastUpdate = now;
+
+    _shadowX += _shadowDx;
+
+    if (_shadowX > 48 || _shadowX < 4) {
+        _shadowDx = -_shadowDx;
+        _shadowY = 8 + (_shadowX % 16);
+    }
+
+    ESP_LOGD(TAG, "shadowX=%d now=%lu", _shadowX, _nowMs);
+
+    drawShadowBand(_shadowX, _shadowY);
 }
 void Clockface::ambient_tremor() {
-    // Placeholder for tremor ambient effect
+    uint32_t now = millis();
+    if (now - _tremorLastUpdate < TREMOR_UPDATE_MS) return;
+    _tremorLastUpdate = now;
+
+    const uint16_t* bg = _activeAct.getBackground();
+
+    // Draw 8–12 small ripples per frame
+    for (uint8_t i = 0; i < 10; i++) {
+        // Random-ish positions using now for deterministic pseudo-random
+        uint8_t y = 32 + ((i * 7 + now / 150) % 20); // avoid top-center (0–31)
+        uint8_t x = (i * 5 + (now / 100)) % 48;      // ripple within safe width
+
+        drawTremorRipple(x, y, bg);
+    }
 }
 void Clockface::ambient_wind() {
     // Placeholder for wind ambient effect
@@ -176,6 +200,60 @@ void Clockface::drawWorm() {
 void Clockface::drawFlight() {
     // Placeholder for flight drawing
 }
+
+void Clockface::drawShadowBand(uint8_t xStart, uint8_t yStart) {
+    const uint8_t width = 16;
+    const uint8_t height = 6;
+    
+    const uint16_t* bg = _activeAct.getBackground();
+
+    for (uint8_t y = 0; y < height; y++) {
+        for (uint8_t x = 0; x < width; x++) {
+
+            uint8_t px = xStart + x;
+            uint8_t py = yStart + y;
+            if (px >= 64 || py >= 64) continue;
+
+            uint16_t base = bg[py * 64 + px];
+            uint16_t shaded = darken(base);
+
+            _display->drawPixel(px, py, shaded);
+        }
+    }
+}
+
+uint16_t Clockface::darken(uint16_t color) {
+    uint8_t r = (color >> 11) & 0x1F;
+    uint8_t g = (color >> 5) & 0x3F;
+    uint8_t b = color & 0x1F;
+
+    r = (r * 3) / 4;
+    g = (g * 3) / 4;
+    b = (b * 3) / 4;
+
+    return (r << 11) | (g << 5) | b;
+}
+
+void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t* bg) {
+    const uint8_t width = 8;
+    const uint8_t height = 2;
+
+    for (uint8_t y = 0; y < height; y++) {
+        for (uint8_t x = 0; x < width; x++) {
+            uint8_t px = xStart + x;
+            uint8_t py = yStart + y;
+            if (px >= 64 || py >= 64) continue;
+
+            // Sample background
+            uint16_t base = bg[py * 64 + px];
+            // Darken for ripple
+            uint16_t ripple = darken(base, 0.8f); // darken 20%
+
+            _display->drawPixel(px, py, ripple);
+        }
+    }
+}
+
 
 void Clockface::drawPhraseWithSandWipe(const char* phrase, uint16_t color) {
     if (!phrase) {
