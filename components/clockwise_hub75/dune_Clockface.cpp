@@ -165,6 +165,9 @@ void Clockface::layer_time() {
 
 void Clockface::layer_text() {
 
+    drawPhraseBlended("H", 0xFFFF, 255);
+    return;
+    
     // Global silencing rules
     if (eventSilencesText()) return;
     //if (_nowMs - _lastMinuteChangeMs < 2000) return;
