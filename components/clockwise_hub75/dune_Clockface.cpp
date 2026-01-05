@@ -165,7 +165,10 @@ void Clockface::layer_time() {
 
 void Clockface::layer_text() {
 
-    drawPhraseBlended("HELLO", 0xFFFF, 255);
+    //drawPhraseBlended("HELLO", 0xFFFF, 255);
+    drawTestLetter('H', 10, 10, 0xFFFF);
+    drawTestLetterScaled('H', 10, 40, 0xFFFF);
+
     return;
     
     // Global silencing rules
@@ -391,6 +394,48 @@ void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t*
         }
     }
 }
+
+void Clockface::drawTestLetter(char c, int x, int y, uint16_t color) {
+    int index = 0;
+    if (c >= 'A' && c <= 'J') index = (c - 'A') + 1;
+
+    const uint8_t* glyph = dune_font5x7_letters[index];
+
+    for (int col = 0; col < 5; col++) {
+        uint8_t bits = pgm_read_byte(&glyph[col]);
+        for (int row = 0; row < 7; row++) {
+            if (bits & (1 << row)) {
+                int px = x + col;
+                int py = y + row;
+                if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
+                fbSet(px, py, color);
+            }
+        }
+    }
+}
+
+void Clockface::drawTestLetterScaled(char c, int x, int y, uint16_t color) {
+    int index = (c >= 'A' && c <= 'J') ? (c - 'A') + 1 : 0;
+    const uint8_t* glyph = dune_font5x7_letters[index];
+    const int scale = 2;
+
+    for (int col = 0; col < 5; col++) {
+        uint8_t bits = pgm_read_byte(&glyph[col]);
+        for (int row = 0; row < 7; row++) {
+            if (!(bits & (1 << row))) continue;
+
+            for (int dx = 0; dx < scale; dx++) {
+                for (int dy = 0; dy < scale; dy++) {
+                    int px = x + col * scale + dx;
+                    int py = y + row * scale + dy;
+                    if (px < 0 || py < 0 || px >= 64 || py >= 64) continue;
+                    fbSet(px, py, color);
+                }
+            }
+        }
+    }
+}
+
 
 void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha) {
     if (!phrase) return;
