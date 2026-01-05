@@ -21,7 +21,7 @@ Clockface::~Clockface() {
 Act Clockface::getCurrentAct(uint8_t hour) {
 	// 6 phases, each 4 hours
     uint8_t îdx = hour / 4; // 0-5
-    return acts[îdx];
+    return _acts[îdx];
 }
 
 void Clockface::setup(CWDateTime *dateTime) {
@@ -38,12 +38,12 @@ void Clockface::setup(CWDateTime *dateTime) {
 
 void Clockface::initializeActs() {
 	ESP_LOGD(TAG, "initializeActs() called");
-	acts[0] = Act(ACT_I, "The Desert Sleeps", PHRASES_TIME, DIM_SAND, dune_act1);
-	acts[1] = Act(ACT_II, "Spice Awakens", PHRASES_DESERT, SPICE_AMBER, dune_act2);
-	acts[2] = Act(ACT_III, "The Watchers", PHRASES_POWER, HIGH_CONTRAST_WHITE, dune_act3);
-	acts[3] = Act(ACT_IV, "The Maker Stirs", PHRASES_DANGER, BRIGHT_SAND, dune_act4);
-	acts[4] = Act(ACT_V, "Storm of Fate", PHRASES_DANGER, RED_DANGER, dune_act5);
-	acts[5] = Act(ACT_VI, "Silence & Survival", PHRASES_SURVIVAL, COOL_BROWN, dune_act6);
+	_acts[0] = Act(ACT_I, "The Desert Sleeps", PHRASES_TIME, DIM_SAND, dune_act1);
+	_acts[1] = Act(ACT_II, "Spice Awakens", PHRASES_DESERT, SPICE_AMBER, dune_act2);
+	_acts[2] = Act(ACT_III, "The Watchers", PHRASES_POWER, HIGH_CONTRAST_WHITE, dune_act3);
+	_acts[3] = Act(ACT_IV, "The Maker Stirs", PHRASES_DANGER, BRIGHT_SAND, dune_act4);
+	_acts[4] = Act(ACT_V, "Storm of Fate", PHRASES_DANGER, RED_DANGER, dune_act5);
+	_acts[5] = Act(ACT_VI, "Silence & Survival", PHRASES_SURVIVAL, COOL_BROWN, dune_act6);
     ESP_LOGD(TAG, "initializeActs() done");
 }
 

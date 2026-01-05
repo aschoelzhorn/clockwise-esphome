@@ -94,7 +94,7 @@ class Clockface : public IClockface {
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
     Act _activeAct;
-    Act acts[6];
+    Act _acts[6];
 
     uint32_t _lastPhraseUpdate = 0;
 
