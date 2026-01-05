@@ -326,6 +326,16 @@ void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
 		ESP_LOGE(TAG, "drawTime() failed: _display is nullptr");
 		return;
 	}
+
+    if (hour != _lastHour || minute != _lastMinute) {
+        ESP_LOGD(TAG, "drawTime() updating time %02d:%02d", hour, minute);
+        _lastHour = hour;
+        _lastMinute = minute;
+    } else {
+        // No change, avoids flicker
+        return;
+    }
+
 	// Placement
 	int x = 10; // x_start
 	int y = 34; // y_start
