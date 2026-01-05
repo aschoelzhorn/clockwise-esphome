@@ -12,7 +12,7 @@ public:
 
     void drawPixel(int16_t x, int16_t y, uint16_t color) override {
         if (x < 0 || y < 0 || x >= 64 || y >= 64) return;
-        Clockface::framebuffer[y * 64 + x] = color;
+        Clockface::_framebuffer[y * 64 + x] = color;
     }
 };
 
@@ -62,7 +62,7 @@ void Clockface::initializeActs() {
 }
 
 void Clockface::flushFramebuffer() {
-    _display->drawRGBBitmap(0, 0, framebuffer, 64, 64);
+    _display->drawRGBBitmap(0, 0, _framebuffer, 64, 64);
 }
 
 
@@ -120,7 +120,7 @@ void Clockface::layer_background() {
 		return;
 	} 
 
-    memcpy(framebuffer, bg, 64 * 64 * sizeof(uint16_t));
+    memcpy(_framebuffer, bg, 64 * 64 * sizeof(uint16_t));
    //_display->drawRGBBitmap(0, 0, bg, 64, 64);
 }
 
@@ -320,7 +320,7 @@ void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
 
     snprintf(buf, sizeof(buf),
              showColon ? "%02d:%02d" : "%02d %02d",
-             _hour, _minute);
+             hour, minute);
 
     fbGfx.print(buf);
 }
