@@ -240,6 +240,11 @@ void Clockface::enterAct(uint8_t actId) {
 }
 
 void Clockface::ambient_heat() {
+
+  ESP_LOGD(TAG, "_ambientHeat.enabled change: %s", _ambientHeat.enabled ? "true" : "false");
+  ESP_LOGD(TAG, "_ambientSand.enabled change: %s", _ambientSand.enabled ? "true" : "false");
+  ESP_LOGD(TAG, "_ambientTremor.enabled change: %s", _ambientTremor.enabled ? "true" : "false");
+
   if (!_ambientHeat.enabled) return;
 
   // Cold desert = slow update
@@ -249,6 +254,8 @@ void Clockface::ambient_heat() {
   _ambientHeat.phase += 0.08f;
   if (_ambientHeat.phase > 6.28f)
     _ambientHeat.phase -= 6.28f;
+
+  ESP_LOGD(TAG, "_ambientHeat.phase: %.2f", _ambientHeat.phase);
 
   for (uint8_t y = 0; y < 64; y++) {
 
