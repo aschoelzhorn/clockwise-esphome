@@ -100,7 +100,6 @@ void Clockface::update() {
 
 void Clockface::setActiveAct() {
     Act act = getCurrentAct(_dateTime->getHour());
-    act = _acts[0]; // FOR TESTING ONLY - FORCE ACT I (REMOVE LATER)
     if (act.getId() != _activeAct.getId()) {
         ESP_LOGD(TAG, "Act change: %s", act.getName());
         _activeAct = act;
@@ -113,15 +112,55 @@ void Clockface::layer_clear() {
 }
 
 void Clockface::layer_background() {
+
+  // No transition → draw normally
+  if (!_bgTransition.active) {
     const uint16_t* bg = _activeAct.getBackground();
 	if (!bg) {
 		ESP_LOGE(TAG, "layer_background() failed: bg is nullptr");
 		return;
 	} 
-    memcpy(framebuffer, bg, 64 * 64 * sizeof(uint16_t));
+    memcpy(framebuffer, bg, 64 * 64 * sizeof(uint16_t));    
+    return;
+  }
+
+  // Transition active
+  uint32_t elapsed = _now - _bgTransition.start;
+
+  if (elapsed >= _bgTransition.duration) {
+    // End transition
+    _bgTransition.active = false;
+
+    const uint16_t* bg = _bgTransition.to;
+    for (uint8_t y = 0; y < 64; y++) {
+      for (uint8_t x = 0; x < 64; x++) {
+        fbSet(x, y, bg[y * 64 + x]);
+      }
+    }
+    return;
+  }
+
+  uint8_t alpha = (elapsed * 255) / _bgTransition.duration;
+
+  const uint16_t* a = _bgTransition.from;
+  const uint16_t* b = _bgTransition.to;
+
+  for (uint8_t y = 0; y < 64; y++) {
+    for (uint8_t x = 0; x < 64; x++) {
+      uint16_t blended =
+        blend565(a[y * 64 + x], b[y * 64 + x], alpha);
+      fbSet(x, y, blended);
+    }
+  }    
+
 }
 
 void Clockface::layer_ambient() {
+    /* TODO check this switch statement, see also code in enterAct()
+    _ambientHeat.enabled   = (actId == ACT_I);
+    _ambientSand.enabled   = (actId >= ACT_II);
+    _ambientTremor.enabled = (actId >= ACT_IV);
+    */
     switch (_activeAct.getId()) {
         case ACT_I: ambient_heat(); break;
         case ACT_II: ambient_spice(); break;
@@ -133,15 +172,28 @@ void Clockface::layer_ambient() {
 }
 
 void Clockface::layer_event() {
-    if (!_event.active) return;
+  if (!_event.active) {
+    maybeStartEvent();
+    return;
+  }
 
-    if (_event.type == EVENT_STORM) {
-        drawStorm();
-    } else if (_event.type == EVENT_WORM) {
-        drawWorm();
-    } else if (_event.type == EVENT_FLIGHT) {
-        drawFlight();
-    }
+  switch (_event.type) {
+  
+    case EVENT_STORM:
+      drawStorm();
+      break;
+
+    case EVENT_WORM:
+      drawWorm();
+      break;
+
+    case EVENT_FLIGHT:
+      drawFlight();
+      break;
+
+    default:
+      break;
+  }
 }
 
 void Clockface::layer_time() {
@@ -214,6 +266,47 @@ void Clockface::layer_text() {
     }
 }
 
+void Clockface::maybeStartEvent() {
+
+  // No overlapping events
+  if (_event.active) return;
+
+  // Guard: don't start near minute change
+  // TODO implement _lastMinuteChange
+  //if (_now - _lastMinuteChange < 3000) return;
+
+  // Simple probability gate (tune later)
+  // if (random(1000) > 2) return; // disable for testing
+
+  // Act-based selection
+  uint8_t actId = _activeAct.getId();
+
+  // EVENT_FLIGHT missing    
+  if (actId >= ACT_IV) {
+    startEvent(EVENT_WORM);
+  } else if (actId >= ACT_II) {
+    startEvent(EVENT_STORM);
+  }
+}
+
+void Clockface::startEvent(EventType type) {
+  _event.active = true;
+  _event.type = type;
+  _event.phase = EP_ENTER;
+  _event.phaseStart = _now;
+
+  ESP_LOGD(TAG, "Event started: %d", type);
+}
+
+void Clockface::endEvent() {
+  _event.active = false;
+  _event.type = EVENT_NONE;
+  _event.phase = EP_IDLE;
+
+  ESP_LOGD(TAG, "Event ended");  
+}
+
+
 // TODO: move these utility functions to a common location
 inline uint8_t r5(uint16_t c) { return (c >> 11) & 0x1F; }
 inline uint8_t g6(uint16_t c) { return (c >> 5) & 0x3F; }
@@ -225,10 +318,34 @@ inline uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
 
 void Clockface::enterAct(uint8_t actId) {
 
-  _ambientHeat.enabled   = false; //(actId == ACT_I); // disable for testing
+  int currentActId = _activeAct.getId();
+  int previousActId = currentActId - 1;
+
+  const uint16_t* newBg = _activeAct.getBackground();
+  if (currentActId < ACT_I) {
+    // No previous act, no transition
+    _bgTransition.active = false;
+    memcpy(framebuffer, newBg, 64 * 64 * sizeof(uint16_t));
+    return;
+  }
+  
+  if (previousActId == 0) { // wrap around
+    previousActId = ACT_VI;
+  }
+
+  const uint16_t* oldBg = acts[previousActId].getBackground();
+
+  _bgTransition.active = true;
+  _bgTransition.from = oldBg;
+  _bgTransition.to = newBg;
+  _bgTransition.start = _now;
+
+  _ambientHeat.enabled   = (actId == ACT_I);
   _ambientSand.enabled   = (actId >= ACT_II);
   _ambientTremor.enabled = (actId >= ACT_IV);
 
+  _ambientHeat.enabled   = false;  // disable for testing
+  
   // Reset phases so visuals feel intentional
   _ambientHeat.phase = 0.0f;
   _ambientSand.phase = 0.0f;
@@ -327,7 +444,36 @@ void Clockface::ambient_dust() {
 }
 
 void Clockface::drawStorm() {
-    // Placeholder for storm drawing
+  uint32_t elapsed = _now - _event.phaseStart;
+
+  switch (_event.phase) {
+
+    case EP_ENTER:
+      // TODO: wind buildup
+      if (elapsed > 2000) {
+        _event.phase = EP_ACTIVE;
+        _event.phaseStart = _now;
+      }
+      break;
+
+    case EP_ACTIVE:
+      // TODO: sandstorm visuals
+      if (elapsed > 5000) {
+        _event.phase = EP_EXIT;
+        _event.phaseStart = _now;
+      }
+      break;
+
+    case EP_EXIT:
+      // TODO: calm return
+      if (elapsed > 2000) {
+        endEvent();
+      }
+      break;
+
+    default:
+      break;
+  }
 }
 void Clockface::drawWorm() {
     // Placeholder for worm drawing

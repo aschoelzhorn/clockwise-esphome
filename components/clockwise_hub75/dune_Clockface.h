@@ -63,35 +63,69 @@ AmbientState _ambientHeat;
 AmbientState _ambientSand;
 AmbientState _ambientTremor;
 
-
 //frame ambient end
 
-    typedef enum {
-      VS_IDLE,
-      VS_ENTER,
-      VS_ACTIVE,
-      VS_EXIT
-    } VisualPhase;
+    // typedef enum {
+    //   VS_IDLE,
+    //   VS_ENTER,
+    //   VS_ACTIVE,
+    //   VS_EXIT
+    // } VisualPhase;
 
 
-    #define STORM_ENTER_MS   800
-    #define STORM_ACTIVE_MS 3000
-    #define STORM_EXIT_MS   1200
+    // #define STORM_ENTER_MS   800
+    // #define STORM_ACTIVE_MS 3000
+    // #define STORM_EXIT_MS   1200
 
-    typedef enum {
-      EVENT_NONE = 0,
-      EVENT_STORM,
-      EVENT_WORM,
-      EVENT_FLIGHT
-    } EventType;
+    // typedef enum {
+    //   EVENT_NONE = 0,
+    //   EVENT_STORM,
+    //   EVENT_WORM,
+    //   EVENT_FLIGHT
+    // } EventType;
 
-    typedef struct {
-      bool active = false;
-      EventType type = EVENT_NONE;
-      VisualPhase phase = VS_IDLE;
-      uint32_t phaseStart = 0;
-    } Event;
-    Event _event;
+    // typedef struct {
+    //   bool active = false;
+    //   EventType type = EVENT_NONE;
+    //   VisualPhase phase = VS_IDLE;
+    //   uint32_t phaseStart = 0;
+    // } Event;
+    // Event _event;
+
+// frame event begin
+
+enum EventType {
+  EVENT_NONE,
+  EVENT_STORM,
+  EVENT_WORM,
+  EVENT_FLIGHT
+};
+
+enum EventPhase {
+  EP_IDLE,
+  EP_ENTER,   // buildup
+  EP_ACTIVE,  // main visuals
+  EP_EXIT     // fade out / settle
+};
+struct EventState {
+  bool active = false;
+  EventType type = EVENT_NONE;
+  EventPhase phase = EP_IDLE;
+  uint32_t phaseStart = 0;
+};
+EventState _event;
+// frame event end
+
+struct BackgroundTransition {
+  bool active = false;
+  const uint16_t* from = nullptr;
+  const uint16_t* to = nullptr;
+  uint32_t start = 0;
+  uint32_t duration = 2500;
+};
+
+BackgroundTransition _bgTransition;
+
 
     #define ACT_I 1
     #define ACT_II 2
@@ -154,6 +188,9 @@ AmbientState _ambientTremor;
     void ambient_dust();
 
     // event effects
+    void maybeStartEvent();
+    void startEvent(EventType type);
+    void endEvent();
     void drawStorm();
     void drawWorm();
     void drawFlight();
