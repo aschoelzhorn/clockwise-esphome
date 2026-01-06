@@ -333,7 +333,7 @@ void Clockface::enterAct(uint8_t actId) {
     previousActId = ACT_VI;
   }
 
-  const uint16_t* oldBg = acts[previousActId].getBackground();
+  const uint16_t* oldBg = _acts[previousActId].getBackground();
 
   _bgTransition.active = true;
   _bgTransition.from = oldBg;
