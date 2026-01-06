@@ -30,6 +30,7 @@ class Clockface : public IClockface {
     #define COLOR_SHADOW_DARK  0x4208  // dark brown/gray
     #define COLOR_SHADOW_SOFT  0x630C  // softer edge
 
+    // frame_text begin
     // Text state
     enum TextPhase {
         TEXT_IDLE,
@@ -50,6 +51,20 @@ class Clockface : public IClockface {
     static constexpr uint32_t TEXT_QUIET_MS    = 1500; //600000; // 10 minutes
 
     TextState _text;
+// frame_text end
+
+// frame ambient begin
+struct AmbientState {
+  bool enabled = false;
+  uint32_t lastUpdate = 0;
+  float phase = 0.0f;
+};
+AmbientState _ambientHeat;
+AmbientState _ambientSand;
+AmbientState _ambientTremor;
+
+
+//frame ambient end
 
     typedef enum {
       VS_IDLE,
@@ -109,24 +124,28 @@ class Clockface : public IClockface {
 
     EventBus* _eventBus;
 
+    Act getCurrentAct(uint8_t hour);
+
+    void initializeActs();
+    void setActiveAct();
+    void enterAct(uint8_t actId);
+
+    void drawBackgroundImage(const uint16_t* image);
+    void flushFramebuffer();
     void drawTime(uint8_t hour, uint8_t minute, uint16_t color);
     void drawDigit(uint8_t digit, int x, int y, uint16_t color);
     void drawColon(int x, int y, bool blink, uint16_t color);
 
-    Act getCurrentAct(uint8_t hour);
 
-    void initializeActs();
-    void drawBackgroundImage(const uint16_t* image);
-
-    void flushFramebuffer();
-
+    // rendering layers
     void layer_clear();
     void layer_background();
     void layer_ambient();
     void layer_event();
     void layer_time();
     void layer_text();
- 
+
+    // ambient effects
     void ambient_heat();
     void ambient_spice();
     void ambient_shadow();
@@ -134,10 +153,12 @@ class Clockface : public IClockface {
     void ambient_wind();
     void ambient_dust();
 
+    // event effects
     void drawStorm();
     void drawWorm();
     void drawFlight();
 
+    
     void drawShadowBand(uint8_t xStart, uint8_t yStart);
     uint16_t darken(uint16_t color);
     uint16_t darken(uint16_t color, float factor);

@@ -83,8 +83,8 @@ void Clockface::update() {
 	}
 	
     _now = millis();
-	_activeAct = getCurrentAct(_dateTime->getHour());
-    _activeAct = _acts[0]; // FOR TESTING ONLY - FORCE ACT I
+
+    setActiveAct(); // Update active Act based on current hour
     
     bool event_is_active = false; // Placeholder for event logic
 
@@ -96,6 +96,16 @@ void Clockface::update() {
     layer_text();         // L5 Text overlay (phrases)
 
     flushFramebuffer();
+}
+
+void Clockface::setActiveAct() {
+    Act act = getCurrentAct(_dateTime->getHour());
+    if (act.getId() != _activeAct.getId()) {
+        ESP_LOGD(TAG, "Act change: %s", act.getName());
+        _activeAct = act;
+        enterAct(_activeAct.getId());
+    }
+    _activeAct = _acts[0]; // FOR TESTING ONLY - FORCE ACT I
 }
 
 void Clockface::layer_clear() {
@@ -204,8 +214,70 @@ void Clockface::layer_text() {
     }
 }
 
+// TODO: move these utility functions to a common location
+inline uint8_t r5(uint16_t c) { return (c >> 11) & 0x1F; }
+inline uint8_t g6(uint16_t c) { return (c >> 5) & 0x3F; }
+inline uint8_t b5(uint16_t c) { return c & 0x1F; }
+
+inline uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
+  return (r << 11) | (g << 5) | b;
+}
+
+void Clockface::enterAct(uint8_t actId) {
+
+  _ambientHeat.enabled   = (actId == ACT_I);
+  _ambientSand.enabled   = (actId >= ACT_II);
+  _ambientTremor.enabled = (actId >= ACT_IV);
+
+  // Reset phases so visuals feel intentional
+  _ambientHeat.phase = 0.0f;
+  _ambientSand.phase = 0.0f;
+  _ambientTremor.phase = 0.0f;
+
+  _ambientHeat.lastUpdate = _now;
+  _ambientSand.lastUpdate = _now;
+  _ambientTremor.lastUpdate = _now;
+}
+
 void Clockface::ambient_heat() {
-    // Placeholder for heat ambient effect
+  if (!_ambientHeat.enabled) return;
+
+  // Cold desert = slow update
+  if (_now - _ambientHeat.lastUpdate < 120) return;
+  _ambientHeat.lastUpdate = _now;
+
+  _ambientHeat.phase += 0.08f;
+  if (_ambientHeat.phase > 6.28f)
+    _ambientHeat.phase -= 6.28f;
+
+  for (uint8_t y = 0; y < 64; y++) {
+
+    float rowWave = sinf(_ambientHeat.phase + y * 0.15f);
+
+    for (uint8_t x = 0; x < 64; x++) {
+
+      uint16_t c = fbGet(x, y);
+
+      uint8_t r = r5(c);
+      uint8_t g = g6(c);
+      uint8_t b = b5(c);
+
+      // Ignore sky / deep shadow
+      if (r + g + b < 12) continue;
+
+      int8_t delta =
+        (rowWave > 0.4f)  ? 1 :
+        (rowWave < -0.4f) ? -1 : 0;
+
+      if (!delta) continue;
+
+      r = constrain(r + delta, 0, 31);
+      g = constrain(g + delta, 0, 63);
+      b = constrain(b + delta, 0, 31);
+
+      fbSet(x, y, rgb565(r, g, b));
+    }
+  }
 }
 void Clockface::ambient_spice() {
     // Placeholder for spice ambient effect
