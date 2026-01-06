@@ -225,7 +225,7 @@ inline uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
 
 void Clockface::enterAct(uint8_t actId) {
 
-  _ambientHeat.enabled   = (actId == ACT_I);
+  _ambientHeat.enabled   = false; //(actId == ACT_I); // disable for testing
   _ambientSand.enabled   = (actId >= ACT_II);
   _ambientTremor.enabled = (actId >= ACT_IV);
 
@@ -241,9 +241,9 @@ void Clockface::enterAct(uint8_t actId) {
 
 void Clockface::ambient_heat() {
 
-  ESP_LOGD(TAG, "_ambientHeat.enabled change: %s", _ambientHeat.enabled ? "true" : "false");
-  ESP_LOGD(TAG, "_ambientSand.enabled change: %s", _ambientSand.enabled ? "true" : "false");
-  ESP_LOGD(TAG, "_ambientTremor.enabled change: %s", _ambientTremor.enabled ? "true" : "false");
+//   ESP_LOGD(TAG, "_ambientHeat.enabled: %s", _ambientHeat.enabled ? "true" : "false");
+//   ESP_LOGD(TAG, "_ambientSand.enabled: %s", _ambientSand.enabled ? "true" : "false");
+//   ESP_LOGD(TAG, "_ambientTremor.enabled: %s", _ambientTremor.enabled ? "true" : "false");
 
   if (!_ambientHeat.enabled) return;
 
