@@ -36,6 +36,13 @@ Clockface::~Clockface() {
 }
 
 Act Clockface::getCurrentAct(uint8_t hour) {
+
+    // Change act every 30 seconds
+    static constexpr uint32_t TEST_ACT_MS = 30 * 1000;
+
+    uint32_t slot = (_now / TEST_ACT_MS) % 6;
+    return _acts[slot];
+
 	// 6 phases, each 4 hours
     uint8_t îdx = hour / 4; // 0-5
     return _acts[îdx];
