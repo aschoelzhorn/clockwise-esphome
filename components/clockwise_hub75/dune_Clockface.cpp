@@ -100,12 +100,12 @@ void Clockface::update() {
 
 void Clockface::setActiveAct() {
     Act act = getCurrentAct(_dateTime->getHour());
+    act = _acts[0]; // FOR TESTING ONLY - FORCE ACT I (REMOVE LATER)
     if (act.getId() != _activeAct.getId()) {
         ESP_LOGD(TAG, "Act change: %s", act.getName());
         _activeAct = act;
         enterAct(_activeAct.getId());
     }
-    _activeAct = _acts[0]; // FOR TESTING ONLY - FORCE ACT I
 }
 
 void Clockface::layer_clear() {
