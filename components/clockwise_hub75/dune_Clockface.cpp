@@ -346,8 +346,9 @@ void Clockface::enterAct(uint8_t actId) {
 
   ESP_LOGD(TAG, "currentActId: %d, previousActId: %d", currentActId, previousActId);
 
-  const uint16_t* newBg = _acts[currentActId].getBackground();
-  const uint16_t* oldBg = _acts[previousActId].getBackground();
+  // act id not identical to array index, but we could fix that by add in a dummy act at index 0
+  const uint16_t* newBg = _acts[currentActId - 1].getBackground();
+  const uint16_t* oldBg = _acts[previousActId - 1].getBackground();
 
   _bgTransition.active = true;
   _bgTransition.from = oldBg;
