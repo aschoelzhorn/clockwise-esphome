@@ -325,7 +325,7 @@ inline uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
 
 void Clockface::enterAct(uint8_t actId) {
 
-  int currentActId = _actId;
+  int currentActId = actId;
   int previousActId = currentActId - 1;
 
   
