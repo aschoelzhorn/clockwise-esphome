@@ -171,6 +171,7 @@ void Clockface::layer_ambient() {
     _ambientSand.enabled   = (actId >= ACT_II);
     _ambientTremor.enabled = (actId >= ACT_IV);
     */
+   return; // disable for testing
     switch (_activeAct.getId()) {
         case ACT_I: ambient_heat(); break;
         case ACT_II: ambient_spice(); break;
