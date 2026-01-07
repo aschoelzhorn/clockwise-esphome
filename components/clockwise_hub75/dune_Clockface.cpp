@@ -35,17 +35,20 @@ Clockface::~Clockface() {
   delete _eventBus;
 }
 
+#define TEST_ACT_CYCLING
+
 Act Clockface::getCurrentAct(uint8_t hour) {
 
-    // Change act every 30 seconds
-    static constexpr uint32_t TEST_ACT_MS = 30 * 1000;
-
+#ifdef TEST_ACT_CYCLING
+    // Change act every 10 seconds
+    static constexpr uint32_t TEST_ACT_MS = 10 * 1000;
     uint32_t slot = (_now / TEST_ACT_MS) % 6;
     return _acts[slot];
-
+#else
 	// 6 phases, each 4 hours
     uint8_t îdx = hour / 4; // 0-5
     return _acts[îdx];
+#endif
 }
 
 void Clockface::setup(CWDateTime *dateTime) {
@@ -119,8 +122,6 @@ void Clockface::layer_clear() {
 }
 
 void Clockface::layer_background() {
-
-  ESP_LOGE(TAG, "layer_background() _bgTransition.active: %s", _bgTransition.active ? "true" : "false");
 
   // No transition → draw normally
   if (!_bgTransition.active) {
