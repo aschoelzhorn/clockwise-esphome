@@ -120,6 +120,8 @@ void Clockface::layer_clear() {
 
 void Clockface::layer_background() {
 
+  ESP_LOGE(TAG, "layer_background() _bgTransition.active: %s", _bgTransition.active ? "true" : "false");
+
   // No transition → draw normally
   if (!_bgTransition.active) {
     const uint16_t* bg = _activeAct.getBackground();
