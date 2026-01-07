@@ -106,10 +106,10 @@ void Clockface::update() {
 }
 
 void Clockface::setActiveAct() {
-    Act act = getCurrentAct(_dateTime->getHour());
-    if (act.getId() != _activeAct.getId()) {
-        ESP_LOGD(TAG, "Act change: %s", act.getName());
-        _activeAct = act;
+    Act newAct = getCurrentAct(_dateTime->getHour());
+    if (newAct.getId() != _activeAct.getId()) {
+        ESP_LOGD(TAG, "Act change: %s", newAct.getName());
+        _activeAct = newAct;
         enterAct(_activeAct.getId());
     }
 }
@@ -325,14 +325,15 @@ inline uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
 
 void Clockface::enterAct(uint8_t actId) {
 
-  int currentActId = _activeAct.getId();
+  int currentActId = _actId;
   int previousActId = currentActId - 1;
 
-  const uint16_t* newBg = _activeAct.getBackground();
+  
   if (currentActId < ACT_I) {
-    // No previous act, no transition
+    // No previous act, no transition, can never happen normally
+    ESP_LOGD(TAG, "enterAct with currentActId < 1 can never happen normally");
     _bgTransition.active = false;
-    memcpy(framebuffer, newBg, 64 * 64 * sizeof(uint16_t));
+    //memcpy(framebuffer, newBg, 64 * 64 * sizeof(uint16_t));
     return;
   }
   
@@ -340,6 +341,9 @@ void Clockface::enterAct(uint8_t actId) {
     previousActId = ACT_VI;
   }
 
+  ESP_LOGD(TAG, "currentActId: %d, previousActId: %d", currentActId, previousActId);
+
+  const uint16_t* newBg = _acts[currentActId].getBackground();
   const uint16_t* oldBg = _acts[previousActId].getBackground();
 
   _bgTransition.active = true;
@@ -352,6 +356,8 @@ void Clockface::enterAct(uint8_t actId) {
   _ambientTremor.enabled = (actId >= ACT_IV);
 
   _ambientHeat.enabled   = false;  // disable for testing
+  _ambientSand.enabled   = false;  // disable for testing
+  _ambientTremor.enabled = false;  // disable for testing
   
   // Reset phases so visuals feel intentional
   _ambientHeat.phase = 0.0f;
