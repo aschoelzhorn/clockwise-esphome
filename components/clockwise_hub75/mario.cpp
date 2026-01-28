@@ -57,7 +57,7 @@ void Mario::idle() {
 
 void Mario::init() {
   Locator::getEventBus()->subscribe(this);
-  draw();
+  idle();  // Ensure Mario starts in IDLE state and is drawn  
 }
 
 void Mario::draw() {

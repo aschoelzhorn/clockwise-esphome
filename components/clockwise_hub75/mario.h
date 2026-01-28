@@ -16,6 +16,7 @@ class Mario: public Sprite, public EventTask {
   private:
 
     enum State {
+      UNKNOWN,
       IDLE,
       WALKING,
       JUMPING
@@ -28,8 +29,8 @@ class Mario: public Sprite, public EventTask {
 
     const unsigned short* _sprite;
     unsigned long lastMillis = 0;
-    State _state = IDLE; 
-    State _lastState = IDLE;
+    State _state = UNKNOWN; 
+    State _lastState = UNKNOWN;
     bool _shouldHitBlocks = true;  // Track if this jump should hit blocks
     uint8_t _targetJumpHeight = MARIO_JUMP_HEIGHT;  // Track target height for this jump
     unsigned short _skyColor = SKY_COLOR;

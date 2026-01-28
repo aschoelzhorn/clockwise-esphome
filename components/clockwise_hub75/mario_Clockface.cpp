@@ -74,20 +74,12 @@ void Clockface::setup(CWDateTime *dateTime) {
 
   Locator::getDisplay()->setFont(&Super_Mario_Bros__24pt7b);
 
-  // Check if we need to switch between day/night mode
-  bool shouldBeNight = shouldBeNightMode();
-  applyNightMode(shouldBeNight);
-  
-  drawStaticObjects();
-
-  updateTime();
-
   hourBlock->init();
   minuteBlock->init();
   mario->init();
   for (int i = 0; i < ENEMY_COUNT; ++i) enemies[i]->init();
 
-  applyNightMode(shouldBeNight);
+  updateTime();
 }
 
 void Clockface::drawStaticObjects() {
