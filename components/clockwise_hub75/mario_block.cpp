@@ -51,7 +51,7 @@ void Block::setText(String text) {
 
 void Block::init() {
   Locator::getEventBus()->subscribe(this);
-  draw();
+  idle();
 }
 
 void Block::update() {

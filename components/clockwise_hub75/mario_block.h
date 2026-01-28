@@ -13,6 +13,7 @@ const uint8_t MAX_MOVE_HEIGHT = 4;
 class Block: public Sprite, public EventTask {
   private:
     enum State {
+      UNKNOWN,
       IDLE,
       HIT
     };   
@@ -22,8 +23,8 @@ class Block: public Sprite, public EventTask {
     String _text;
 
     unsigned long lastMillis = 0;
-    State _state = IDLE; 
-    State _lastState = IDLE; 
+    State _state = UNKNOWN;
+    State _lastState = UNKNOWN;
     uint8_t _lastY;
     uint8_t _firstY;
     unsigned short _skyColor = SKY_COLOR;
