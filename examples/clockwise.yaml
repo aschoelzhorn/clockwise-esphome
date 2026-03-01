@@ -69,6 +69,12 @@ wifi:
 
 captive_portal:
 
+# can be used for RTC
+i2c:
+  sda: 41
+  scl: 42
+  scan: true
+
 # Web server (optional - disable for production to save memory)
 #web_server:
 #  port: 80
@@ -82,6 +88,14 @@ time:
     on_time_sync:
       then:
         - logger.log: "Time synchronized with Home Assistant"
+
+  - platform: bm8563
+    id: rtc_time
+    address: 0x51
+    update_interval: 60s
+    on_time_sync:
+      then:
+        - logger.log: "Time synchronized with BM8563 RTC"
 
 # External components
 external_components:
@@ -105,6 +119,7 @@ display:
     bit_depth: 8
     min_refresh_rate: 120  # ESP32-S3 can handle high refresh rates
     double_buffer: false
+    rotation: 0 # (0=default, 90, 180, 270)
     
     # Hardware configuration - FM6126A driver chip
     shift_driver: FM6126A
@@ -122,7 +137,7 @@ display:
 clockwise_hub75:
   id: clockwise_main
   hub75_id: matrix_display
-  time_id: homeassistant_time  # Link to time component for clock display  
+  time_id: homeassistant_time # rtc_time # Link to time component for clock display
   clockface_type: MARIO
   initial_brightness: ${initial_brightness}
 

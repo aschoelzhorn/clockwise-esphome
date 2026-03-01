@@ -108,6 +108,7 @@ display:
     shift_driver: FM6126A
     brightness: 128
     update_interval: 4294967295ms  # Never - clockwise handles updates
+    rotation: 90 # (Optional, integer): The rotation of the display in degrees, one of 0, 90, 180 or 270. Defaults to 0
 
 # Clockwise Component
 clockwise_hub75:
@@ -204,6 +205,7 @@ sensor:
 ## 🔌 Wiring Guide
 
 For **Huidu HD-WF2** boards, no manual wiring needed - just use `board: huidu-hd-wf2` in your configuration.
+RTC is supported. 
 
 For custom setups, see the [original HUB75 ESPHome component](https://github.com/stuartparmenter/hub75-esphome).
 
