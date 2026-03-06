@@ -10,12 +10,12 @@ static const char *const TAG = "CWDateTime";
 
 void CWDateTime::set_rtc(esphome::time::RealTimeClock *rtc) {
   rtc_ = rtc;
-  if (rtc_)
-    ESP_LOGI(TAG, "RTC successfully linked!");
-  else
+  if (rtc_) {
+    ESP_LOGI(TAG, "RTC pointer linked: %p (source determined by selector)", rtc_);
+  } else {
     ESP_LOGW(TAG, "RTC pointer cleared or invalid!");
+  }
 }
-
 
 void CWDateTime::begin() {
   ESP_LOGI(TAG, "CWDateTime initialized. Waiting for RTC to be assigned via YAML.");

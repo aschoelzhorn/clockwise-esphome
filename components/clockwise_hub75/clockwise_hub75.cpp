@@ -1,3 +1,5 @@
+
+#include "CWDateTime.h"
 #include "clockwise_hub75.h"
 #include "esphome/core/log.h"
 #include "Locator.h"
@@ -6,11 +8,20 @@
 #include "mario_Clockface.h"  // For Mario face
 #include "dune_Clockface.h"   // For Dune face
 
+::CWDateTime g_dt;
+
 namespace esphome {
 namespace clockwise_hub75 {
 
+void ClockwiseHUB75::set_ha_time(time::RealTimeClock *time) {
+  ha_time_ = time;
+}
+
+void ClockwiseHUB75::set_rtc_time(time::RealTimeClock *time) {
+  rtc_time_ = time;
+}
+
 static const char *const TAG = "clockwise_hub75";
-static ::CWDateTime g_dt;  // Global datetime instance (shim)
 
 void ClockwiseHUB75::setup() {
   ESP_LOGCONFIG(TAG, "Setting up Clockwise HUB75 Integration...");
@@ -33,9 +44,9 @@ void ClockwiseHUB75::setup() {
   
   // Initialize datetime shim
   g_dt.begin();
-  if (time_ != nullptr) {
-    g_dt.set_rtc(time_);
-  }
+  // Time sources are now wired from YAML via set_ha_time and set_rtc_time
+  // Default to HA time source
+  set_time_source(time_source_);
   
   // Create clockface based on type
   switch (clockface_type_) {

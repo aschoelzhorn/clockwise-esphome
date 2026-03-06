@@ -1,11 +1,13 @@
 #pragma once
 
+
 #include "esphome/core/component.h"
 #include "esphome/components/hub75/hub75_component.h"
 #include "esphome/components/time/real_time_clock.h"
 #include "IClockface.h"
 #include "CWDateTime.h"
 
+extern ::CWDateTime g_dt;
 
 // Forward declaration to avoid circular include
 class GFXWrapper;
@@ -29,6 +31,25 @@ class ClockwiseHUB75 : public PollingComponent {
   // Configuration
   void set_hub75_display(esphome::hub75::HUB75Display *display) { hub75_display_ = display; }
   void set_time(time::RealTimeClock *time) { time_ = time; }
+  void set_ha_time(time::RealTimeClock *time);
+  void set_rtc_time(time::RealTimeClock *time);
+  void set_time_source(int source) {
+    // 0 = Home Assistant, 1 = RTC
+    time_source_ = source;
+    ESP_LOGI("clockwise_hub75", "set_time_source called: source=%d", source);
+    ESP_LOGI("clockwise_hub75", "ha_time_=%p, rtc_time_=%p", ha_time_, rtc_time_);
+    if (source == 0 && ha_time_ != nullptr) {
+      ESP_LOGI("clockwise_hub75", "Switching to Home Assistant time");
+      set_time(ha_time_);
+    } else if (source == 1 && rtc_time_ != nullptr) {
+      ESP_LOGI("clockwise_hub75", "Switching to RTC time");
+      set_time(rtc_time_);
+    }
+    if (time_ != nullptr) {
+      ESP_LOGI("clockwise_hub75", "g_dt.set_rtc called with time_=%p", time_);
+      g_dt.set_rtc(time_);
+    }
+  }
   void set_clockface_type(ClockfaceType type) { clockface_type_ = type; }
   void set_initial_brightness(uint8_t brightness) { initial_brightness_ = brightness; }
 
@@ -45,6 +66,9 @@ class ClockwiseHUB75 : public PollingComponent {
  protected:
   esphome::hub75::HUB75Display *hub75_display_{nullptr};
   time::RealTimeClock *time_{nullptr};
+  time::RealTimeClock *ha_time_{nullptr};
+  time::RealTimeClock *rtc_time_{nullptr};
+  int time_source_{0}; // 0 = HA, 1 = RTC
   IClockface *clockface_{nullptr};
   GFXWrapper *gfx_wrapper_{nullptr};
   
