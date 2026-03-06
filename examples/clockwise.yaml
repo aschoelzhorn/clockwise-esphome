@@ -28,6 +28,12 @@ esphome:
     build_flags:
       - -Os  # Optimize for size
       - -DCORE_DEBUG_LEVEL=1  # Reduce debug level    
+  on_boot:
+    priority: 600
+    then:
+      - lambda: |-
+          id(clockwise_main).set_ha_time(id(homeassistant_time));
+          id(clockwise_main).set_rtc_time(id(rtc_time));
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -134,12 +140,17 @@ display:
     update_interval: 4294967295ms
 
 # Clockwise Integration Component
+
+# Clockwise Integration Component with runtime time source switching
 clockwise_hub75:
   id: clockwise_main
   hub75_id: matrix_display
-  time_id: homeassistant_time # rtc_time # Link to time component for clock display
-  clockface_type: MARIO
+  time_id: homeassistant_time  # Default to HA time
+  clockface_type: DUNE  # Options: PACMAN, MARIO, DUNE
   initial_brightness: ${initial_brightness}
+
+
+
 
 # Home Assistant Entities
 
@@ -184,6 +195,30 @@ switch:
 
 # Clockface Selection
 select:
+  - platform: clockwise_hub75
+    clockwise_hub75_id: clockwise_main
+    id: clockface_selector
+    name: "Clockface"
+    icon: mdi:clock-outline
+    entity_category: config
+
+# Select entities (merged)
+select:
+  - platform: template
+    id: time_source_selector
+    name: "Time Source"
+    icon: mdi:clock
+    options:
+      - "Home Assistant"
+      - "RTC"
+    initial_option: "Home Assistant"
+    optimistic: true
+    on_value:
+      then:
+        - lambda: |-
+            // 0 = Home Assistant, 1 = RTC
+            int source = (x == "Home Assistant") ? 0 : 1;
+            id(clockwise_main).set_time_source(source);
   - platform: clockwise_hub75
     clockwise_hub75_id: clockwise_main
     id: clockface_selector
@@ -298,4 +333,15 @@ button:
     name: "Safe Mode Boot"
     entity_category: diagnostic
     disabled_by_default: true
+
+  # Sync HA time to RTC button
+  - platform: template
+    name: "Sync Time to RTC"
+    icon: mdi:clock-check
+    entity_category: config
+    on_press:
+      then:
+        - logger.log: "Syncing Home Assistant time to RTC..."
+        - bm8563.write_time:
+            id: rtc_time
 

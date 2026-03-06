@@ -1,3 +1,5 @@
+
+#include "CWDateTime.h"
 #include "clockwise_hub75.h"
 #include "esphome/core/log.h"
 #include "Locator.h"
@@ -5,11 +7,38 @@
 #include "pacman_Clockface.h"  // Pacman clockface implementation
 #include "mario_Clockface.h"  // For Mario face
 
+::CWDateTime g_dt;
+
 namespace esphome {
 namespace clockwise_hub75 {
 
+void ClockwiseHUB75::set_ha_time(time::RealTimeClock *time) {
+  ha_time_ = time;
+}
+
+void ClockwiseHUB75::set_rtc_time(time::RealTimeClock *time) {
+  rtc_time_ = time;
+}
+
+void ClockwiseHUB75::set_time_source(int source) {
+  // 0 = Home Assistant, 1 = RTC
+  time_source_ = source;
+  ESP_LOGI("clockwise_hub75", "set_time_source called: source=%d", source);
+  ESP_LOGI("clockwise_hub75", "ha_time_=%p, rtc_time_=%p", ha_time_, rtc_time_);
+  if (source == 0 && ha_time_ != nullptr) {
+    ESP_LOGI("clockwise_hub75", "Switching to Home Assistant time");
+    set_time(ha_time_);
+  } else if (source == 1 && rtc_time_ != nullptr) {
+    ESP_LOGI("clockwise_hub75", "Switching to RTC time");
+    set_time(rtc_time_);
+  }
+  if (time_ != nullptr) {
+    ESP_LOGI("clockwise_hub75", "g_dt.set_rtc called with time_=%p", time_);
+    g_dt.set_rtc(time_);
+  }
+}
+
 static const char *const TAG = "clockwise_hub75";
-static ::CWDateTime g_dt;  // Global datetime instance (shim)
 
 void ClockwiseHUB75::setup() {
   ESP_LOGCONFIG(TAG, "Setting up Clockwise HUB75 Integration...");
@@ -32,9 +61,9 @@ void ClockwiseHUB75::setup() {
   
   // Initialize datetime shim
   g_dt.begin();
-  if (time_ != nullptr) {
-    g_dt.set_rtc(time_);
-  }
+  // Time sources are now wired from YAML via set_ha_time and set_rtc_time
+  // Default to HA time source
+  set_time_source(time_source_);
   
   // Create clockface based on type
   switch (clockface_type_) {
