@@ -99,6 +99,50 @@ select:
 - **Purpose**: Turn display on/off
 - **Icon**: `mdi:power`
 
+### Time Source Selection
+
+The component supports dual time sources:
+
+1. **Home Assistant Time**: Requires WiFi connection, automatically synced
+2. **Hardware RTC (e.g., BM8563)**: Maintains time without WiFi, requires initial sync
+
+**Configuration Example:**
+
+```yaml
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+  - platform: bm8563
+    id: rtc_time
+    address: 0x51
+
+select:
+  - platform: template
+    id: time_source_selector
+    name: "Time Source"
+    options:
+      - "Home Assistant"
+      - "RTC"
+    initial_option: "Home Assistant"
+    on_value:
+      - lambda: |-
+          int source = (x == "Home Assistant") ? 0 : 1;
+          id(clockwise_main).set_time_source(source);
+
+button:
+  - platform: template
+    name: "Sync Time to RTC"
+    icon: mdi:clock-check
+    on_press:
+      - bm8563.write_time:
+          id: rtc_time
+```
+
+**Benefits:**
+- Clock continues working during WiFi outages when using RTC
+- One-click sync button to update RTC from Home Assistant
+- Switchable at runtime without recompilation
+
 #### Select Entity (Clockface)
 
 - **Options**: "Pacman", "Mario", "Clock"

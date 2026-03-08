@@ -23,6 +23,8 @@ This ESPHome component brings the fantastic [Clockwise](https://clockwise.page/)
 - **⚡ Power Control**: Turn display on/off remotely
 - **🎯 Huidu HD-WF2 Support**: Optimized for HD-WF2 boards with automatic pin mapping
 - **📱 Real-time Sync**: Time synchronized with Home Assistant
+- **🕐 Dual Time Sources**: Choose between Home Assistant time or hardware RTC (BM8563)
+- **🔄 RTC Sync**: One-click button to sync Home Assistant time to RTC hardware
 
 ## 🎯 Home Assistant Controls
 
@@ -32,6 +34,8 @@ Once installed, you'll get these entities in Home Assistant:
 - **Switch**: `auto_brightness` - Enable/disable automatic brightness (when LDR is configured)
 - **Number**: `display_brightness` - Adjust brightness (0-255)
 - **Select**: `clockface` - Choose between Mario, Pac-Man, and other styles
+- **Select**: `time_source` - Choose between Home Assistant or RTC time
+- **Button**: `sync_time_to_rtc` - Sync current Home Assistant time to RTC hardware
 - **Sensor**: `ambient_light` - Current light level percentage (when LDR is configured)
 
 ## 🏗️ Project Background
@@ -98,6 +102,20 @@ esphome run examples/clockwise.yaml
 ### Basic Configuration
 
 ```yaml
+# I2C for RTC (required if using hardware RTC)
+i2c:
+  sda: 41
+  scl: 42
+
+# Time components
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: Europe/Vienna
+  - platform: bm8563           # Optional: Hardware RTC for offline operation
+    id: rtc_time
+    address: 0x51
+
 # HUB75 Display (using board preset for HD-WF2)
 display:
   - platform: hub75
@@ -136,6 +154,28 @@ select:
     clockwise_hub75_id: clockwise_main
     id: clockface_selector
     name: "Clockface"
+  
+  # Time source selector (when RTC is configured)
+  - platform: template
+    id: time_source_selector
+    name: "Time Source"
+    options:
+      - "Home Assistant"
+      - "RTC"
+    initial_option: "Home Assistant"
+    on_value:
+      - lambda: |-
+          int source = (x == "Home Assistant") ? 0 : 1;
+          id(clockwise_main).set_time_source(source);
+
+# Sync button (when RTC is configured)
+button:
+  - platform: template
+    name: "Sync Time to RTC"
+    icon: mdi:clock-check
+    on_press:
+      - bm8563.write_time:
+          id: rtc_time
 ```
 
 ### Supported Hardware
@@ -205,7 +245,46 @@ sensor:
 ## 🔌 Wiring Guide
 
 For **Huidu HD-WF2** boards, no manual wiring needed - just use `board: huidu-hd-wf2` in your configuration.
-RTC is supported. 
+
+**RTC Support**: The HD-WF2 board includes a BM8563 RTC chip connected via I2C. Configure it as a secondary time source:
+
+```yaml
+i2c:
+  sda: 41
+  scl: 42
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+  - platform: bm8563
+    id: rtc_time
+    address: 0x51
+
+# Time source selector
+select:
+  - platform: template
+    id: time_source_selector
+    name: "Time Source"
+    options:
+      - "Home Assistant"
+      - "RTC"
+    initial_option: "Home Assistant"
+    on_value:
+      - lambda: |-
+          int source = (x == "Home Assistant") ? 0 : 1;
+          id(clockwise_main).set_time_source(source);
+
+# Sync button to write HA time to RTC
+button:
+  - platform: template
+    name: "Sync Time to RTC"
+    icon: mdi:clock-check
+    on_press:
+      - bm8563.write_time:
+          id: rtc_time
+```
+
+**Why RTC?** An RTC maintains accurate time even when WiFi is unavailable, making your clock more reliable. 
 
 For custom setups, see the [original HUB75 ESPHome component](https://github.com/stuartparmenter/hub75-esphome).
 
@@ -218,10 +297,16 @@ type: entities
 entities:
   - entity: select.clockwise_hdwf2_clockface
     name: Clockface
+  - entity: select.clockwise_hdwf2_time_source
+    name: Time Source
+  - entity: button.clockwise_hdwf2_sync_time_to_rtc
+    name: Sync Time to RTC
   - entity: number.clockwise_hdwf2_display_brightness
     name: Display Brightness
   - entity: switch.clockwise_hdwf2_display_power
     name: Display Power
+  - entity: switch.clockwise_hdwf2_auto_brightness
+    name: Auto Brightness
   - entity: update.clockwise_clock_firmware
     name: Firmware
 title: Clockwise HD-WF2 Clock
