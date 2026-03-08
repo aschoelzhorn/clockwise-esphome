@@ -37,19 +37,19 @@ String CWDateTime::getFormattedTime(const char* /*format*/) {
   return getFormattedTime();
 }
 
-int CWDateTime::getHour() {
+int CWDateTime::getHour() const {
   if (!rtc_) return 0;
   esphome::ESPTime t = rtc_->now();
   return t.is_valid() ? t.hour : 0;
 }
 
-int CWDateTime::getMinute() {
+int CWDateTime::getMinute() const {
   if (!rtc_) return 0;
   esphome::ESPTime t = rtc_->now();
   return t.is_valid() ? t.minute : 0;
 }
 
-int CWDateTime::getSecond() {
+int CWDateTime::getSecond() const {
   if (!rtc_) return 0;
   esphome::ESPTime t = rtc_->now();
   return t.is_valid() ? t.second : 0;
