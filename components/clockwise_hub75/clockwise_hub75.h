@@ -11,6 +11,7 @@ extern ::CWDateTime g_dt;
 
 // Forward declaration to avoid circular include
 class GFXWrapper;
+class IStoryTheme;
 
 namespace esphome {
 namespace clockwise_hub75 {
@@ -54,6 +55,7 @@ class ClockwiseHUB75 : public PollingComponent {
   time::RealTimeClock *rtc_time_{nullptr};
   int time_source_{0}; // 0 = HA, 1 = RTC
   IClockface *clockface_{nullptr};
+  IStoryTheme *theme_{nullptr};  // For story-based clockfaces
   GFXWrapper *gfx_wrapper_{nullptr};
   
   ClockfaceType clockface_type_{PACMAN};
