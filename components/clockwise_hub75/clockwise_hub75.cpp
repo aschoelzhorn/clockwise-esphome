@@ -9,7 +9,9 @@
 #include "SpecialDates.h"
 #include <cctype>
 #include <cstring>
-#include "dune_Clockface.h"   // For Dune face
+#include "dune_Clockface.h"   // For Dune face (legacy)
+#include "StoryClockface.h"   // Generic story clockface orchestrator
+#include "dune_theme.h"       // New Dune theme
 
 ::CWDateTime g_dt;
 
@@ -173,9 +175,11 @@ void ClockwiseHUB75::setup() {
       ESP_LOGCONFIG(TAG, "Mario clockface initialized");
       break;
     case DUNE:
-      clockface_ = new dune::Clockface(gfx_wrapper_);  // Dune Clockface implements IClockface
+      // Use new theme-based architecture
+      theme_ = new dune::DuneTheme();
+      clockface_ = new StoryClockface(theme_, gfx_wrapper_);
       clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Dune clockface initialized");
+      ESP_LOGCONFIG(TAG, "Dune clockface initialized (theme-based)");
       break;
   }
   
@@ -236,6 +240,12 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type, bool force) {
     clockface_ = nullptr;
   }
   
+  // Destroy the old theme if present
+  if (theme_ != nullptr) {
+    delete theme_;
+    theme_ = nullptr;
+  }
+  
   // Clear the display
   if (hub75_display_ != nullptr) {
     hub75_display_->fill(Color(0, 0, 0));
@@ -255,9 +265,11 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type, bool force) {
       ESP_LOGCONFIG(TAG, "Switched to Mario clockface");
       break;
     case DUNE:
-      clockface_ = new dune::Clockface(gfx_wrapper_);
+      // Use new theme-based architecture
+      theme_ = new dune::DuneTheme();
+      clockface_ = new StoryClockface(theme_, gfx_wrapper_);
       clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Switched to Dune clockface");
+      ESP_LOGCONFIG(TAG, "Switched to Dune clockface (theme-based)");
       break;
   }
 }
