@@ -4,6 +4,7 @@
 #include "IStoryTheme.h"
 #include "CWDateTime.h"
 #include "GFXWrapper.h"
+#include "dune_act.h"
 
 /**
  * StoryClockface - Generic orchestrator for story-based clockfaces
@@ -34,10 +35,11 @@ public:
   ~StoryClockface();
 
   void setup(CWDateTime* dt) override;
-  void render(GFXWrapper* gfx, const CWDateTime& dt) override;
+  void update() override;
+  void render(GFXWrapper* gfx, CWDateTime& dt);
 
 private:
-  void updateAct(const CWDateTime& dt);
+  void updateAct(CWDateTime& dt);
   void updatePhrase();
-  void renderFrame(GFXWrapper* gfx, const CWDateTime& dt);
+  void renderFrame(GFXWrapper* gfx, CWDateTime& dt);
 };

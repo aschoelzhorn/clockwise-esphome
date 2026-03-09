@@ -17,9 +17,9 @@ public:
 
   char *getHour(const char *format);
   char *getMinute(const char *format);
-  int getHour();
-  int getMinute();
-  int getSecond();
+    int getHour() const;
+    int getMinute() const;
+    int getSecond() const;
   long getMilliseconds();
 
   int getDay();

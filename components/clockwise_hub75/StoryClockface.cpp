@@ -25,7 +25,7 @@ void StoryClockface::setup(CWDateTime* dt) {
   
   // Initialize with current act
   currentActId_ = theme_->getCurrentActId(*dt_);
-  Act* act = theme_->getAct(currentActId_);
+  dune::Act* act = theme_->getAct(currentActId_);
   if (act) {
     currentPhrase_ = act->getNewPhrase();
     ESP_LOGI(TAG, "StoryClockface initialized - Theme: %s, Act: %s",
@@ -33,7 +33,13 @@ void StoryClockface::setup(CWDateTime* dt) {
   }
 }
 
-void StoryClockface::render(GFXWrapper* gfx, const CWDateTime& dt) {
+void StoryClockface::update() {
+  if (dt_ && gfx_) {
+    render(gfx_, *dt_);
+  }
+}
+
+void StoryClockface::render(GFXWrapper* gfx, CWDateTime& dt) {
   if (!theme_ || !gfx) {
     return;
   }
@@ -49,12 +55,12 @@ void StoryClockface::render(GFXWrapper* gfx, const CWDateTime& dt) {
   frameCount_++;
 }
 
-void StoryClockface::updateAct(const CWDateTime& dt) {
+void StoryClockface::updateAct(CWDateTime& dt) {
   uint8_t newActId = theme_->getCurrentActId(dt);
   
   if (newActId != currentActId_) {
     currentActId_ = newActId;
-    Act* act = theme_->getAct(currentActId_);
+    dune::Act* act = theme_->getAct(currentActId_);
     if (act) {
       ESP_LOGI(TAG, "Act changed: %s", act->getName());
       // Get first phrase for new act
@@ -64,13 +70,13 @@ void StoryClockface::updateAct(const CWDateTime& dt) {
 }
 
 void StoryClockface::updatePhrase() {
-  Act* act = theme_->getAct(currentActId_);
+  dune::Act* act = theme_->getAct(currentActId_);
   if (act) {
     currentPhrase_ = act->getNewPhrase();
   }
 }
 
-void StoryClockface::renderFrame(GFXWrapper* gfx, const CWDateTime& dt) {
+void StoryClockface::renderFrame(GFXWrapper* gfx, CWDateTime& dt) {
   // Layer 0: Clear
   gfx->fillScreen(0x0000);  // Black
 

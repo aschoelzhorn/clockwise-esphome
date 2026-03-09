@@ -112,7 +112,7 @@ void DuneTheme::renderAmbientEffect(GFXWrapper* gfx, uint8_t actId, uint32_t fra
   }
 }
 
-void DuneTheme::renderTimeDisplay(GFXWrapper* gfx, uint8_t actId, const CWDateTime& dt) {
+void DuneTheme::renderTimeDisplay(GFXWrapper* gfx, uint8_t actId, CWDateTime& dt) {
   if (actId >= 6) return;
 
   Act* act = getAct(actId);

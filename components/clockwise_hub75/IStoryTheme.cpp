@@ -1,7 +1,8 @@
 #include "IStoryTheme.h"
 #include "CWDateTime.h"
+#include "dune_act.h"
 
-uint8_t IStoryTheme::getCurrentActId(const CWDateTime& dt) const {
+uint8_t IStoryTheme::getCurrentActId(CWDateTime& dt) const {
   uint8_t actCount = getActCount();
   uint8_t hour = dt.getHour();
   

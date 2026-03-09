@@ -110,10 +110,10 @@ public:
   const char* getThemeName() const override { return "Dune"; }
 
   Act* getAct(uint8_t actId) override;
-
+  
   void renderBackground(GFXWrapper* gfx, uint8_t actId) override;
   void renderAmbientEffect(GFXWrapper* gfx, uint8_t actId, uint32_t frameCount) override;
-  void renderTimeDisplay(GFXWrapper* gfx, uint8_t actId, const CWDateTime& dt) override;
+  void renderTimeDisplay(GFXWrapper* gfx, uint8_t actId, CWDateTime& dt) override;
   void renderTextField(GFXWrapper* gfx, uint8_t actId, const char* text) override;
 };
 

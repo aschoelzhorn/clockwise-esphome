@@ -4,7 +4,9 @@
 #include "CWDateTime.h"
 #include "GFXWrapper.h"
 
-class Act;
+namespace dune {
+  class Act;
+}
 
 /**
  * IStoryTheme - Interface for story-based clockfaces
@@ -41,13 +43,13 @@ public:
    * Returns the Act object for the given act ID
    * @param actId Act index (0 to getActCount()-1)
    */
-  virtual Act* getAct(uint8_t actId) = 0;
+  virtual dune::Act* getAct(uint8_t actId) = 0;
 
   /**
    * Determines which act should be displayed for the current time
    * Default implementation: currentHour / (24 / getActCount())
    */
-  virtual uint8_t getCurrentActId(const CWDateTime& dt) const;
+  virtual uint8_t getCurrentActId(CWDateTime& dt) const;
 
   // ==================== Rendering ====================
 
@@ -78,7 +80,7 @@ public:
   virtual void renderTimeDisplay(
     GFXWrapper* gfx,
     uint8_t actId,
-    const CWDateTime& dt
+    CWDateTime& dt
   ) = 0;
 
   /**
