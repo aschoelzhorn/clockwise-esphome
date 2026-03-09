@@ -10,10 +10,10 @@
 #include "IClockface.h"
 #include "CWDateTime.h"
 
-#include "dune_assets.h"
-//#include "dune_font.h"
-#include "dune_phrases.h"
-#include "dune_act.h"
+#include "story_dune_assets.h"
+//#include "story_font.h"
+#include "story_dune_phrases.h"
+#include "story_act.h"
 
 namespace dune {
 
@@ -155,6 +155,8 @@ BackgroundTransition _bgTransition;
     Act _acts[6];
 
     uint32_t _now;
+    uint32_t _lastMinuteChange = 0;
+    uint8_t _lastMinute = 255;  // Invalid initial value
 
     EventBus* _eventBus;
 

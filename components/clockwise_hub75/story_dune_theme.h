@@ -1,9 +1,9 @@
 #pragma once
 
-#include "IStoryTheme.h"
-#include "dune_act.h"
-#include "dune_phrases.h"
-#include "dune_assets.h"
+#include "story_IStoryTheme.h"
+#include "story_act.h"
+#include "story_dune_phrases.h"
+#include "story_dune_assets.h"
 
 namespace dune {
 
@@ -20,6 +20,11 @@ namespace dune {
 class DuneTheme : public IStoryTheme {
 private:
   Act acts_[6];
+  
+  // Design note: These rendering constants are theme-specific (Dune-specific)
+  // Future refactor: Could extract common rendering utilities to a base class
+  // if multiple themes share similar text/rendering patterns
+
   uint32_t frameCount_;
 
   // Rendering constants
@@ -49,6 +54,7 @@ private:
   static constexpr uint32_t TEXT_HOLD_MS = 3000;
   static constexpr uint32_t TEXT_QUIET_MS = 1000;
 
+
   // Ambient effect states
   struct AmbientHeatState {
     bool enabled = false;
@@ -70,6 +76,10 @@ private:
     static constexpr uint32_t UPDATE_MS = 100;
   };
   AmbientTremorState ambientTremor_;
+
+  // Design note: Helper methods kept in theme for encapsulation
+  // Color blending and text rendering are theme-specific in this design
+  // Future refactor: Could extract to shared utilities if patterns emergeclear
 
   // Helper methods for color blending
   static uint16_t blend565(uint16_t bg, uint16_t fg, uint8_t alpha);
@@ -105,12 +115,14 @@ public:
   ~DuneTheme();
 
   // IStoryTheme implementation
-  uint8_t getActCount() const override { return 6; }
+  uint8_t getActCount() const override { return 6; }  
   uint32_t getActDurationSeconds() const override { return 4 * 3600; }
   const char* getThemeName() const override { return "Dune"; }
 
   Act* getAct(uint8_t actId) override;
   
+  // Design note: Theme-specific rendering implementation (IStoryTheme interface)
+  // Themes handle their own rendering logic to allow full customization per theme
   void renderBackground(GFXWrapper* gfx, uint8_t actId) override;
   void renderAmbientEffect(GFXWrapper* gfx, uint8_t actId, uint32_t frameCount) override;
   void renderTimeDisplay(GFXWrapper* gfx, uint8_t actId, CWDateTime& dt) override;

@@ -11,5 +11,5 @@ const unsigned short COOL_BROWN = 0x8410; // ACT VI: Silence & Survival (cool br
 
 
 extern const uint8_t dune_font5x7[][5];
-uint8_t duneFontIndex(char c);
+uint8_t fontIndex(char c);
 

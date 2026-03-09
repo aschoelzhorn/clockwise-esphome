@@ -9,9 +9,9 @@
 #include "SpecialDates.h"
 #include <cctype>
 #include <cstring>
-#include "dune_Clockface.h"   // For Dune face (legacy)
-#include "StoryClockface.h"   // Generic story clockface orchestrator
-#include "dune_theme.h"       // New Dune theme
+// #include "dune_Clockface.h"   // For Dune face (legacy)
+#include "story_Clockface.h"   // Generic story clockface orchestrator
+#include "story_dune_theme.h"       // New Dune theme
 
 ::CWDateTime g_dt;
 
@@ -177,7 +177,7 @@ void ClockwiseHUB75::setup() {
     case DUNE:
       // Use new theme-based architecture
       theme_ = new dune::DuneTheme();
-      clockface_ = new StoryClockface(theme_, gfx_wrapper_);
+      clockface_ = new dune::StoryClockface(theme_, gfx_wrapper_);
       clockface_->setup(&g_dt);
       ESP_LOGCONFIG(TAG, "Dune clockface initialized (theme-based)");
       break;
@@ -267,7 +267,7 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type, bool force) {
     case DUNE:
       // Use new theme-based architecture
       theme_ = new dune::DuneTheme();
-      clockface_ = new StoryClockface(theme_, gfx_wrapper_);
+      clockface_ = new dune::StoryClockface(theme_, gfx_wrapper_);
       clockface_->setup(&g_dt);
       ESP_LOGCONFIG(TAG, "Switched to Dune clockface (theme-based)");
       break;

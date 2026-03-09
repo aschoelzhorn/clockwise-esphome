@@ -1,6 +1,6 @@
-#include "dune_act.h"
-#include "dune_phrases.h"
-#include "dune_assets.h"
+#include "story_act.h"
+#include "story_dune_phrases.h"
+#include "story_dune_assets.h"
 #include <stddef.h>
 
 static const char *const TAG = "dune act";
