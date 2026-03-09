@@ -1,5 +1,5 @@
 #include "StoryClockface.h"
-#include "Act.h"
+#include "dune_act.h"
 #include "esphome/core/log.h"
 
 static const char *const TAG = "StoryClockface";

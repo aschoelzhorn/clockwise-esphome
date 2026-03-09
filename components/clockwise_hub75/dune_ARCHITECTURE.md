@@ -57,6 +57,7 @@ Real Time Range    Act     Narrative Theme
 │                  HUB75 Display (64×64 LED Matrix)                   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
 ### Mermaid Diagram
 
 ```mermaid
