@@ -2,7 +2,7 @@
 #include "dune_Clockface.h"
 #include <Adafruit_GFX.h>
 #include "Macros.h"
-#include "dune_font.h"
+#include "story_font.h"
 
 static const char *const TAG = "dune_Clockface";
 
@@ -94,6 +94,13 @@ void Clockface::update() {
 	
     _now = millis();
 
+    // Track minute changes for event timing
+    uint8_t currentMinute = _dateTime->getMinute();
+    if (currentMinute != _lastMinute) {
+        _lastMinute = currentMinute;
+        _lastMinuteChange = _now;
+    }
+
     setActiveAct(); // Update active Act based on current hour
     
     bool event_is_active = false; // Placeholder for event logic
@@ -166,11 +173,8 @@ void Clockface::layer_background() {
 }
 
 void Clockface::layer_ambient() {
-    /* TODO check this switch statement, see also code in enterAct()
-    _ambientHeat.enabled   = (actId == ACT_I);
-    _ambientSand.enabled   = (actId >= ACT_II);
-    _ambientTremor.enabled = (actId >= ACT_IV);
-    */
+    // Ambient states are enabled in enterAct() based on current act
+    // Each act has its own ambient effect implementation
    return; // disable for testing
     switch (_activeAct.getId()) {
         case ACT_I: ambient_heat(); break;
@@ -283,8 +287,7 @@ void Clockface::maybeStartEvent() {
   if (_event.active) return;
 
   // Guard: don't start near minute change
-  // TODO implement _lastMinuteChange
-  //if (_now - _lastMinuteChange < 3000) return;
+  if (_now - _lastMinuteChange < 3000) return;
 
   // Simple probability gate (tune later)
   // if (random(1000) > 2) return; // disable for testing
@@ -318,15 +321,8 @@ void Clockface::endEvent() {
 }
 
 
-// TODO: move these utility functions to a common location
-inline uint8_t r5(uint16_t c) { return (c >> 11) & 0x1F; }
-inline uint8_t g6(uint16_t c) { return (c >> 5) & 0x3F; }
-inline uint8_t b5(uint16_t c) { return c & 0x1F; }
-
-inline uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
-  return (r << 11) | (g << 5) | b;
-}
-
+// Note: Color utility functions (r5, g6, b5, rgb565) have been moved to GFXWrapper
+// for reuse across story themes
 void Clockface::enterAct(uint8_t actId) {
 
   int currentActId = actId;
@@ -466,28 +462,79 @@ void Clockface::drawStorm() {
 
   switch (_event.phase) {
 
-    case EP_ENTER:
-      // TODO: wind buildup
+    case EP_ENTER: {
+      // Wind buildup: subtle horizontal motion and darkening
+      uint8_t intensity = (elapsed * 255) / 2000;
+      
+      // Apply subtle darkening and horizontal streaks
+      for (uint8_t y = 0; y < 64; y++) {
+        if (y % 4 != 0) continue;  // Process every 4th row for performance
+        
+        int offset = (intensity * (y % 3)) / 256;  // Horizontal displacement
+        for (uint8_t x = 0; x < 62; x++) {
+          uint16_t color = fbGet(x + offset, y);
+          uint16_t darkened = darken(color, 0.9f);
+          fbSet(x, y, darkened);
+        }
+      }
+      
       if (elapsed > 2000) {
         _event.phase = EP_ACTIVE;
         _event.phaseStart = _now;
       }
-      break;
+    } break;
 
-    case EP_ACTIVE:
-      // TODO: sandstorm visuals
+    case EP_ACTIVE: {
+      // Sandstorm: heavy visual distortion with flying particles
+      uint32_t frame = elapsed / 50;  // ~20 fps animation
+      
+      // Create sand particles/streaks
+      for (uint8_t i = 0; i < 30; i++) {
+        uint8_t x = (frame * 3 + i * 7) % 64;
+        uint8_t y = (i * 11) % 64;
+        uint8_t len = 2 + (i % 3);
+        
+        uint16_t sandColor = 0xFDA0;  // Sandy/dust color
+        for (uint8_t l = 0; l < len && x + l < 64; l++) {
+          fbSet(x + l, y, sandColor);
+        }
+      }
+      
+      // Apply overall ochre tint and motion blur
+      for (uint8_t y = 0; y < 64; y += 2) {
+        for (uint8_t x = 0; x < 64; x += 2) {
+          uint16_t color = fbGet(x, y);
+          // Blend with sand color
+          uint16_t tinted = blend565(color, 0xFDA0, 128);
+          fbSet(x, y, tinted);
+        }
+      }
+      
       if (elapsed > 5000) {
         _event.phase = EP_EXIT;
         _event.phaseStart = _now;
       }
-      break;
+    } break;
 
-    case EP_EXIT:
-      // TODO: calm return
+    case EP_EXIT: {
+      // Calm return: gradually clear the storm effects
+      uint8_t fadeOut = 255 - ((elapsed * 255) / 2000);
+      
+      // Subtle residual dust particles
+      if (fadeOut > 50) {
+        uint32_t frame = elapsed / 80;
+        for (uint8_t i = 0; i < 10; i++) {
+          uint8_t x = (frame + i * 13) % 64;
+          uint8_t y = (i * 7) % 64;
+          uint16_t dustColor = blend565(0x0000, 0xFDA0, fadeOut);
+          fbSet(x, y, dustColor);
+        }
+      }
+      
       if (elapsed > 2000) {
         endEvent();
       }
-      break;
+    } break;
 
     default:
       break;
@@ -520,6 +567,7 @@ void Clockface::drawShadowBand(uint8_t xStart, uint8_t yStart) {
         }
     }
 }
+
 
 uint16_t Clockface::darken(uint16_t color) {
     uint8_t r = (color >> 11) & 0x1F;
@@ -568,7 +616,7 @@ void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t*
 
 
 void Clockface::drawCharBlended(char c, int x, int y, uint16_t color, uint8_t alpha) {
-  uint8_t index = duneFontIndex(c);
+  uint8_t index = fontIndex(c);
   const uint8_t* glyph = dune_font5x7[index];
 
   for (int col = 0; col < FONT_W; col++) {
@@ -623,7 +671,17 @@ void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
 }
 
 void Clockface::externalEvent(int type) {
-	// TODO: Handle external events (storm, worm, etc.)
+	// Handle external event triggers (from Home Assistant, sensors, etc.)
+	// Map integer type to EventType enum
+	EventType eventType = static_cast<EventType>(type);
+	
+	// Validate event type
+	if (eventType >= EVENT_NONE && eventType <= EVENT_FLIGHT) {
+		ESP_LOGD(TAG, "External event triggered: %d", type);
+		startEvent(eventType);
+	} else {
+		ESP_LOGW(TAG, "Invalid external event type: %d", type);
+	}
 }
 
 
@@ -652,6 +710,7 @@ bool Clockface::eventSilencesText() const {
             return false;
     }
 }
+
 
 uint16_t Clockface::blend565(uint16_t bg, uint16_t fg, uint8_t alpha) {
 

@@ -1,10 +1,12 @@
 #pragma once
 
 #include "IClockface.h"
-#include "IStoryTheme.h"
+#include "story_IStoryTheme.h"
 #include "CWDateTime.h"
 #include "GFXWrapper.h"
-#include "dune_act.h"
+#include "story_act.h"
+
+namespace dune {
 
 /**
  * StoryClockface - Generic orchestrator for story-based clockfaces
@@ -21,25 +23,30 @@
  */
 class StoryClockface : public IClockface {
 private:
-  IStoryTheme* theme_;
-  GFXWrapper* gfx_;
-  uint8_t currentActId_;
-  uint32_t frameCount_;
-  const char* currentPhrase_;
-  CWDateTime* dt_;
+  IStoryTheme* _theme;
+  GFXWrapper* _display;
+  uint8_t _currentActId;
+  uint32_t _frameCount;
+  const char* _currentPhrase;
+  CWDateTime* _dateTime ;
 
   static constexpr uint32_t PHRASE_UPDATE_FRAMES = 300;  // Update phrase ~every 5 seconds at 60 FPS
 
 public:
   StoryClockface(IStoryTheme* theme, GFXWrapper* gfx);
   ~StoryClockface();
-
   void setup(CWDateTime* dt) override;
   void update() override;
-  void render(GFXWrapper* gfx, CWDateTime& dt);
+  void externalEvent(int type);
+
+  static uint16_t framebuffer[64 * 64];    
 
 private:
   void updateAct(CWDateTime& dt);
   void updatePhrase();
+  void render(GFXWrapper* gfx, CWDateTime& dt);
   void renderFrame(GFXWrapper* gfx, CWDateTime& dt);
+  void flushFramebuffer();
 };
+
+}  // namespace dune

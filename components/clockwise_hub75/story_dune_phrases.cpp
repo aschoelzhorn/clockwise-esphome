@@ -1,5 +1,5 @@
 // Definitions for Dune clock phrases
-#include "dune_phrases.h"
+#include "story_dune_phrases.h"
 
 const char* PHRASES_TIME[3] = {
   "TIME FLOWS",

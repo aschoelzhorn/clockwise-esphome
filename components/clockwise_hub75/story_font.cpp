@@ -1,4 +1,4 @@
-#include "dune_font.h"
+#include "story_font.h"
 
 // Index mapping:
 // 0  = space
@@ -55,7 +55,7 @@ const uint8_t dune_font5x7[][5] PROGMEM = {
   {0x00,0x36,0x36,0x00,0x00}
 };
 
-uint8_t duneFontIndex(char c) {
+uint8_t fontIndex(char c) {
   if (c == ' ') return 0;
   if (c >= 'A' && c <= 'Z') return 1 + (c - 'A');
   if (c >= '0' && c <= '9') return 27 + (c - '0');

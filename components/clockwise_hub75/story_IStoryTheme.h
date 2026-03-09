@@ -3,10 +3,9 @@
 #include <stdint.h>
 #include "CWDateTime.h"
 #include "GFXWrapper.h"
+#include "story_act.h"
 
 namespace dune {
-  class Act;
-}
 
 /**
  * IStoryTheme - Interface for story-based clockfaces
@@ -43,7 +42,7 @@ public:
    * Returns the Act object for the given act ID
    * @param actId Act index (0 to getActCount()-1)
    */
-  virtual dune::Act* getAct(uint8_t actId) = 0;
+  virtual Act* getAct(uint8_t actId) = 0;
 
   /**
    * Determines which act should be displayed for the current time
@@ -52,6 +51,10 @@ public:
   virtual uint8_t getCurrentActId(CWDateTime& dt) const;
 
   // ==================== Rendering ====================
+
+  // Design note: Rendering is theme-specific to allow full customization
+  // Each theme can implement its own visual style and effects
+  // The clockface orchestrator calls these methods but doesn't dictate rendering details
 
   /**
    * Render Layer 1: Static background image for this act
@@ -93,3 +96,5 @@ public:
     const char* text
   ) = 0;
 };
+
+}  // namespace dune
