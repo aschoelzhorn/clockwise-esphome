@@ -7,7 +7,7 @@
 #include "pacman_Clockface.h"  // Pacman clockface implementation
 #include "mario_Clockface.h"  // For Mario face
 #include "dune_Clockface.h"   // For Dune face (legacy)
-#include "StoryClockface.h"   // Generic story clockface orchestrator
+#include "dune_StoryClockface.h"   // Generic story clockface orchestrator
 #include "dune_theme.h"       // New Dune theme
 
 ::CWDateTime g_dt;
@@ -83,7 +83,7 @@ void ClockwiseHUB75::setup() {
     case DUNE:
       // Use new theme-based architecture
       theme_ = new dune::DuneTheme();
-      clockface_ = new StoryClockface(theme_, gfx_wrapper_);
+      clockface_ = new dune::StoryClockface(theme_, gfx_wrapper_);
       clockface_->setup(&g_dt);
       ESP_LOGCONFIG(TAG, "Dune clockface initialized (theme-based)");
       break;
@@ -163,7 +163,7 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type) {
     case DUNE:
       // Use new theme-based architecture
       theme_ = new dune::DuneTheme();
-      clockface_ = new StoryClockface(theme_, gfx_wrapper_);
+      clockface_ = new dune::StoryClockface(theme_, gfx_wrapper_);
       clockface_->setup(&g_dt);
       ESP_LOGCONFIG(TAG, "Switched to Dune clockface (theme-based)");
       break;

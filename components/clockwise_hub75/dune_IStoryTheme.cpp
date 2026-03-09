@@ -1,6 +1,8 @@
-#include "IStoryTheme.h"
+#include "dune_IStoryTheme.h"
 #include "CWDateTime.h"
 #include "dune_act.h"
+
+namespace dune {
 
 uint8_t IStoryTheme::getCurrentActId(CWDateTime& dt) const {
   uint8_t actCount = getActCount();
@@ -13,3 +15,5 @@ uint8_t IStoryTheme::getCurrentActId(CWDateTime& dt) const {
   
   return (secondsInDay / secondsPerAct) % actCount;
 }
+
+}  // namespace dune

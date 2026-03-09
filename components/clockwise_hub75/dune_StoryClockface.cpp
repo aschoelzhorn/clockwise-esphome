@@ -1,6 +1,8 @@
-#include "StoryClockface.h"
+#include "dune_StoryClockface.h"
 #include "dune_act.h"
 #include "esphome/core/log.h"
+
+namespace dune {
 
 static const char *const TAG = "StoryClockface";
 
@@ -25,7 +27,7 @@ void StoryClockface::setup(CWDateTime* dt) {
   
   // Initialize with current act
   currentActId_ = theme_->getCurrentActId(*dt_);
-  dune::Act* act = theme_->getAct(currentActId_);
+  Act* act = theme_->getAct(currentActId_);
   if (act) {
     currentPhrase_ = act->getNewPhrase();
     ESP_LOGI(TAG, "StoryClockface initialized - Theme: %s, Act: %s",
@@ -60,7 +62,7 @@ void StoryClockface::updateAct(CWDateTime& dt) {
   
   if (newActId != currentActId_) {
     currentActId_ = newActId;
-    dune::Act* act = theme_->getAct(currentActId_);
+    Act* act = theme_->getAct(currentActId_);
     if (act) {
       ESP_LOGI(TAG, "Act changed: %s", act->getName());
       // Get first phrase for new act
@@ -70,7 +72,7 @@ void StoryClockface::updateAct(CWDateTime& dt) {
 }
 
 void StoryClockface::updatePhrase() {
-  dune::Act* act = theme_->getAct(currentActId_);
+  Act* act = theme_->getAct(currentActId_);
   if (act) {
     currentPhrase_ = act->getNewPhrase();
   }
@@ -97,3 +99,5 @@ void StoryClockface::renderFrame(GFXWrapper* gfx, CWDateTime& dt) {
     theme_->renderTextField(gfx, currentActId_, currentPhrase_);
   }
 }
+
+}  // namespace dune

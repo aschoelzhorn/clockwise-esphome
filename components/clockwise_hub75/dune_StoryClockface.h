@@ -1,10 +1,12 @@
 #pragma once
 
 #include "IClockface.h"
-#include "IStoryTheme.h"
+#include "dune_IStoryTheme.h"
 #include "CWDateTime.h"
 #include "GFXWrapper.h"
 #include "dune_act.h"
+
+namespace dune {
 
 /**
  * StoryClockface - Generic orchestrator for story-based clockfaces
@@ -43,3 +45,5 @@ private:
   void updatePhrase();
   void renderFrame(GFXWrapper* gfx, CWDateTime& dt);
 };
+
+}  // namespace dune

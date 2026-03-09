@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IStoryTheme.h"
+#include "dune_IStoryTheme.h"
 #include "dune_act.h"
 #include "dune_phrases.h"
 #include "dune_assets.h"
