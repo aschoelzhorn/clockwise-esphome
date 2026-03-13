@@ -28,7 +28,18 @@ private:
   uint8_t _currentActId;
   uint32_t _frameCount;
   const char* _currentPhrase;
-  CWDateTime* _dateTime ;
+  CWDateTime* _dateTime;
+  uint32_t _now;
+
+  // Background transition state
+  struct BackgroundTransition {
+    bool active = false;
+    const uint16_t* from = nullptr;
+    const uint16_t* to = nullptr;
+    uint32_t start = 0;
+    uint32_t duration = 2500;
+  };
+  BackgroundTransition _bgTransition;
 
   static constexpr uint32_t PHRASE_UPDATE_FRAMES = 300;  // Update phrase ~every 5 seconds at 60 FPS
 
@@ -47,6 +58,15 @@ private:
   void render(GFXWrapper* gfx, CWDateTime& dt);
   void renderFrame(GFXWrapper* gfx, CWDateTime& dt);
   void flushFramebuffer();
+  
+  // Framebuffer operations
+  inline void fbClear(uint16_t color);
+  inline uint16_t fbGet(uint8_t x, uint8_t y);
+  inline void fbSet(uint8_t x, uint8_t y, uint16_t color);
+  
+  // Background rendering with transition
+  void renderBackgroundLayer();
+  uint16_t blend565(uint16_t bg, uint16_t fg, uint8_t alpha);
 };
 
 }  // namespace dune
