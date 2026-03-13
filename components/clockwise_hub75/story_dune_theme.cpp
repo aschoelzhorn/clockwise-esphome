@@ -74,13 +74,16 @@ DuneTheme::~DuneTheme() {
 }
 
 Act* DuneTheme::getAct(uint8_t actId) {
-  if (actId < 6) {
+  if (actId < getActCount()) {
     return &acts_[actId];
   }
   return nullptr;
 }
 
 // ==================== Rendering ====================
+
+// This implementation keeps rendering logic in the theme for maximum flexibility
+// Each theme can customize how backgrounds, text, and effects are drawn
 
 void DuneTheme::renderBackground(GFXWrapper* gfx, uint8_t actId) {
   if (actId >= 6) return;
@@ -146,8 +149,41 @@ void DuneTheme::renderTextField(GFXWrapper* gfx, uint8_t actId, const char* text
 
   uint16_t color = act->getFontColor();
   
-  // For now, simple rendering - TODO: implement text fade animation
-  drawPhraseBlended(gfx, text, color, 255);
+  // Set new text if needed
+  if (textState_.phrase != text) {
+    textState_.phrase = text;
+    textState_.phase = TEXT_FADE_IN;
+    textState_.phaseStart = millis();
+  }
+  
+  // Update state machine
+  updateTextState(millis());
+  
+  // Calculate alpha based on current phase
+  uint8_t alpha = 255;
+  uint32_t elapsed = millis() - textState_.phaseStart;
+  
+  switch (textState_.phase) {
+    case TEXT_FADE_IN:
+      alpha = (elapsed * 255) / TEXT_FADE_MS;
+      if (alpha > 255) alpha = 255;
+      break;
+      
+    case TEXT_HOLD:
+      alpha = 255;
+      break;
+      
+    case TEXT_FADE_OUT:
+      alpha = 255 - ((elapsed * 255) / TEXT_FADE_MS);
+      if (alpha > 255) alpha = 0;  // Handle underflow
+      break;
+      
+    case TEXT_QUIET:
+    case TEXT_IDLE:
+      return;  // Don't render during quiet/idle
+  }
+  
+  drawPhraseBlended(gfx, text, color, alpha);
 }
 
 // ==================== Ambient Effect Implementations ====================
@@ -275,9 +311,49 @@ void DuneTheme::renderTextPhrase(GFXWrapper* gfx, const char* phrase, uint16_t c
 }
 
 void DuneTheme::updateTextState(uint32_t frameTime) {
-  // Update text fade in/hold/fade out state
-  // This would be called by StoryClockface to manage text animation
-  // TODO: implement text state machine
+  // Update text fade in/hold/fade out state machine
+  if (!textState_.phrase) {
+    textState_.phase = TEXT_IDLE;
+    return;
+  }
+
+  uint32_t elapsed = frameTime - textState_.phaseStart;
+
+  switch (textState_.phase) {
+    case TEXT_IDLE:
+      // Waiting to start new text
+      textState_.phaseStart = frameTime;
+      textState_.phase = TEXT_FADE_IN;
+      break;
+
+    case TEXT_FADE_IN:
+      if (elapsed >= TEXT_FADE_MS) {
+        textState_.phase = TEXT_HOLD;
+        textState_.phaseStart = frameTime;
+      }
+      break;
+
+    case TEXT_HOLD:
+      if (elapsed >= TEXT_HOLD_MS) {
+        textState_.phase = TEXT_FADE_OUT;
+        textState_.phaseStart = frameTime;
+      }
+      break;
+
+    case TEXT_FADE_OUT:
+      if (elapsed >= TEXT_FADE_MS) {
+        textState_.phase = TEXT_QUIET;
+        textState_.phaseStart = frameTime;
+        textState_.phrase = nullptr;  // Clear phrase
+      }
+      break;
+
+    case TEXT_QUIET:
+      if (elapsed >= TEXT_QUIET_MS) {
+        textState_.phase = TEXT_IDLE;
+      }
+      break;
+  }
 }
 
 void DuneTheme::drawShadowBand(GFXWrapper* gfx, uint8_t xStart, uint8_t yStart, const uint16_t* bg) {

@@ -155,6 +155,8 @@ BackgroundTransition _bgTransition;
     Act _acts[6];
 
     uint32_t _now;
+    uint32_t _lastMinuteChange = 0;
+    uint8_t _lastMinute = 255;  // Invalid initial value
 
     EventBus* _eventBus;
 

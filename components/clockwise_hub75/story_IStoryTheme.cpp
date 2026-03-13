@@ -5,6 +5,8 @@
 namespace dune {
 
 uint8_t IStoryTheme::getCurrentActId(CWDateTime& dt) const {
+  // Default implementation: divide 24 hours evenly among acts
+  // Themes can override for custom behavior (e.g., storm/worm events changing act)
   uint8_t actCount = getActCount();
   uint8_t hour = dt.getHour();
   

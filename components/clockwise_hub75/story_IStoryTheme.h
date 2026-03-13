@@ -52,6 +52,10 @@ public:
 
   // ==================== Rendering ====================
 
+  // Design note: Rendering is theme-specific to allow full customization
+  // Each theme can implement its own visual style and effects
+  // The clockface orchestrator calls these methods but doesn't dictate rendering details
+
   /**
    * Render Layer 1: Static background image for this act
    */
