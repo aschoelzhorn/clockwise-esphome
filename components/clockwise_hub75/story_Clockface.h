@@ -41,7 +41,33 @@ private:
   };
   BackgroundTransition _bgTransition;
 
+  // Text rendering constants
+  static constexpr int TEXT_Y = 2;
+  static constexpr int FONT_W = 5;
+  static constexpr int FONT_H = 7;
+  static constexpr int CHAR_SPACING = 1;
+
+  // Text state machine
+  enum TextPhase {
+    TEXT_IDLE,
+    TEXT_FADE_IN,
+    TEXT_HOLD,
+    TEXT_FADE_OUT,
+    TEXT_QUIET
+  };
+
+  struct TextState {
+    TextPhase phase = TEXT_IDLE;
+    const char* phrase = nullptr;
+    uint32_t phaseStart = 0;
+  };
+
+  static constexpr uint32_t TEXT_FADE_MS = 1000;
+  static constexpr uint32_t TEXT_HOLD_MS = 3000;
+  static constexpr uint32_t TEXT_QUIET_MS = 1500;
   static constexpr uint32_t PHRASE_UPDATE_FRAMES = 300;  // Update phrase ~every 5 seconds at 60 FPS
+
+  TextState _text;
 
 public:
   StoryClockface(IStoryTheme* theme, GFXWrapper* gfx);
@@ -67,6 +93,14 @@ private:
   // Background rendering with transition
   void renderBackgroundLayer();
   uint16_t blend565(uint16_t bg, uint16_t fg, uint8_t alpha);
+  
+  // Time and text rendering
+  void renderTimeLayer();
+  void renderTextLayer();
+  void drawTime(uint8_t hour, uint8_t minute, uint16_t color);
+  void drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha);
+  void drawCharBlended(char c, int x, int y, uint16_t color, uint8_t alpha);
+  int textWidth(const char* s);
 };
 
 }  // namespace dune

@@ -1,5 +1,6 @@
 #include "story_Clockface.h"
 #include "story_act.h"
+#include "story_font.h"
 #include "esphome/core/log.h"
 #include <Adafruit_GFX.h>
 #include <pgmspace.h>
@@ -161,13 +162,11 @@ void StoryClockface::renderFrame(GFXWrapper* gfx, CWDateTime& dt) {
   // Layer 3: Major events (placeholder for future)
   // _theme->renderMajorEvents(gfx, _currentActId, _frameCount);
 
-  // Layer 4: Time display (theme-specific)
-  // _theme->renderTimeDisplay(gfx, _currentActId, dt);
+  // Layer 4: Time display
+  renderTimeLayer();
 
-  // Layer 5: Text overlay (theme-specific)
-  // if (_currentPhrase) {
-  //   _theme->renderTextField(gfx, _currentActId, _currentPhrase);
-  // }
+  // Layer 5: Text overlay (phrases)
+  renderTextLayer();
   
   // Flush framebuffer to display
   flushFramebuffer();
@@ -250,6 +249,135 @@ void StoryClockface::renderBackgroundLayer() {
       framebuffer[idx] = blended;
     }
   }
+}
+
+// ==================== Time Rendering ====================
+
+void StoryClockface::renderTimeLayer() {
+  if (!_dateTime) return;
+  
+  Act* act = _theme->getAct(_currentActId);
+  if (!act) return;
+  
+  drawTime(_dateTime->getHour(), _dateTime->getMinute(), act->getFontColor());
+}
+
+void StoryClockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
+  fbGfx.setTextSize(1);
+  fbGfx.setTextColor(color);
+
+  // Placement
+  int x = 10; // x_start
+  int y = 34; // y_start
+
+  fbGfx.setCursor(x, y);
+
+  char buf[6];
+  bool showColon = (_now / 1000) % 2; // blink every second
+
+  snprintf(buf, sizeof(buf),
+           showColon ? "%02d:%02d" : "%02d %02d",
+           hour, minute);
+
+  fbGfx.print(buf);
+}
+
+// ==================== Text Rendering ====================
+
+void StoryClockface::renderTextLayer() {
+  uint32_t elapsed = _now - _text.phaseStart;
+  
+  Act* act = _theme->getAct(_currentActId);
+  if (!act) return;
+  
+  uint16_t color = act->getFontColor();
+
+  switch (_text.phase) {
+
+    case TEXT_IDLE:
+      _text.phrase = act->getNewPhrase();
+      if (!_text.phrase) return;
+      _text.phase = TEXT_FADE_IN;
+      _text.phaseStart = _now;
+      break;
+
+    case TEXT_FADE_IN: {
+      uint8_t alpha = (elapsed * 255) / TEXT_FADE_MS;
+      if (alpha > 255) alpha = 255;
+      drawPhraseBlended(_text.phrase, color, alpha);
+
+      if (elapsed >= TEXT_FADE_MS) {
+        _text.phase = TEXT_HOLD;
+        _text.phaseStart = _now;
+      }
+    } break;
+
+    case TEXT_HOLD:
+      drawPhraseBlended(_text.phrase, color, 255);
+
+      if (elapsed >= TEXT_HOLD_MS) {
+        _text.phase = TEXT_FADE_OUT;
+        _text.phaseStart = _now;
+      }
+      break;
+
+    case TEXT_FADE_OUT: {
+      uint8_t alpha = 255 - ((elapsed * 255) / TEXT_FADE_MS);
+      if (alpha > 255) alpha = 0;  // Handle underflow
+      drawPhraseBlended(_text.phrase, color, alpha);
+
+      if (elapsed >= TEXT_FADE_MS) {
+        _text.phase = TEXT_QUIET;
+        _text.phaseStart = _now;
+      }
+    } break;
+
+    case TEXT_QUIET:
+      if (elapsed >= TEXT_QUIET_MS) {
+        _text.phase = TEXT_IDLE;
+      }
+      break;
+  }
+}
+
+void StoryClockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha) {
+  if (!phrase) return;
+
+  int w = textWidth(phrase);
+  int x = (64 - w) / 2;
+  int y = TEXT_Y;
+
+  for (size_t i = 0; i < strlen(phrase); i++) {
+    drawCharBlended(phrase[i], x, y, textColor, alpha);
+    x += FONT_W + CHAR_SPACING;
+  }
+}
+
+void StoryClockface::drawCharBlended(char c, int x, int y, uint16_t color, uint8_t alpha) {
+  uint8_t index = fontIndex(c);
+  const uint8_t* glyph = dune_font5x7[index];
+
+  for (int col = 0; col < FONT_W; col++) {
+    uint8_t bits = pgm_read_byte(&glyph[col]);
+
+    for (int row = 0; row < FONT_H; row++) {
+      if (bits & (1 << row)) {
+        int px = x + col;
+        int py = y + row;
+
+        if (px >= 0 && px < 64 && py >= 0 && py < 64) {
+          uint16_t bg = fbGet(px, py);
+          uint16_t blended = blend565(bg, color, alpha);
+          fbSet(px, py, blended);
+        }
+      }
+    }
+  }
+}
+
+int StoryClockface::textWidth(const char* s) {
+  if (!s) return 0;
+  return strlen(s) * (FONT_W + CHAR_SPACING) - CHAR_SPACING;
 }
 
 }  // namespace dune
