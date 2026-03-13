@@ -21,7 +21,6 @@ Act::Act() : _id(0), _name(nullptr), _phrases(nullptr), _fontColor(0), _backgrou
     // Default constructor  
 }
 
-
 uint8_t Act::getId() const {
     return _id;
 }

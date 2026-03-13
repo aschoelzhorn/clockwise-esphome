@@ -21,12 +21,6 @@ class DuneTheme : public IStoryTheme {
 private:
   Act acts_[6];
   
-  // Design note: These rendering constants are theme-specific (Dune-specific)
-  // Future refactor: Could extract common rendering utilities to a base class
-  // if multiple themes share similar text/rendering patterns
-
-  uint32_t frameCount_;
-
   // Rendering constants
   static constexpr int TEXT_Y = 2;
   static constexpr int FONT_W = 5;
@@ -77,40 +71,7 @@ private:
   };
   AmbientTremorState ambientTremor_;
 
-  // Design note: Helper methods kept in theme for encapsulation
-  // Color blending and text rendering are theme-specific in this design
-  // Future refactor: Could extract to shared utilities if patterns emergeclear
-
-  // Helper methods for color blending
-  static uint16_t blend565(uint16_t bg, uint16_t fg, uint8_t alpha);
-  static uint16_t darken(uint16_t color, float factor = 0.75f);
-  static inline uint8_t r5(uint16_t c) { return (c >> 11) & 0x1F; }
-  static inline uint8_t g6(uint16_t c) { return (c >> 5) & 0x3F; }
-  static inline uint8_t b5(uint16_t c) { return c & 0x1F; }
-  static inline uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
-    return (r << 11) | (g << 5) | b;
-  }
-
-  // Helper methods
-  int textWidth(const char* s) const;
-  void renderTextPhrase(GFXWrapper* gfx, const char* phrase, uint16_t color);
-  void drawCharBlended(GFXWrapper* gfx, char c, int x, int y, uint16_t color, uint8_t alpha);
-  void drawPhraseBlended(GFXWrapper* gfx, const char* phrase, uint16_t color, uint8_t alpha);
-  void updateTextState(uint32_t frameTime);
-
-  // Ambient effect implementations
-  void renderAmbientEffect_I(GFXWrapper* gfx, uint32_t frameCount);
-  void renderAmbientEffect_II(GFXWrapper* gfx, uint32_t frameCount);
-  void renderAmbientEffect_III(GFXWrapper* gfx, uint32_t frameCount);
-  void renderAmbientEffect_IV(GFXWrapper* gfx, uint32_t frameCount);
-  void renderAmbientEffect_V(GFXWrapper* gfx, uint32_t frameCount);
-  void renderAmbientEffect_VI(GFXWrapper* gfx, uint32_t frameCount);
-
-  // Specific ambient effect helpers
-  void drawShadowBand(GFXWrapper* gfx, uint8_t xStart, uint8_t yStart, const uint16_t* bg);
-  void drawTremorRipple(GFXWrapper* gfx, uint8_t x, uint8_t y, const uint16_t* bg);
-
-public:
+ public:
   DuneTheme();
   ~DuneTheme();
 
@@ -118,15 +79,9 @@ public:
   uint8_t getActCount() const override { return 6; }  
   uint32_t getActDurationSeconds() const override { return 4 * 3600; }
   const char* getThemeName() const override { return "Dune"; }
-
   Act* getAct(uint8_t actId) override;
-  
-  // Design note: Theme-specific rendering implementation (IStoryTheme interface)
-  // Themes handle their own rendering logic to allow full customization per theme
-  void renderBackground(GFXWrapper* gfx, uint8_t actId) override;
-  void renderAmbientEffect(GFXWrapper* gfx, uint8_t actId, uint32_t frameCount) override;
-  void renderTimeDisplay(GFXWrapper* gfx, uint8_t actId, CWDateTime& dt) override;
-  void renderTextField(GFXWrapper* gfx, uint8_t actId, const char* text) override;
+  Act getCurrentAct(uint8_t hour);
+    
 };
 
 }  // namespace dune
