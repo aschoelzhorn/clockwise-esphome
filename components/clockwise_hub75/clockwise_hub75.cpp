@@ -6,9 +6,9 @@
 #include "GFXWrapper.h"
 #include "pacman_Clockface.h"  // Pacman clockface implementation
 #include "mario_Clockface.h"  // For Mario face
-#include "dune_Clockface.h"   // For Dune face (legacy)
-#include "dune_StoryClockface.h"   // Generic story clockface orchestrator
-#include "dune_theme.h"       // New Dune theme
+// #include "dune_Clockface.h"   // For Dune face (legacy)
+#include "story_Clockface.h"   // Generic story clockface orchestrator
+#include "story_dune_theme.h"       // New Dune theme
 
 ::CWDateTime g_dt;
 

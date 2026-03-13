@@ -1,10 +1,10 @@
 #pragma once
 
 #include "IClockface.h"
-#include "dune_IStoryTheme.h"
+#include "story_IStoryTheme.h"
 #include "CWDateTime.h"
 #include "GFXWrapper.h"
-#include "dune_act.h"
+#include "story_act.h"
 
 namespace dune {
 
@@ -46,6 +46,7 @@ private:
   void updatePhrase();
   void render(GFXWrapper* gfx, CWDateTime& dt);
   void renderFrame(GFXWrapper* gfx, CWDateTime& dt);
+  void flushFramebuffer();
 };
 
 }  // namespace dune

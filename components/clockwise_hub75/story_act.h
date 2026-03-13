@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
-#include "dune_phrases.h"
+#include "story_dune_phrases.h"
 
 namespace dune {
 

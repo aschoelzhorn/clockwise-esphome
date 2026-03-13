@@ -28,7 +28,7 @@ class GFXWrapper : public Adafruit_GFX {
   }
 
 
-  uint16_t Clockface::darken(uint16_t color) {
+  uint16_t darken(uint16_t color) {
       uint8_t r = (color >> 11) & 0x1F;
       uint8_t g = (color >> 5) & 0x3F;
       uint8_t b = color & 0x1F;
@@ -40,7 +40,7 @@ class GFXWrapper : public Adafruit_GFX {
       return (r << 11) | (g << 5) | b;
   }
 
-  uint16_t Clockface::darken(uint16_t color, float factor) {
+  uint16_t darken(uint16_t color, float factor) {
       uint8_t r = (color >> 11) & 0x1F;
       uint8_t g = (color >> 5) & 0x3F;
       uint8_t b = color & 0x1F;
@@ -52,8 +52,9 @@ class GFXWrapper : public Adafruit_GFX {
       return (r << 11) | (g << 5) | b;
   }
 
-  void Clockface::drawCharBlended(char c, int x, int y, uint16_t color, uint8_t alpha) {
-    uint8_t index = duneFontIndex(c);
+/*
+  void drawCharBlended(char c, int x, int y, uint16_t color, uint8_t alpha) {
+    uint8_t index = fontIndex(c);
     const uint8_t* glyph = dune_font5x7[index];
 
     for (int col = 0; col < FONT_W; col++) {
@@ -73,7 +74,8 @@ class GFXWrapper : public Adafruit_GFX {
   }
 
 
-  void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha) {
+
+  void drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_t alpha) {
       if (!phrase) return;
 
       int w = textWidth(phrase);
@@ -86,7 +88,7 @@ class GFXWrapper : public Adafruit_GFX {
     }
   }
 
-  uint16_t Clockface::blend565(uint16_t bg, uint16_t fg, uint8_t alpha) {
+  uint16_t blend565(uint16_t bg, uint16_t fg, uint8_t alpha) {
 
     if (alpha < 16) alpha = 16;
 
@@ -99,6 +101,7 @@ class GFXWrapper : public Adafruit_GFX {
     uint8_t fg_c = (fg >> 5) & 0x3F;
     uint8_t fb = fg & 0x1F;
 
+    
     uint8_t r = (br * (255 - alpha) + fr * alpha) / 255;
     uint8_t g = (bgc * (255 - alpha) + fg_c * alpha) / 255;
     uint8_t b = (bb * (255 - alpha) + fb * alpha) / 255;
@@ -106,9 +109,10 @@ class GFXWrapper : public Adafruit_GFX {
     return (r << 11) | (g << 5) | b;
 }
 
-int Clockface::textWidth(const char* s) {
+int textWidth(const char* s) {
   return strlen(s) * (FONT_W + CHAR_SPACING) - CHAR_SPACING;
 }
+*/
 
  private:
   esphome::hub75::HUB75Display *display_;

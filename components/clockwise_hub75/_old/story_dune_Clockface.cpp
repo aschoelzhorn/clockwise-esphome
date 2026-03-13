@@ -2,7 +2,7 @@
 #include "dune_Clockface.h"
 #include <Adafruit_GFX.h>
 #include "Macros.h"
-#include "dune_font.h"
+#include "story_font.h"
 
 static const char *const TAG = "dune_Clockface";
 
@@ -568,7 +568,7 @@ void Clockface::drawShadowBand(uint8_t xStart, uint8_t yStart) {
     }
 }
 
-/* moved to GFXWrapper for reuse in story themes
+
 uint16_t Clockface::darken(uint16_t color) {
     uint8_t r = (color >> 11) & 0x1F;
     uint8_t g = (color >> 5) & 0x3F;
@@ -592,7 +592,7 @@ uint16_t Clockface::darken(uint16_t color, float factor) {
 
     return (r << 11) | (g << 5) | b;
 }
-*/
+
 
 void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t* bg) {
     const uint8_t width = 8;
@@ -614,9 +614,9 @@ void Clockface::drawTremorRipple(uint8_t xStart, uint8_t yStart, const uint16_t*
     }
 }
 
-/* moved to GFXWrapper for reuse in story themes
+
 void Clockface::drawCharBlended(char c, int x, int y, uint16_t color, uint8_t alpha) {
-  uint8_t index = duneFontIndex(c);
+  uint8_t index = fontIndex(c);
   const uint8_t* glyph = dune_font5x7[index];
 
   for (int col = 0; col < FONT_W; col++) {
@@ -648,7 +648,7 @@ void Clockface::drawPhraseBlended(const char* phrase, uint16_t textColor, uint8_
         x += FONT_W + CHAR_SPACING;
   }
 }
-*/
+
 
 void Clockface::drawTime(uint8_t hour, uint8_t minute, uint16_t color) {
     fbGfx.setTextSize(1);
@@ -711,7 +711,7 @@ bool Clockface::eventSilencesText() const {
     }
 }
 
-/* moved to GFXWrapper for reuse in story themes
+
 uint16_t Clockface::blend565(uint16_t bg, uint16_t fg, uint8_t alpha) {
 
     if (alpha < 16) alpha = 16;
@@ -735,7 +735,7 @@ uint16_t Clockface::blend565(uint16_t bg, uint16_t fg, uint8_t alpha) {
 int Clockface::textWidth(const char* s) {
   return strlen(s) * (FONT_W + CHAR_SPACING) - CHAR_SPACING;
 }
-*/
+
 
 
 }  // namespace dune

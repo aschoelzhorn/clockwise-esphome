@@ -1,5 +1,5 @@
-#include "dune_theme.h"
-#include "dune_font.h"
+#include "story_dune_theme.h"
+#include "story_font.h"
 #include "esphome/core/log.h"
 #include <cmath>
 #include <cstring>
@@ -272,7 +272,7 @@ int DuneTheme::textWidth(const char* s) const {
 }
 
 void DuneTheme::drawCharBlended(GFXWrapper* gfx, char c, int x, int y, uint16_t color, uint8_t alpha) {
-  uint8_t index = duneFontIndex(c);
+  uint8_t index = fontIndex(c);
   const uint8_t* glyph = dune_font5x7[index];
 
   for (int col = 0; col < FONT_W; col++) {

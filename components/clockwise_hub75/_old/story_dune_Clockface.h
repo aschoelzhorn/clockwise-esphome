@@ -10,10 +10,10 @@
 #include "IClockface.h"
 #include "CWDateTime.h"
 
-#include "dune_assets.h"
-//#include "dune_font.h"
-#include "dune_phrases.h"
-#include "dune_act.h"
+#include "story_dune_assets.h"
+//#include "story_font.h"
+#include "story_dune_phrases.h"
+#include "story_act.h"
 
 namespace dune {
 

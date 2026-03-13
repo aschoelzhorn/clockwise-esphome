@@ -1,6 +1,6 @@
-#include "dune_IStoryTheme.h"
+#include "story_IStoryTheme.h"
 #include "CWDateTime.h"
-#include "dune_act.h"
+#include "story_act.h"
 
 namespace dune {
 

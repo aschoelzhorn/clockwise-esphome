@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "CWDateTime.h"
 #include "GFXWrapper.h"
-#include "dune_act.h"
+#include "story_act.h"
 
 namespace dune {
 

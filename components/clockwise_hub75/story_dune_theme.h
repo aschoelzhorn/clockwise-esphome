@@ -1,9 +1,9 @@
 #pragma once
 
-#include "dune_IStoryTheme.h"
-#include "dune_act.h"
-#include "dune_phrases.h"
-#include "dune_assets.h"
+#include "story_IStoryTheme.h"
+#include "story_act.h"
+#include "story_dune_phrases.h"
+#include "story_dune_assets.h"
 
 namespace dune {
 
@@ -79,7 +79,7 @@ private:
 
   // Design note: Helper methods kept in theme for encapsulation
   // Color blending and text rendering are theme-specific in this design
-  // Future refactor: Could extract to shared utilities if patterns emerge
+  // Future refactor: Could extract to shared utilities if patterns emergeclear
 
   // Helper methods for color blending
   static uint16_t blend565(uint16_t bg, uint16_t fg, uint8_t alpha);
