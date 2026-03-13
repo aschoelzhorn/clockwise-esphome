@@ -4,6 +4,9 @@
 #include <Adafruit_GFX.h>
 #include <pgmspace.h>
 
+// Enable test mode to cycle acts every 15 seconds
+#define TEST_ACT_CYCLING
+
 namespace dune {
 
 class FB_GFX : public Adafruit_GFX {
@@ -108,7 +111,16 @@ void StoryClockface::render(GFXWrapper* gfx, CWDateTime& dt) {
 }
 
 void StoryClockface::updateAct(CWDateTime& dt) {
-  uint8_t newActId = _theme->getCurrentActId(dt);
+  uint8_t newActId;
+  
+#ifdef TEST_ACT_CYCLING
+  // Test mode: Change act every 15 seconds
+  static constexpr uint32_t TEST_ACT_MS = 15 * 1000;
+  newActId = (_now / TEST_ACT_MS) % _theme->getActCount();
+#else
+  // Normal mode: Use theme's time-based act calculation
+  newActId = _theme->getCurrentActId(dt);
+#endif
   
   if (newActId != _currentActId) {
     // Start background transition
