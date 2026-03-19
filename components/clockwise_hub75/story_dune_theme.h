@@ -5,7 +5,7 @@
 #include "story_dune_phrases.h"
 #include "story_dune_assets.h"
 
-namespace dune {
+namespace story {
 
 /**
  * DuneTheme - Dune-specific implementation of IStoryTheme
@@ -48,6 +48,14 @@ private:
   static constexpr uint32_t TEXT_HOLD_MS = 3000;
   static constexpr uint32_t TEXT_QUIET_MS = 1000;
 
+const unsigned short DIM_SAND = 0xC618; // ACT I: Desert Sleeps (dim sand)
+const unsigned short SPICE_AMBER = 0xFCA0; // ACT II: Spice Awakens (spice amber)
+const unsigned short HIGH_CONTRAST_WHITE = 0xFFFF; // ACT III: Watchers (high contrast, white)
+const unsigned short BRIGHT_SAND = 0xFFE0; // ACT IV: Maker Stirs (bright sand)
+const unsigned short RED_DANGER = 0xF800; // ACT V: Storm of Fate (red, danger)
+const unsigned short COOL_BROWN = 0x8410; // ACT VI: Silence & Survival (cool brown)
+
+
 
   // Ambient effect states
   struct AmbientHeatState {
@@ -84,4 +92,4 @@ private:
     
 };
 
-}  // namespace dune
+}  // namespace story

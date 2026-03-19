@@ -6,7 +6,9 @@
 
 static const char *const TAG = "DuneTheme";
 
-namespace dune {
+namespace story {
+
+
 
 // ==================== Act Initialization ====================
 
@@ -17,32 +19,45 @@ DuneTheme::DuneTheme() {
   acts_[0] = Act(0, "The Desert Sleeps",
                  PHRASES_TIME,
                  DIM_SAND,
-                 dune_act1);
+                 dune_act1,
+                 7);  // 7 seconds for testing
 
   acts_[1] = Act(1, "Spice Awakens",
                  PHRASES_DESERT,
                  SPICE_AMBER,
-                 dune_act2);
+                 dune_act2,
+                 7);
 
   acts_[2] = Act(2, "The Watchers",
                  PHRASES_POWER,
                  HIGH_CONTRAST_WHITE,
-                 dune_act3);
+                 dune_act3,
+                 7);
 
   acts_[3] = Act(3, "The Maker Stirs",
                  PHRASES_DANGER,
                  BRIGHT_SAND,
-                 dune_act4);
+                 dune_act4,
+                 7);
 
   acts_[4] = Act(4, "Storm of Fate",
                  PHRASES_DANGER,
                  RED_DANGER,
-                 dune_act5);
+                 dune_act5,
+                 7);
 
   acts_[5] = Act(5, "Silence & Survival",
                  PHRASES_SURVIVAL,
                  COOL_BROWN,
-                 dune_act6);
+                 dune_act6,
+                 7);  // 7 seconds for testing
+
+  // Calculate total story duration for logging
+  uint32_t totalDuration = 0;
+  for (int i = 0; i < 6; i++) {
+    totalDuration += acts_[i].getDurationSeconds();
+  }
+  ESP_LOGI(TAG, "Dune theme initialized: 6 acts, total story duration: %u seconds", totalDuration);
 
   // // Initialize ambient states
   // ambientHeat_.enabled = false;
@@ -84,4 +99,4 @@ Act* DuneTheme::getAct(uint8_t actId) {
 }
 
 
-}  // namespace dune
+}  // namespace story

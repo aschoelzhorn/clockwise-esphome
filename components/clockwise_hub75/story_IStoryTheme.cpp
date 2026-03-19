@@ -2,7 +2,7 @@
 #include "CWDateTime.h"
 #include "story_act.h"
 
-namespace dune {
+namespace story {
 
 uint8_t IStoryTheme::getCurrentActId(CWDateTime& dt) const {
   // Default implementation: divide 24 hours evenly among acts
@@ -18,4 +18,4 @@ uint8_t IStoryTheme::getCurrentActId(CWDateTime& dt) const {
   return (secondsInDay / secondsPerAct) % actCount;
 }
 
-}  // namespace dune
+}  // namespace story

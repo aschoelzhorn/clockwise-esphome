@@ -5,15 +5,16 @@
 
 static const char *const TAG = "dune act";
 
-namespace dune {
+namespace story {
 
-Act::Act(uint8_t id, const char* name, const char** phrases, uint16_t fontColor, const uint16_t* background) {
+Act::Act(uint8_t id, const char* name, const char** phrases, uint16_t fontColor, const uint16_t* background, uint32_t durationSeconds) {
     _id = id;
     _name = name;
     _phrases = phrases;
     _phraseCount = COUNT_PHRASES;
     _fontColor = fontColor;
     _background = background;
+    _durationSeconds = durationSeconds;
     _lastPhraseIndex = -1;
 }
 
@@ -54,6 +55,22 @@ size_t Act::getPhraseCount() const {
 
 const uint16_t* Act::getBackground() const {
     return _background;
+}
+
+const ActLayout& Act::getLayout() const {
+    return _layout;
+}
+
+void Act::setLayout(const ActLayout& layout) {
+    _layout = layout;
+}
+
+uint32_t Act::getDurationSeconds() const {
+    return _durationSeconds;
+}
+
+void Act::setDurationSeconds(uint32_t seconds) {
+    _durationSeconds = seconds;
 }
 
 }

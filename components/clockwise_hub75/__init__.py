@@ -29,6 +29,7 @@ CLOCKFACE_TYPES = {
     "PACMAN": ClockfaceType.PACMAN,
     "MARIO": ClockfaceType.MARIO,
     "DUNE": ClockfaceType.DUNE,
+    "STARTREK": ClockfaceType.STARTREK,
 }
 
 CONF_HUB75_ID = "hub75_id"

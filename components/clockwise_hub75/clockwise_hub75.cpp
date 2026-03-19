@@ -9,6 +9,7 @@
 // #include "dune_Clockface.h"   // For Dune face (legacy)
 #include "story_Clockface.h"   // Generic story clockface orchestrator
 #include "story_dune_theme.h"       // New Dune theme
+#include "story_startrek_theme.h"   // New Star Trek theme
 
 ::CWDateTime g_dt;
 
@@ -82,11 +83,18 @@ void ClockwiseHUB75::setup() {
       break;
     case DUNE:
       // Use new theme-based architecture
-      theme_ = new dune::DuneTheme();
-      clockface_ = new dune::StoryClockface(theme_, gfx_wrapper_);
+      theme_ = new story::DuneTheme();
+      clockface_ = new story::StoryClockface(theme_, gfx_wrapper_);
       clockface_->setup(&g_dt);
       ESP_LOGCONFIG(TAG, "Dune clockface initialized (theme-based)");
       break;
+    case STARTREK:
+      // Use new theme-based architecture
+      theme_ = new story::StarTrekTheme();
+      clockface_ = new story::StoryClockface(theme_, gfx_wrapper_);
+      clockface_->setup(&g_dt);
+      ESP_LOGCONFIG(TAG, "Star Trek clockface initialized (theme-based)");
+      break;      
   }
   
   ESP_LOGCONFIG(TAG, "Clockwise HUB75 setup complete");
@@ -162,10 +170,17 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type) {
       break;
     case DUNE:
       // Use new theme-based architecture
-      theme_ = new dune::DuneTheme();
-      clockface_ = new dune::StoryClockface(theme_, gfx_wrapper_);
+      theme_ = new story::DuneTheme();
+      clockface_ = new story::StoryClockface(theme_, gfx_wrapper_);
       clockface_->setup(&g_dt);
       ESP_LOGCONFIG(TAG, "Switched to Dune clockface (theme-based)");
+      break;
+    case STARTREK:
+      // Use new theme-based architecture
+      theme_ = new story::StarTrekTheme();
+      clockface_ = new story::StoryClockface(theme_, gfx_wrapper_);
+      clockface_->setup(&g_dt);
+      ESP_LOGCONFIG(TAG, "Switched to Star Trek clockface (theme-based)");
       break;
   }
 }

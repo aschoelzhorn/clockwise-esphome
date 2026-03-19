@@ -12,7 +12,7 @@ extern ::CWDateTime g_dt;
 // Forward declaration to avoid circular include
 class GFXWrapper;
 
-namespace dune {
+namespace story {
   class IStoryTheme;
 }
 
@@ -22,7 +22,8 @@ namespace clockwise_hub75 {
 enum ClockfaceType {
     PACMAN = 0,
     MARIO = 1,
-    DUNE = 2
+    DUNE = 2,
+    STARTREK = 3
 };
 
 class ClockwiseHUB75 : public PollingComponent {
@@ -58,7 +59,7 @@ class ClockwiseHUB75 : public PollingComponent {
   time::RealTimeClock *rtc_time_{nullptr};
   int time_source_{0}; // 0 = HA, 1 = RTC
   IClockface *clockface_{nullptr};
-  dune::IStoryTheme *theme_{nullptr};  // For story-based clockfaces
+  story::IStoryTheme *theme_{nullptr};  // For story-based clockfaces
   GFXWrapper *gfx_wrapper_{nullptr};
   
   ClockfaceType clockface_type_{PACMAN};
