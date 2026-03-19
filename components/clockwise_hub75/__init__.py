@@ -38,6 +38,7 @@ CLOCKFACE_TYPES = {
     "PACMAN": ClockfaceType.PACMAN,
     "MARIO": ClockfaceType.MARIO,
     "DUNE": ClockfaceType.DUNE,
+    "STARTREK": ClockfaceType.STARTREK,
 }
 
 PANEL_COLOR_ORDERS = {

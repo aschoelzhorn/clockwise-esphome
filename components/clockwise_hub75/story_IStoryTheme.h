@@ -4,8 +4,11 @@
 #include "CWDateTime.h"
 #include "GFXWrapper.h"
 #include "story_act.h"
+#include "story_font.h"
 
-namespace dune {
+namespace story {
+
+using GlyphFont = const uint8_t (*)[5];
 
 /**
  * IStoryTheme - Interface for story-based clockfaces
@@ -45,7 +48,13 @@ public:
    * Default implementation: currentHour / (24 / getActCount())
    */
   virtual uint8_t getCurrentActId(CWDateTime& dt) const;
-  
+
+  /**
+   * Returns the glyph table used for phrase rendering.
+   * Default: dune_font5x7. Override in theme to use a different 5x7 font.
+   */
+  virtual GlyphFont getPhraseFont() const { return dune_font5x7; }
+
 };
 
-}  // namespace dune
+}  // namespace story
