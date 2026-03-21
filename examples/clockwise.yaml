@@ -27,13 +27,30 @@ esphome:
     lib_ldf_mode: chain+
     build_flags:
       - -Os  # Optimize for size
-      - -DCORE_DEBUG_LEVEL=1  # Reduce debug level    
+      - -DCORE_DEBUG_LEVEL=1  # Reduce debug level
   on_boot:
-    priority: 600
-    then:
-      - lambda: |-
-          id(clockwise_main).set_ha_time(id(homeassistant_time));
-          id(clockwise_main).set_rtc_time(id(rtc_time));
+    - priority: 600
+      then:
+        - lambda: |-
+            id(clockwise_main).set_ha_time(id(homeassistant_time));
+            id(clockwise_main).set_ntp_time(id(ntp_time));
+            id(clockwise_main).set_rtc_time(id(rtc_time));
+    - priority: -100
+      then:
+        - lambda: |-
+            // Apply persisted brightness
+            id(clockwise_main).set_brightness((uint8_t)id(saved_brightness));
+            id(display_brightness).publish_state(id(saved_brightness));
+
+            // Apply persisted clockface
+            auto cf = id(clockface_selector).current_option();
+            if (cf == "Mario") id(clockwise_main).switch_clockface(esphome::clockwise_hub75::MARIO);
+            else id(clockwise_main).switch_clockface(esphome::clockwise_hub75::PACMAN);
+
+            // Apply persisted time source
+            auto ts = id(time_source_selector).current_option();
+            int source = (ts == "Home Assistant") ? 0 : (ts == "NTP") ? 1 : 2;
+            id(clockwise_main).set_time_source(source);
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -48,6 +65,10 @@ globals:
     type: bool
     restore_value: yes
     initial_value: '${enable_ldr}'
+  - id: saved_brightness
+    type: int
+    restore_value: yes
+    initial_value: '${initial_brightness}'
 
 # Enable logging
 logger:
@@ -75,7 +96,7 @@ wifi:
 
 captive_portal:
 
-# can be used for RTC
+# used for RTC
 i2c:
   sda: 41
   scl: 42
@@ -85,6 +106,7 @@ i2c:
 #web_server:
 #  port: 80
 #  local: true
+#  version: 3
 
 # Time component for clock functionality
 time:
@@ -95,17 +117,29 @@ time:
       then:
         - logger.log: "Time synchronized with Home Assistant"
 
+  - platform: sntp
+    id: ntp_time
+    timezone: Europe/Vienna  # Change to your timezone
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
+    update_interval: 3600s
+    on_time_sync:
+      then:
+        - logger.log: "Time synchronized with NTP"
+
   - platform: bm8563
     id: rtc_time
     address: 0x51
-    update_interval: 60s
+    update_interval: 3600s  # Only re-read chip hourly so it doesn't override HA/NTP every 60s
     on_time_sync:
       then:
         - logger.log: "Time synchronized with BM8563 RTC"
 
 # External components
 external_components:
-  # Clockwise HUB75 integration component (hub75 is now built-in to ESPHome core)
+  # Clockwise HUB75 integration component
   - source: github://aschoelzhorn/clockwise-esphome@main
     components: [clockwise_hub75]
 
@@ -123,7 +157,7 @@ display:
     # Display settings
     brightness: ${initial_brightness}
     bit_depth: 8
-    min_refresh_rate: 120  # ESP32-S3 can handle high refresh rates
+    min_refresh_rate: 120  # ESP32-S3 can handle higher refresh rates
     double_buffer: false
     rotation: 0 # (0=default, 90, 180, 270)
     
@@ -145,24 +179,29 @@ display:
 clockwise_hub75:
   id: clockwise_main
   hub75_id: matrix_display
-  time_id: homeassistant_time  # Default to HA time
-  clockface_type: DUNE  # Options: PACMAN, MARIO, DUNE
+  clockface_type: MARIO  # Options: PACMAN, MARIO
   initial_brightness: ${initial_brightness}
-
-
 
 
 # Home Assistant Entities
 
 # Brightness Control (0-255)
 number:
-  - platform: clockwise_hub75
-    clockwise_hub75_id: clockwise_main
+  - platform: template
     id: display_brightness
     name: "Display Brightness"
     icon: mdi:brightness-5
     entity_category: config
     mode: slider
+    min_value: 0
+    max_value: 255
+    step: 1
+    lambda: return id(saved_brightness);
+    set_action:
+      - globals.set:
+          id: saved_brightness
+          value: !lambda return (int)x;
+      - lambda: id(clockwise_main).set_brightness((uint8_t)x);
 
 # Power Control
 switch:
@@ -193,38 +232,42 @@ switch:
           value: 'false'
       - logger.log: "Auto-brightness disabled"
 
-# Clockface Selection
+# Select entities
 select:
-  - platform: clockwise_hub75
-    clockwise_hub75_id: clockwise_main
+  - platform: template
     id: clockface_selector
     name: "Clockface"
     icon: mdi:clock-outline
     entity_category: config
+    options:
+      - "Pacman"
+      - "Mario"
+    initial_option: "Pacman"
+    restore_value: true
+    optimistic: true
+    on_value:
+      then:
+        - lambda: |-
+            if (x == "Mario") id(clockwise_main).switch_clockface(esphome::clockwise_hub75::MARIO);
+            else id(clockwise_main).switch_clockface(esphome::clockwise_hub75::PACMAN);
 
-# Select entities (merged)
-select:
   - platform: template
     id: time_source_selector
     name: "Time Source"
     icon: mdi:clock
     options:
       - "Home Assistant"
+      - "NTP"
       - "RTC"
     initial_option: "Home Assistant"
+    restore_value: true
     optimistic: true
     on_value:
       then:
         - lambda: |-
-            // 0 = Home Assistant, 1 = RTC
-            int source = (x == "Home Assistant") ? 0 : 1;
+            // 0 = Home Assistant, 1 = NTP, 2 = RTC
+            int source = (x == "Home Assistant") ? 0 : (x == "NTP") ? 1 : 2;
             id(clockwise_main).set_time_source(source);
-  - platform: clockwise_hub75
-    clockwise_hub75_id: clockwise_main
-    id: clockface_selector
-    name: "Clockface"
-    icon: mdi:clock-outline
-    entity_category: config
 
 # Status indicators
 sensor:
@@ -334,14 +377,14 @@ button:
     entity_category: diagnostic
     disabled_by_default: true
 
-  # Sync HA time to RTC button
+  # Sync time to RTC button
   - platform: template
     name: "Sync Time to RTC"
     icon: mdi:clock-check
     entity_category: config
     on_press:
       then:
-        - logger.log: "Syncing Home Assistant time to RTC..."
+        - logger.log: "Syncing time to RTC..."
         - bm8563.write_time:
             id: rtc_time
 

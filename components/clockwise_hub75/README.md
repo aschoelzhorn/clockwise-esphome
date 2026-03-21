@@ -101,10 +101,11 @@ select:
 
 ### Time Source Selection
 
-The component supports dual time sources:
+The component supports three time sources:
 
-1. **Home Assistant Time**: Requires WiFi connection, automatically synced
-2. **Hardware RTC (e.g., BM8563)**: Maintains time without WiFi, requires initial sync
+1. **Home Assistant Time** (`source = 0`): Requires WiFi + HA connection, automatically synced
+2. **NTP (SNTP)** (`source = 1`): Syncs from internet time servers directly, no HA required
+3. **Hardware RTC (e.g., BM8563)** (`source = 2`): Maintains time without WiFi, requires initial sync
 
 **Configuration Example:**
 
@@ -112,9 +113,24 @@ The component supports dual time sources:
 time:
   - platform: homeassistant
     id: homeassistant_time
+  - platform: sntp
+    id: ntp_time
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
   - platform: bm8563
     id: rtc_time
     address: 0x51
+
+esphome:
+  on_boot:
+    priority: 600
+    then:
+      - lambda: |-
+          id(clockwise_main).set_ha_time(id(homeassistant_time));
+          id(clockwise_main).set_ntp_time(id(ntp_time));
+          id(clockwise_main).set_rtc_time(id(rtc_time));
 
 select:
   - platform: template
@@ -122,11 +138,13 @@ select:
     name: "Time Source"
     options:
       - "Home Assistant"
+      - "NTP"
       - "RTC"
     initial_option: "Home Assistant"
     on_value:
       - lambda: |-
-          int source = (x == "Home Assistant") ? 0 : 1;
+          // 0 = Home Assistant, 1 = NTP, 2 = RTC
+          int source = (x == "Home Assistant") ? 0 : (x == "NTP") ? 1 : 2;
           id(clockwise_main).set_time_source(source);
 
 button:
@@ -139,7 +157,8 @@ button:
 ```
 
 **Benefits:**
-- Clock continues working during WiFi outages when using RTC
+- **NTP**: Accurate time from public servers without needing HA — great for standalone deployments
+- **RTC**: Clock continues working during WiFi outages
 - One-click sync button to update RTC from Home Assistant
 - Switchable at runtime without recompilation
 

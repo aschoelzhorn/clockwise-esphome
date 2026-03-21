@@ -22,8 +22,8 @@ This ESPHome component brings the fantastic [Clockwise](https://clockwise.page/)
 - **🔄 Clockface Switching**: Change between clock styles on the fly
 - **⚡ Power Control**: Turn display on/off remotely
 - **🎯 Huidu HD-WF2 Support**: Optimized for HD-WF2 boards with automatic pin mapping
-- **📱 Real-time Sync**: Time synchronized with Home Assistant
-- **🕐 Dual Time Sources**: Choose between Home Assistant time or hardware RTC (BM8563)
+- **📱 Real-time Sync**: Time synchronized with Home Assistant or NTP
+- **🕐 Triple Time Sources**: Choose between Home Assistant, NTP (SNTP), or hardware RTC (BM8563)
 - **🔄 RTC Sync**: One-click button to sync Home Assistant time to RTC hardware
 
 ## 🎯 Home Assistant Controls
@@ -34,7 +34,7 @@ Once installed, you'll get these entities in Home Assistant:
 - **Switch**: `auto_brightness` - Enable/disable automatic brightness (when LDR is configured)
 - **Number**: `display_brightness` - Adjust brightness (0-255)
 - **Select**: `clockface` - Choose between Mario, Pac-Man, and other styles
-- **Select**: `time_source` - Choose between Home Assistant or RTC time
+- **Select**: `time_source` - Choose between Home Assistant, NTP, or RTC time
 - **Button**: `sync_time_to_rtc` - Sync current Home Assistant time to RTC hardware
 - **Sensor**: `ambient_light` - Current light level percentage (when LDR is configured)
 
@@ -112,6 +112,13 @@ time:
   - platform: homeassistant
     id: homeassistant_time
     timezone: Europe/Vienna
+  - platform: sntp               # Optional: NTP time source (no HA required)
+    id: ntp_time
+    timezone: Europe/Vienna
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
   - platform: bm8563           # Optional: Hardware RTC for offline operation
     id: rtc_time
     address: 0x51
@@ -136,6 +143,15 @@ clockwise_hub75:
   clockface_type: MARIO          # Options: MARIO, PACMAN
   initial_brightness: 128
 
+esphome:
+  on_boot:
+    priority: 600
+    then:
+      - lambda: |-
+          id(clockwise_main).set_ha_time(id(homeassistant_time));
+          id(clockwise_main).set_ntp_time(id(ntp_time));
+          id(clockwise_main).set_rtc_time(id(rtc_time));
+
 # Home Assistant Controls
 number:
   - platform: clockwise_hub75
@@ -155,17 +171,19 @@ select:
     id: clockface_selector
     name: "Clockface"
   
-  # Time source selector (when RTC is configured)
+  # Time source selector
   - platform: template
     id: time_source_selector
     name: "Time Source"
     options:
       - "Home Assistant"
+      - "NTP"
       - "RTC"
     initial_option: "Home Assistant"
     on_value:
       - lambda: |-
-          int source = (x == "Home Assistant") ? 0 : 1;
+          // 0 = Home Assistant, 1 = NTP, 2 = RTC
+          int source = (x == "Home Assistant") ? 0 : (x == "NTP") ? 1 : 2;
           id(clockwise_main).set_time_source(source);
 
 # Sync button (when RTC is configured)
@@ -246,7 +264,7 @@ sensor:
 
 For **Huidu HD-WF2** boards, no manual wiring needed - just use `board: huidu-hd-wf2` in your configuration.
 
-**RTC Support**: The HD-WF2 board includes a BM8563 RTC chip connected via I2C. Configure it as a secondary time source:
+**RTC Support**: The HD-WF2 board includes a BM8563 RTC chip connected via I2C. Configure it as a time source:
 
 ```yaml
 i2c:
@@ -256,9 +274,24 @@ i2c:
 time:
   - platform: homeassistant
     id: homeassistant_time
+  - platform: sntp
+    id: ntp_time
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
   - platform: bm8563
     id: rtc_time
     address: 0x51
+
+esphome:
+  on_boot:
+    priority: 600
+    then:
+      - lambda: |-
+          id(clockwise_main).set_ha_time(id(homeassistant_time));
+          id(clockwise_main).set_ntp_time(id(ntp_time));
+          id(clockwise_main).set_rtc_time(id(rtc_time));
 
 # Time source selector
 select:
@@ -267,11 +300,13 @@ select:
     name: "Time Source"
     options:
       - "Home Assistant"
+      - "NTP"
       - "RTC"
     initial_option: "Home Assistant"
     on_value:
       - lambda: |-
-          int source = (x == "Home Assistant") ? 0 : 1;
+          // 0 = Home Assistant, 1 = NTP, 2 = RTC
+          int source = (x == "Home Assistant") ? 0 : (x == "NTP") ? 1 : 2;
           id(clockwise_main).set_time_source(source);
 
 # Sync button to write HA time to RTC
@@ -283,6 +318,8 @@ button:
       - bm8563.write_time:
           id: rtc_time
 ```
+
+**Why NTP?** NTP provides accurate time directly from internet time servers without requiring a Home Assistant connection — ideal if you want the clock to work standalone.
 
 **Why RTC?** An RTC maintains accurate time even when WiFi is unavailable, making your clock more reliable. 
 

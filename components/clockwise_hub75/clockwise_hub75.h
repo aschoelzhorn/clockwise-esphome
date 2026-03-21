@@ -30,9 +30,9 @@ class ClockwiseHUB75 : public PollingComponent {
 
   // Configuration
   void set_hub75_display(esphome::hub75::HUB75Display *display) { hub75_display_ = display; }
-  void set_time(time::RealTimeClock *time) { time_ = time; }
-  void set_ha_time(time::RealTimeClock *time);
-  void set_rtc_time(time::RealTimeClock *time);
+  void set_ha_time(time::RealTimeClock *t) { ha_time_ = t; }
+  void set_ntp_time(time::RealTimeClock *t) { ntp_time_ = t; }
+  void set_rtc_time(time::RealTimeClock *t) { rtc_time_ = t; }
   void set_time_source(int source);
   void set_clockface_type(ClockfaceType type) { clockface_type_ = type; }
   void set_initial_brightness(uint8_t brightness) { initial_brightness_ = brightness; }
@@ -51,8 +51,9 @@ class ClockwiseHUB75 : public PollingComponent {
   esphome::hub75::HUB75Display *hub75_display_{nullptr};
   time::RealTimeClock *time_{nullptr};
   time::RealTimeClock *ha_time_{nullptr};
+  time::RealTimeClock *ntp_time_{nullptr};
   time::RealTimeClock *rtc_time_{nullptr};
-  int time_source_{0}; // 0 = HA, 1 = RTC
+  int time_source_{0}; // 0 = HA, 1 = NTP, 2 = RTC
   IClockface *clockface_{nullptr};
   GFXWrapper *gfx_wrapper_{nullptr};
   
@@ -60,7 +61,8 @@ class ClockwiseHUB75 : public PollingComponent {
   uint8_t initial_brightness_{128};
   uint8_t current_brightness_{128};
   bool power_state_{true};
-  
+
+  void set_time(time::RealTimeClock *t) { time_ = t; }
   void update_display_();
 };
 

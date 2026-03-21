@@ -4,41 +4,48 @@
 #include "esphome/core/log.h"
 #include "Locator.h"
 #include "GFXWrapper.h"
-#include "pacman_Clockface.h"  // Pacman clockface implementation
-#include "mario_Clockface.h"  // For Mario face
+#include "pacman_Clockface.h"
+#include "mario_Clockface.h"
 
 ::CWDateTime g_dt;
 
 namespace esphome {
 namespace clockwise_hub75 {
 
-void ClockwiseHUB75::set_ha_time(time::RealTimeClock *time) {
-  ha_time_ = time;
-}
-
-void ClockwiseHUB75::set_rtc_time(time::RealTimeClock *time) {
-  rtc_time_ = time;
-}
+static const char *const TAG = "clockwise_hub75";
 
 void ClockwiseHUB75::set_time_source(int source) {
-  // 0 = Home Assistant, 1 = RTC
+  // 0 = Home Assistant, 1 = NTP (SNTP), 2 = RTC
   time_source_ = source;
-  ESP_LOGI("clockwise_hub75", "set_time_source called: source=%d", source);
-  ESP_LOGI("clockwise_hub75", "ha_time_=%p, rtc_time_=%p", ha_time_, rtc_time_);
+  ESP_LOGD(TAG, "set_time_source: source=%d ha=%p ntp=%p rtc=%p", source, ha_time_, ntp_time_, rtc_time_);
+
   if (source == 0 && ha_time_ != nullptr) {
-    ESP_LOGI("clockwise_hub75", "Switching to Home Assistant time");
+    ESP_LOGI(TAG, "Switching to Home Assistant time");
     set_time(ha_time_);
-  } else if (source == 1 && rtc_time_ != nullptr) {
-    ESP_LOGI("clockwise_hub75", "Switching to RTC time");
+  } else if (source == 1 && ntp_time_ != nullptr) {
+    ESP_LOGI(TAG, "Switching to NTP time");
+    set_time(ntp_time_);
+  } else if (source == 2 && rtc_time_ != nullptr) {
+    ESP_LOGI(TAG, "Switching to RTC time");
     set_time(rtc_time_);
   }
+  
   if (time_ != nullptr) {
-    ESP_LOGI("clockwise_hub75", "g_dt.set_rtc called with time_=%p", time_);
+    ESP_LOGD(TAG, "g_dt.set_rtc: time_=%p", time_);
     g_dt.set_rtc(time_);
   }
 }
 
-static const char *const TAG = "clockwise_hub75";
+static IClockface *create_clockface_(ClockfaceType type, GFXWrapper *gfx) {
+  switch (type) {
+    case PACMAN:
+      return new pacman::Clockface(gfx);
+    case MARIO:
+      return new mario::Clockface(gfx);
+    default:
+      return nullptr;
+  }
+}
 
 void ClockwiseHUB75::setup() {
   ESP_LOGCONFIG(TAG, "Setting up Clockwise HUB75 Integration...");
@@ -59,28 +66,17 @@ void ClockwiseHUB75::setup() {
   // Provide the wrapper to the Clockface engine via Locator
   Locator::provide(gfx_wrapper_);
   
-  // Initialize datetime shim
+  // Initialize datetime shim and wire initial time source
   g_dt.begin();
-  // Time sources are now wired from YAML via set_ha_time and set_rtc_time
-  // Default to HA time source
   set_time_source(time_source_);
-  
-  // Create clockface based on type
-  switch (clockface_type_) {
-    case PACMAN:
-      clockface_ = new pacman::Clockface(gfx_wrapper_);  // Pacman Clockface implements IClockface
-      clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Pacman clockface initialized");
-      break;
-    case MARIO:
-      clockface_ = new mario::Clockface(gfx_wrapper_);  // Mario Clockface implements IClockface
-      clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Mario clockface initialized");
-      break;
-    case CLOCK:
-      // TODO: Replace with BasicClockface (must implement IClockface)
-      ESP_LOGW(TAG, "Basic clock clockface not yet implemented");
-      break;
+
+  // Create initial clockface
+  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_);
+  if (clockface_ != nullptr) {
+    clockface_->setup(&g_dt);
+    ESP_LOGCONFIG(TAG, "Clockface %d initialized", static_cast<int>(clockface_type_));
+  } else {
+    ESP_LOGW(TAG, "Clockface %d not yet implemented", static_cast<int>(clockface_type_));
   }
   
   ESP_LOGCONFIG(TAG, "Clockwise HUB75 setup complete");
@@ -119,9 +115,18 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type) {
     ESP_LOGD(TAG, "Already using clockface type %d, skipping switch", static_cast<int>(type));
     return;
   }
-  
+
+  // Called before setup() (e.g. from a template select restoring its value):
+  // gfx_wrapper_ isn't created yet, so just record the type and return.
+  // setup() will then create the correct clockface.
+  if (gfx_wrapper_ == nullptr) {
+    ESP_LOGD(TAG, "switch_clockface called before setup, storing type %d", static_cast<int>(type));
+    clockface_type_ = type;
+    return;
+  }
+
   ESP_LOGI(TAG, "Switching clockface from %d to %d", static_cast<int>(clockface_type_), static_cast<int>(type));
-  
+
   // Destroy the old clockface
   if (clockface_ != nullptr) {
     delete clockface_;
@@ -135,22 +140,13 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type) {
   
   // Update the clockface type
   clockface_type_ = type;
-  
-  // Create the new clockface based on type
-  switch (clockface_type_) {
-    case PACMAN:
-      clockface_ = new pacman::Clockface(gfx_wrapper_);
-      clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Switched to Pacman clockface");
-      break;
-    case MARIO:
-      clockface_ = new mario::Clockface(gfx_wrapper_);
-      clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Switched to Mario clockface");
-      break;
-    case CLOCK:
-      ESP_LOGW(TAG, "Basic clock clockface not yet implemented, staying black");
-      break;
+
+  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_);
+  if (clockface_ != nullptr) {
+    clockface_->setup(&g_dt);
+    ESP_LOGI(TAG, "Switched to clockface %d", static_cast<int>(clockface_type_));
+  } else {
+    ESP_LOGW(TAG, "Clockface %d not yet implemented", static_cast<int>(clockface_type_));
   }
 }
 
