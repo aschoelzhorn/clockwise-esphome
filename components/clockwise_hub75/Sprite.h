@@ -15,4 +15,13 @@ class Sprite {
     void logPosition();
 
     virtual const char* name();
+    
+    // Accessors for rendering (renderer is responsible for drawing, not sprite)
+    int8_t getX() const { return _x; }
+    int8_t getY() const { return _y; }
+    uint8_t getWidth() const { return _width; }
+    uint8_t getHeight() const { return _height; }
+    
+    // Virtual accessor for sprite data (pure sprite data only, no rendering logic)
+    virtual const unsigned short* getSpriteData() const { return nullptr; }
 };

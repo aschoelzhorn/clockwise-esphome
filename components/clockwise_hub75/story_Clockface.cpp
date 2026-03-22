@@ -47,6 +47,10 @@ void StoryClockface::setup(CWDateTime* dt) {
   }
   _renderer.clearTransition();
 
+  // Initialize test sprite
+  _testShip.setActive(true);
+  _renderer.setEventSprite(&_testShip);
+
   ESP_LOGI(TAG, "StoryClockface initialized - Theme: %s, starting at act 0 (duration: %u sec)",
            _theme->getThemeName(), firstAct ? firstAct->getDurationSeconds() : 0);
 }
@@ -64,6 +68,9 @@ void StoryClockface::update() {
       _lastMinute = currentMinute;
       _lastMinuteChange = _now;
   }
+
+  // Update test sprite
+  _testShip.update();
 
   setActiveAct(); // Update active Act based on current hour
   StoryTextOverlay overlay = updateTextOverlay();

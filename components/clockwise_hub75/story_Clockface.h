@@ -6,6 +6,7 @@
 #include "GFXWrapper.h"
 #include "story_act.h"
 #include "story_renderer.h"
+#include "sprite_test_ship.h"
 
 namespace story {
 
@@ -53,6 +54,9 @@ private:
   static constexpr uint32_t PHRASE_UPDATE_FRAMES = 300;  // Update phrase ~every 5 seconds at 60 FPS
 
   TextState _text;
+
+  // Test sprite/event
+  TestShip _testShip;
 
 public:
   StoryClockface(IStoryTheme* theme, Adafruit_GFX* gfx);

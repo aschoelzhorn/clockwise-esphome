@@ -1,7 +1,9 @@
 #include "story_renderer.h"
 
 #include "esphome/core/log.h"
+#include "Sprite.h"
 #include "story_font.h"
+#include "mario_assets.h"
 
 #include <pgmspace.h>
 
@@ -114,7 +116,41 @@ void StoryRenderer::layerAmbient() {
 }
 
 void StoryRenderer::layerEvent() {
-  return;
+  if (!event_sprite_) {
+    return;
+  }
+
+  // Renderer is responsible for drawing the sprite, not the sprite itself
+  const unsigned short* spriteData = event_sprite_->getSpriteData();
+  if (!spriteData) {
+    return;
+  }
+
+  int8_t x = event_sprite_->getX();
+  int8_t y = event_sprite_->getY();
+  uint8_t width = event_sprite_->getWidth();
+  uint8_t height = event_sprite_->getHeight();
+
+  // Draw sprite to framebuffer
+  for (uint8_t sy = 0; sy < height; sy++) {
+    for (uint8_t sx = 0; sx < width; sx++) {
+      int spriteIdx = sy * width + sx;
+      uint16_t color = spriteData[spriteIdx];
+
+      // Skip transparent pixels
+      if (color == TRANSPARENT) {
+        continue;
+      }
+
+      int px = x + sx;
+      int py = y + sy;
+
+      // Bounds check
+      if (px >= 0 && px < 64 && py >= 0 && py < 64) {
+        fbSet(px, py, color);
+      }
+    }
+  }
 }
 
 void StoryRenderer::layerTime(const Act& activeAct, const CWDateTime& dateTime, uint32_t now) {
