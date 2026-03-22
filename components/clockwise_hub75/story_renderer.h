@@ -5,6 +5,9 @@
 #include "story_IStoryTheme.h"
 #include "story_act.h"
 
+// Forward declaration
+class Sprite;
+
 namespace story {
 
 struct StoryTextOverlay {
@@ -23,6 +26,10 @@ public:
   void startActTransition(const Act& fromAct, const Act& toAct, uint32_t now);
   void clearTransition();
 
+  // Event sprite management
+  void setEventSprite(Sprite* sprite) { event_sprite_ = sprite; }
+  Sprite* getEventSprite() const { return event_sprite_; }
+
 private:
   struct BackgroundTransition {
     bool active = false;
@@ -39,6 +46,7 @@ private:
   Adafruit_GFX* display_;
   uint16_t framebuffer_[64 * 64];
   BackgroundTransition bg_transition_;
+  Sprite* event_sprite_ = nullptr;
 
   void flushFramebuffer();
   void layerClear();
