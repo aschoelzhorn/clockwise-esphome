@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "story_dune_phrases.h"
+#include "story_event.h"
 
 namespace story {
 
@@ -26,6 +27,8 @@ private:
     uint16_t _fontColor;
     ActLayout _layout;
     uint32_t _durationSeconds = 3600;  // Default 1 hour per act
+    StoryEvent _events[STORY_ACT_MAX_EVENTS];
+    size_t _eventCount = 0;
 
     size_t getPhraseCount() const;
 
@@ -41,6 +44,13 @@ public:
     void setLayout(const ActLayout& layout);
     uint32_t getDurationSeconds() const;
     void setDurationSeconds(uint32_t seconds);
+    bool addEvent(const StoryEvent& event);
+    size_t getEventCount() const;
+    StoryEvent* getEvent(size_t index);
+    const StoryEvent* getEvent(size_t index) const;
+    void resetEvents(uint32_t actStartMs);
+    void updateEvents(uint32_t now);
+    size_t collectRenderSprites(uint32_t now, StoryRenderSprite* out, size_t maxSprites) const;
 };
 
 }

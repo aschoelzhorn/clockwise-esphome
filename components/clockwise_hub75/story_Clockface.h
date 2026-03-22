@@ -5,8 +5,8 @@
 #include "CWDateTime.h"
 #include "GFXWrapper.h"
 #include "story_act.h"
+#include "story_event.h"
 #include "story_renderer.h"
-#include "sprite_test_ship.h"
 
 namespace story {
 
@@ -28,10 +28,11 @@ private:
   IStoryTheme* _theme;
   StoryRenderer _renderer;
   uint8_t _activeActIndex = 0;
-  Act _activeAct;
+  Act* _activeAct = nullptr;
 
   CWDateTime* _dateTime;
   uint32_t _storyStartMs = 0;  // When the story cycle started
+  uint32_t _activeActStartMs = 0;
   uint32_t _now;
   uint32_t _lastMinuteChange = 0;
   uint8_t _lastMinute = 255;  // Invalid initial value
@@ -54,9 +55,8 @@ private:
   static constexpr uint32_t PHRASE_UPDATE_FRAMES = 300;  // Update phrase ~every 5 seconds at 60 FPS
 
   TextState _text;
-
-  // Test sprite/event
-  TestShip _testShip;
+  StoryRenderSprite _eventSprites[STORY_ACT_MAX_EVENTS * STORY_EVENT_MAX_SPRITES];
+  size_t _eventSpriteCount = 0;
 
 public:
   StoryClockface(IStoryTheme* theme, Adafruit_GFX* gfx);

@@ -1,7 +1,6 @@
 #include "story_renderer.h"
 
 #include "esphome/core/log.h"
-#include "Sprite.h"
 #include "story_font.h"
 #include "mario_assets.h"
 
@@ -31,7 +30,8 @@ static const char *const TAG = "StoryRenderer";
 StoryRenderer::StoryRenderer(Adafruit_GFX* display) : display_(display), framebuffer_{0} {}
 
 void StoryRenderer::render(const IStoryTheme& theme, const Act& activeAct, const CWDateTime& dateTime,
-                           uint32_t now, const StoryTextOverlay& overlay) {
+                           uint32_t now, const StoryTextOverlay& overlay,
+                           const StoryRenderSprite* eventSprites, size_t eventSpriteCount) {
   if (!display_) {
     ESP_LOGE(TAG, "Display cannot be null");
     return;
@@ -40,7 +40,7 @@ void StoryRenderer::render(const IStoryTheme& theme, const Act& activeAct, const
   layerClear();
   layerBackground(activeAct, now);
   layerAmbient();
-  layerEvent();
+  layerEvent(eventSprites, eventSpriteCount);
   layerTime(activeAct, dateTime, now);
   layerText(theme, activeAct, overlay);
   flushFramebuffer();
@@ -115,39 +115,30 @@ void StoryRenderer::layerAmbient() {
   return;
 }
 
-void StoryRenderer::layerEvent() {
-  if (!event_sprite_) {
+void StoryRenderer::layerEvent(const StoryRenderSprite* eventSprites, size_t eventSpriteCount) {
+  if (!eventSprites || eventSpriteCount == 0) {
     return;
   }
 
-  // Renderer is responsible for drawing the sprite, not the sprite itself
-  const unsigned short* spriteData = event_sprite_->getSpriteData();
-  if (!spriteData) {
-    return;
-  }
+  for (size_t index = 0; index < eventSpriteCount; index++) {
+    const StoryRenderSprite& sprite = eventSprites[index];
+    if (!sprite.spriteData || sprite.width == 0 || sprite.height == 0) {
+      continue;
+    }
 
-  int8_t x = event_sprite_->getX();
-  int8_t y = event_sprite_->getY();
-  uint8_t width = event_sprite_->getWidth();
-  uint8_t height = event_sprite_->getHeight();
+    for (uint8_t sy = 0; sy < sprite.height; sy++) {
+      for (uint8_t sx = 0; sx < sprite.width; sx++) {
+        int spriteIdx = sy * sprite.width + sx;
+        uint16_t color = sprite.spriteData[spriteIdx];
+        if (color == TRANSPARENT) {
+          continue;
+        }
 
-  // Draw sprite to framebuffer
-  for (uint8_t sy = 0; sy < height; sy++) {
-    for (uint8_t sx = 0; sx < width; sx++) {
-      int spriteIdx = sy * width + sx;
-      uint16_t color = spriteData[spriteIdx];
-
-      // Skip transparent pixels
-      if (color == TRANSPARENT) {
-        continue;
-      }
-
-      int px = x + sx;
-      int py = y + sy;
-
-      // Bounds check
-      if (px >= 0 && px < 64 && py >= 0 && py < 64) {
-        fbSet(px, py, color);
+        int px = sprite.x + sx;
+        int py = sprite.y + sy;
+        if (px >= 0 && px < 64 && py >= 0 && py < 64) {
+          fbSet(px, py, color);
+        }
       }
     }
   }
