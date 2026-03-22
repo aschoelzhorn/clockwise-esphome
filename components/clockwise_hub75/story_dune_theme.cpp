@@ -1,5 +1,6 @@
 #include "story_dune_theme.h"
 #include "story_font.h"
+#include "mario_assets.h"
 #include "esphome/core/log.h"
 #include <cmath>
 #include <cstring>
@@ -51,6 +52,12 @@ DuneTheme::DuneTheme() {
                  COOL_BROWN,
                  dune_act6,
                  7);  // 7 seconds for testing
+
+  StoryEvent testEvent;
+  testEvent.configureRandom(900, 1800, true);
+  testEvent.addMotion({GOOMBA, ENEMY_SIZE[0], ENEMY_SIZE[1], -8, 18, 64, 18, 0, 1800});
+  testEvent.addMotion({KOOPA, ENEMY_SIZE[0], ENEMY_SIZE[1], 64, 28, -8, 28, 300, 2200});
+  acts_[0].addEvent(testEvent);
 
   // Calculate total story duration for logging
   uint32_t totalDuration = 0;

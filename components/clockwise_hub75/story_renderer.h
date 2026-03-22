@@ -1,12 +1,11 @@
 #pragma once
 
 #include <Adafruit_GFX.h>
+#include <stddef.h>
 #include "CWDateTime.h"
 #include "story_IStoryTheme.h"
 #include "story_act.h"
-
-// Forward declaration
-class Sprite;
+#include "story_event.h"
 
 namespace story {
 
@@ -22,13 +21,10 @@ public:
   explicit StoryRenderer(Adafruit_GFX* display);
 
   void render(const IStoryTheme& theme, const Act& activeAct, const CWDateTime& dateTime,
-              uint32_t now, const StoryTextOverlay& overlay);
+              uint32_t now, const StoryTextOverlay& overlay,
+              const StoryRenderSprite* eventSprites, size_t eventSpriteCount);
   void startActTransition(const Act& fromAct, const Act& toAct, uint32_t now);
   void clearTransition();
-
-  // Event sprite management
-  void setEventSprite(Sprite* sprite) { event_sprite_ = sprite; }
-  Sprite* getEventSprite() const { return event_sprite_; }
 
 private:
   struct BackgroundTransition {
@@ -46,13 +42,12 @@ private:
   Adafruit_GFX* display_;
   uint16_t framebuffer_[64 * 64];
   BackgroundTransition bg_transition_;
-  Sprite* event_sprite_ = nullptr;
 
   void flushFramebuffer();
   void layerClear();
   void layerBackground(const Act& activeAct, uint32_t now);
   void layerAmbient();
-  void layerEvent();
+  void layerEvent(const StoryRenderSprite* eventSprites, size_t eventSpriteCount);
   void layerTime(const Act& activeAct, const CWDateTime& dateTime, uint32_t now);
   void layerText(const IStoryTheme& theme, const Act& activeAct, const StoryTextOverlay& overlay);
 

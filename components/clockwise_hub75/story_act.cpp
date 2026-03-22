@@ -73,4 +73,55 @@ void Act::setDurationSeconds(uint32_t seconds) {
     _durationSeconds = seconds;
 }
 
+bool Act::addEvent(const StoryEvent& event) {
+    if (_eventCount >= STORY_ACT_MAX_EVENTS) {
+        return false;
+    }
+
+    _events[_eventCount++] = event;
+    return true;
+}
+
+size_t Act::getEventCount() const {
+    return _eventCount;
+}
+
+StoryEvent* Act::getEvent(size_t index) {
+    if (index >= _eventCount) {
+        return nullptr;
+    }
+    return &_events[index];
+}
+
+const StoryEvent* Act::getEvent(size_t index) const {
+    if (index >= _eventCount) {
+        return nullptr;
+    }
+    return &_events[index];
+}
+
+void Act::resetEvents(uint32_t actStartMs) {
+    for (size_t i = 0; i < _eventCount; i++) {
+        _events[i].reset(actStartMs);
+    }
+}
+
+void Act::updateEvents(uint32_t now) {
+    for (size_t i = 0; i < _eventCount; i++) {
+        _events[i].update(now);
+    }
+}
+
+size_t Act::collectRenderSprites(uint32_t now, StoryRenderSprite* out, size_t maxSprites) const {
+    if (!out || maxSprites == 0) {
+        return 0;
+    }
+
+    size_t count = 0;
+    for (size_t i = 0; i < _eventCount && count < maxSprites; i++) {
+        count += _events[i].collectVisibleSprites(now, out + count, maxSprites - count);
+    }
+    return count;
+}
+
 }
