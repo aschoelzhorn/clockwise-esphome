@@ -32,25 +32,25 @@ esphome:
     - priority: 600
       then:
         - lambda: |-
+            // Restore saved settings from globals (globals restored at priority 600)
+            // These set member vars BEFORE ClockwiseHUB75::setup() creates the clockface
+            id(clockwise_main).set_clockface_type(
+              static_cast<esphome::clockwise_hub75::ClockfaceType>((int)id(saved_clockface)));
+            id(clockwise_main).set_panel_color_order(
+              static_cast<esphome::clockwise_hub75::PanelColorOrder>((int)id(saved_color_order)));
+            id(clockwise_main).set_initial_brightness((uint8_t)(int)id(saved_brightness));
+            // Link time sources
             id(clockwise_main).set_ha_time(id(homeassistant_time));
             id(clockwise_main).set_ntp_time(id(ntp_time));
             id(clockwise_main).set_rtc_time(id(rtc_time));
     - priority: -100
       then:
         - lambda: |-
-            // Apply persisted brightness
-            id(clockwise_main).set_brightness((uint8_t)id(saved_brightness));
-            id(display_brightness).publish_state(id(saved_brightness));
+            // After everything is initialized, apply time source and special dates
+            auto ts = id(time_source_selector).state;
+            int src = (ts == "NTP") ? 1 : (ts == "RTC") ? 2 : 0;
+            id(clockwise_main).set_time_source(src);
 
-            // Apply persisted clockface
-            auto cf = id(clockface_selector).current_option();
-            if (cf == "Mario") id(clockwise_main).switch_clockface(esphome::clockwise_hub75::MARIO);
-            else id(clockwise_main).switch_clockface(esphome::clockwise_hub75::PACMAN);
-
-            // Apply persisted time source
-            auto ts = id(time_source_selector).current_option();
-            int source = (ts == "Home Assistant") ? 0 : (ts == "NTP") ? 1 : 2;
-            id(clockwise_main).set_time_source(source);
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -59,19 +59,32 @@ esp32:
     type: arduino
     version: recommended
 
-# Globals for runtime state
+# Globals for persisting settings across reboots
 globals:
   - id: auto_brightness_enabled
     type: bool
-    restore_value: yes
+    restore_value: true
     initial_value: '${enable_ldr}'
   - id: saved_brightness
     type: int
-    restore_value: yes
+    restore_value: true
     initial_value: '${initial_brightness}'
+  - id: saved_clockface
+    type: int
+    restore_value: true
+    initial_value: '1'           # MARIO
+  - id: saved_color_order
+    type: int
+    restore_value: true
+    initial_value: '0'           # RGB
 
 # Enable logging
 logger:
+  level: DEBUG
+#  logs:
+#    component: INFO
+#    hub75: DEBUG
+#    clockwise_hub75: INFO
 
 # Enable Home Assistant API
 api:
@@ -96,7 +109,7 @@ wifi:
 
 captive_portal:
 
-# used for RTC
+# used for RTC and optional I2C devices
 i2c:
   sda: 41
   scl: 42
@@ -173,8 +186,6 @@ display:
     # Note: Upstream changed update_interval to integer (ms), never = 4294967295
     update_interval: 4294967295ms
 
-# Clockwise Integration Component
-
 # Clockwise Integration Component with runtime time source switching
 clockwise_hub75:
   id: clockwise_main
@@ -192,10 +203,10 @@ number:
     name: "Display Brightness"
     icon: mdi:brightness-5
     entity_category: config
-    mode: slider
     min_value: 0
     max_value: 255
     step: 1
+    mode: slider
     lambda: return id(saved_brightness);
     set_action:
       - globals.set:
@@ -247,6 +258,11 @@ select:
     optimistic: true
     on_value:
       then:
+        - globals.set:
+            id: saved_clockface
+            value: !lambda |-
+              if (x == "Mario") return 1;
+              return 0;
         - lambda: |-
             if (x == "Mario") id(clockwise_main).switch_clockface(esphome::clockwise_hub75::MARIO);
             else id(clockwise_main).switch_clockface(esphome::clockwise_hub75::PACMAN);
@@ -268,6 +284,42 @@ select:
             // 0 = Home Assistant, 1 = NTP, 2 = RTC
             int source = (x == "Home Assistant") ? 0 : (x == "NTP") ? 1 : 2;
             id(clockwise_main).set_time_source(source);
+
+
+  - platform: template
+    id: panel_color_order_selector
+    name: "Panel Color Order"
+    icon: mdi:palette-outline
+    entity_category: config
+    options:
+      - "RGB"
+      - "RBG"
+      - "GRB"
+      - "GBR"
+      - "BRG"
+      - "BGR"
+    initial_option: "RGB"
+    restore_value: true
+    optimistic: true
+    on_value:
+      then:
+        - globals.set:
+            id: saved_color_order
+            value: !lambda |-
+              if (x == "RBG") return 1;
+              if (x == "GRB") return 2;
+              if (x == "GBR") return 3;
+              if (x == "BRG") return 4;
+              if (x == "BGR") return 5;
+              return 0;
+        - lambda: |-
+            esphome::clockwise_hub75::PanelColorOrder order = esphome::clockwise_hub75::RGB;
+            if (x == "RBG") order = esphome::clockwise_hub75::RBG;
+            else if (x == "GRB") order = esphome::clockwise_hub75::GRB;
+            else if (x == "GBR") order = esphome::clockwise_hub75::GBR;
+            else if (x == "BRG") order = esphome::clockwise_hub75::BRG;
+            else if (x == "BGR") order = esphome::clockwise_hub75::BGR;
+            id(clockwise_main).set_panel_color_order(order);
 
 # Status indicators
 sensor:
@@ -365,6 +417,24 @@ text_sensor:
   - platform: version
     name: "ESPHome Version"
     entity_category: diagnostic
+
+# Editable text input in HA/web for special day messages, for future use
+#text:
+#  - platform: template
+#    id: special_dates_input
+#    name: "Special Dates (MM-DD:Name,...)"
+#    icon: mdi:cake-variant-outline
+#    entity_category: config
+#    mode: text
+#    optimistic: true
+#    restore_value: true
+#    initial_value: ""
+#    min_length: 0
+#    max_length: 220
+#    set_action:
+#      - lambda: |-
+#          // Special dates: MM-DD:Name,MM-DD:Name (feature not yet implemented)
+#          ESP_LOGI("testdevice", "Special dates input: %s", x.c_str());
 
 # Control buttons
 button:

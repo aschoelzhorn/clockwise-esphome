@@ -21,6 +21,15 @@ enum ClockfaceType {
     CLOCK = 2
 };
 
+enum PanelColorOrder {
+  RGB = 0,
+  RBG = 1,
+  GRB = 2,
+  GBR = 3,
+  BRG = 4,
+  BGR = 5
+};
+
 class ClockwiseHUB75 : public PollingComponent {
  public:
   void setup() override;
@@ -36,16 +45,18 @@ class ClockwiseHUB75 : public PollingComponent {
   void set_time_source(int source);
   void set_clockface_type(ClockfaceType type) { clockface_type_ = type; }
   void set_initial_brightness(uint8_t brightness) { initial_brightness_ = brightness; }
+  void set_panel_color_order(PanelColorOrder order);
 
   // Control methods for Home Assistant
   void set_brightness(uint8_t brightness);
   void set_power(bool state);
-  void switch_clockface(ClockfaceType type);
+  void switch_clockface(ClockfaceType type, bool force = false);
   
   // Getters for entities
   uint8_t get_brightness() const { return current_brightness_; }
   bool get_power() const { return power_state_; }
   ClockfaceType get_clockface_type() const { return clockface_type_; }
+  PanelColorOrder get_panel_color_order() const { return panel_color_order_; }
 
  protected:
   esphome::hub75::HUB75Display *hub75_display_{nullptr};
@@ -58,6 +69,7 @@ class ClockwiseHUB75 : public PollingComponent {
   GFXWrapper *gfx_wrapper_{nullptr};
   
   ClockfaceType clockface_type_{PACMAN};
+  PanelColorOrder panel_color_order_{RGB};
   uint8_t initial_brightness_{128};
   uint8_t current_brightness_{128};
   bool power_state_{true};

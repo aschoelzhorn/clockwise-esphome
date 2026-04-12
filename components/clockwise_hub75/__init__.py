@@ -17,16 +17,27 @@ ClockwiseHUB75 = clockwise_hub75_ns.class_("ClockwiseHUB75", cg.PollingComponent
 
 # Declare the C++ enum
 ClockfaceType = clockwise_hub75_ns.enum("ClockfaceType")
+PanelColorOrder = clockwise_hub75_ns.enum("PanelColorOrder")
 
 CONF_CLOCKWISE_HUB75_ID = "clockwise_hub75_id"
 
 CONF_CLOCKFACE_TYPE = "clockface_type"
 CONF_INITIAL_BRIGHTNESS = "initial_brightness"
+CONF_PANEL_COLOR_ORDER = "panel_color_order"
 
 CLOCKFACE_TYPES = {
     "PACMAN": ClockfaceType.PACMAN,
     "MARIO": ClockfaceType.MARIO,
     "CLOCK": ClockfaceType.CLOCK,
+}
+
+PANEL_COLOR_ORDERS = {
+    "RGB": PanelColorOrder.RGB,
+    "RBG": PanelColorOrder.RBG,
+    "GRB": PanelColorOrder.GRB,
+    "GBR": PanelColorOrder.GBR,
+    "BRG": PanelColorOrder.BRG,
+    "BGR": PanelColorOrder.BGR,
 }
 
 CONF_HUB75_ID = "hub75_id"
@@ -35,6 +46,7 @@ CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(ClockwiseHUB75),
     cv.Required(CONF_HUB75_ID): cv.use_id(HUB75Display),
     cv.Optional(CONF_CLOCKFACE_TYPE, default="PACMAN"): cv.enum(CLOCKFACE_TYPES, upper=True),
+    cv.Optional(CONF_PANEL_COLOR_ORDER, default="RGB"): cv.enum(PANEL_COLOR_ORDERS, upper=True),
     cv.Optional(CONF_INITIAL_BRIGHTNESS, default=128): cv.int_range(min=0, max=255),
 }).extend(cv.polling_component_schema("16ms"))
 
@@ -47,4 +59,5 @@ async def to_code(config):
     cg.add(var.set_hub75_display(hub75_var))
 
     cg.add(var.set_clockface_type(config[CONF_CLOCKFACE_TYPE]))
+    cg.add(var.set_panel_color_order(config[CONF_PANEL_COLOR_ORDER]))
     cg.add(var.set_initial_brightness(config[CONF_INITIAL_BRIGHTNESS]))

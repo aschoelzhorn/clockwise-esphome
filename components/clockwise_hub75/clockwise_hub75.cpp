@@ -47,6 +47,21 @@ static IClockface *create_clockface_(ClockfaceType type, GFXWrapper *gfx) {
   }
 }
 
+void ClockwiseHUB75::set_panel_color_order(PanelColorOrder order) {
+  panel_color_order_ = order;
+
+  if (gfx_wrapper_ != nullptr) {
+    gfx_wrapper_->set_color_order(static_cast<GFXWrapper::ColorChannelOrder>(order));
+  }
+
+  // Force full redraw for clockfaces that keep static pixels on screen (e.g. Pacman/Mario).
+  if (clockface_ != nullptr && gfx_wrapper_ != nullptr) {
+    switch_clockface(clockface_type_, true);
+  }
+
+  ESP_LOGI(TAG, "Panel color order set to %d", static_cast<int>(order));
+}
+
 void ClockwiseHUB75::setup() {
   ESP_LOGCONFIG(TAG, "Setting up Clockwise HUB75 Integration...");
   
@@ -62,6 +77,7 @@ void ClockwiseHUB75::setup() {
   
   // Create Adafruit_GFX wrapper around HUB75Display
   gfx_wrapper_ = new GFXWrapper(hub75_display_);
+  gfx_wrapper_->set_color_order(static_cast<GFXWrapper::ColorChannelOrder>(panel_color_order_));
   
   // Provide the wrapper to the Clockface engine via Locator
   Locator::provide(gfx_wrapper_);
@@ -85,6 +101,7 @@ void ClockwiseHUB75::setup() {
 void ClockwiseHUB75::dump_config() {
   ESP_LOGCONFIG(TAG, "Clockwise HUB75:");
   ESP_LOGCONFIG(TAG, "  Clockface Type: %d", static_cast<int>(clockface_type_));
+  ESP_LOGCONFIG(TAG, "  Panel Color Order: %d", static_cast<int>(panel_color_order_));
   ESP_LOGCONFIG(TAG, "  Initial Brightness: %d", initial_brightness_);
   ESP_LOGCONFIG(TAG, "  Current Brightness: %d", current_brightness_);
   ESP_LOGCONFIG(TAG, "  Power State: %s", YESNO(power_state_));
@@ -110,8 +127,8 @@ void ClockwiseHUB75::set_power(bool state) {
   ESP_LOGD(TAG, "Power state set to %s", YESNO(state));
 }
 
-void ClockwiseHUB75::switch_clockface(ClockfaceType type) {
-  if (type == clockface_type_) {
+void ClockwiseHUB75::switch_clockface(ClockfaceType type, bool force) {
+  if (!force && type == clockface_type_) {
     ESP_LOGD(TAG, "Already using clockface type %d, skipping switch", static_cast<int>(type));
     return;
   }

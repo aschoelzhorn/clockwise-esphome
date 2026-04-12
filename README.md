@@ -20,6 +20,7 @@ This ESPHome component brings the fantastic [Clockwise](https://clockwise.page/)
 - **💡 Brightness Control**: Adjust display brightness (0-255) remotely
 - **🌅 Automatic Brightness**: Optional LDR sensor for automatic brightness adjustment
 - **🔄 Clockface Switching**: Change between clock styles on the fly
+- **🎨 Panel Color Order**: Fix wrong colors without rewiring — swap R/G/B channels in software
 - **⚡ Power Control**: Turn display on/off remotely
 - **🎯 Huidu HD-WF2 Support**: Optimized for HD-WF2 boards with automatic pin mapping
 - **📱 Real-time Sync**: Time synchronized with Home Assistant or NTP
@@ -35,6 +36,7 @@ Once installed, you'll get these entities in Home Assistant:
 - **Number**: `display_brightness` - Adjust brightness (0-255)
 - **Select**: `clockface` - Choose between Mario, Pac-Man, and other styles
 - **Select**: `time_source` - Choose between Home Assistant, NTP, or RTC time
+- **Select**: `panel_color_order` - Fix swapped colors by selecting RGB, RBG, GRB, GBR, BRG, or BGR
 - **Button**: `sync_time_to_rtc` - Sync current Home Assistant time to RTC hardware
 - **Sensor**: `ambient_light` - Current light level percentage (when LDR is configured)
 
@@ -139,8 +141,8 @@ display:
 clockwise_hub75:
   id: clockwise_main
   hub75_id: matrix_display
-  time_id: homeassistant_time
   clockface_type: MARIO          # Options: MARIO, PACMAN
+  panel_color_order: RGB         # Fix wrong colors: RGB, RBG, GRB, GBR, BRG, BGR
   initial_brightness: 128
 
 esphome:
@@ -166,11 +168,21 @@ switch:
     name: "Display Power"
 
 select:
-  - platform: clockwise_hub75
-    clockwise_hub75_id: clockwise_main
+  - platform: template
     id: clockface_selector
     name: "Clockface"
-  
+    options:
+      - "Pacman"
+      - "Mario"
+    initial_option: "Pacman"
+    restore_value: true
+    optimistic: true
+    on_value:
+      then:
+        - lambda: |-
+            if (x == "Mario") id(clockwise_main).switch_clockface(esphome::clockwise_hub75::MARIO);
+            else id(clockwise_main).switch_clockface(esphome::clockwise_hub75::PACMAN);
+
   # Time source selector
   - platform: template
     id: time_source_selector
@@ -180,11 +192,41 @@ select:
       - "NTP"
       - "RTC"
     initial_option: "Home Assistant"
+    restore_value: true
+    optimistic: true
     on_value:
-      - lambda: |-
-          // 0 = Home Assistant, 1 = NTP, 2 = RTC
-          int source = (x == "Home Assistant") ? 0 : (x == "NTP") ? 1 : 2;
-          id(clockwise_main).set_time_source(source);
+      then:
+        - lambda: |-
+            // 0 = Home Assistant, 1 = NTP, 2 = RTC
+            int source = (x == "Home Assistant") ? 0 : (x == "NTP") ? 1 : 2;
+            id(clockwise_main).set_time_source(source);
+
+  # Panel color order - fix swapped colors without rewiring
+  - platform: template
+    id: panel_color_order_selector
+    name: "Panel Color Order"
+    icon: mdi:palette
+    entity_category: config
+    options:
+      - "RGB"
+      - "RBG"
+      - "GRB"
+      - "GBR"
+      - "BRG"
+      - "BGR"
+    initial_option: "RGB"
+    restore_value: true
+    optimistic: true
+    on_value:
+      then:
+        - lambda: |-
+            esphome::clockwise_hub75::PanelColorOrder order = esphome::clockwise_hub75::RGB;
+            if (x == "RBG") order = esphome::clockwise_hub75::RBG;
+            else if (x == "GRB") order = esphome::clockwise_hub75::GRB;
+            else if (x == "GBR") order = esphome::clockwise_hub75::GBR;
+            else if (x == "BRG") order = esphome::clockwise_hub75::BRG;
+            else if (x == "BGR") order = esphome::clockwise_hub75::BGR;
+            id(clockwise_main).set_panel_color_order(order);
 
 # Sync button (when RTC is configured)
 button:
@@ -336,6 +378,8 @@ entities:
     name: Clockface
   - entity: select.clockwise_hdwf2_time_source
     name: Time Source
+  - entity: select.clockwise_hdwf2_panel_color_order
+    name: Panel Color Order
   - entity: button.clockwise_hdwf2_sync_time_to_rtc
     name: Sync Time to RTC
   - entity: number.clockwise_hdwf2_display_brightness
@@ -379,7 +423,8 @@ This ESPHome component adapts the original Clockwise codebase with these key cha
 
 **Wrong colors:**
 
-- Check RGB pin connections (some panels have colors swapped)
+- Use the **Panel Color Order** select in Home Assistant to swap channels in software — try `RBG`, `GRB`, `BGR`, etc. until colors look correct. No rewiring needed.
+- If none of the six options fix it, check the physical RGB pin connections on your board.
 
 **Boot loops:**
 
