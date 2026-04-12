@@ -18,6 +18,12 @@ The hybrid approach leverages the best of both worlds:
 - ✅ **Hardware Compatibility**: Supports all ESP32 variants, multiple panel layouts, various driver chips
 - ✅ **Advanced Features**: Multi-panel support, brightness control, power management
 
+## Special Days
+
+Mario supports recurring special dates entered as `MM-DD:Name,MM-DD:Name` in the **Special Dates (MM-DD:Name,...)** text control. On a matching date it shows a balloon and scrolls `Happy Birthday Name!` from right to left: at the top during the day, or in warm cream over dark brick ground at night.
+
+The first matching entry is used, with a maximum of 10 valid entries and 24 bytes per name. The example control persists its text and reapplies it after reboot. See the [Special Days guide](../../README.md#special-days) for setup, limits and examples.
+
 ## Quick Start
 
 ### 1. Add External Components
