@@ -1,0 +1,392 @@
+# Clockwise HUB75 Clock - HD-WF2 Board Configuration
+# ESP32-S3 (8MB Flash, No PSRAM) with 64×64 P3 generic Panel
+
+substitutions:
+  device_name: p3-clockwise-hdwf2
+  friendly_name: P3 Panel
+  
+  # HD-WF2 Board with 64×64 generic panel
+  panel_width: "64"
+  panel_height: "64"
+  initial_brightness: "128"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  comment: "Clockwise Clock on HD-WF2 Board with P3"
+  platformio_options:
+    lib_deps:
+      - adafruit/Adafruit BusIO
+      - adafruit/Adafruit GFX Library  # Required for Clockface compatibility
+    lib_ldf_mode: chain
+    build_flags:
+      - -Os  # Optimize for size
+      - -DCORE_DEBUG_LEVEL=1  # Reduce debug level
+  on_boot:
+    - priority: 600
+      then:
+        - lambda: |-
+            // Restore saved settings from globals (globals restored at priority 600)
+            // These set member vars BEFORE ClockwiseHUB75::setup() creates the clockface
+            id(clockwise_main).set_clockface_type(
+              static_cast<esphome::clockwise_hub75::ClockfaceType>((int)id(saved_clockface)));
+            id(clockwise_main).set_panel_color_order(
+              static_cast<esphome::clockwise_hub75::PanelColorOrder>((int)id(saved_color_order)));
+            id(clockwise_main).set_initial_brightness((uint8_t)(int)id(saved_brightness));
+            // Link time sources
+            id(clockwise_main).set_ha_time(id(homeassistant_time));
+            id(clockwise_main).set_ntp_time(id(ntp_time));
+            id(clockwise_main).set_rtc_time(id(rtc_time));
+    - priority: -100
+      then:
+        - lambda: |-
+            // After everything is initialized, apply time source and special dates
+            auto ts = id(time_source_selector).state;
+            int src = (ts == "NTP") ? 1 : (ts == "RTC") ? 2 : 0;
+            id(clockwise_main).set_time_source(src);
+
+            // Restore persisted special dates
+            auto dates = id(special_dates_input).state;
+            if (!dates.empty()) {
+              id(clockwise_main).set_special_dates(dates);
+            }
+
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  framework:
+    type: arduino
+    version: recommended
+
+# Globals for persisting settings across reboots
+globals:
+  - id: saved_brightness
+    type: int
+    restore_value: true
+    initial_value: '${initial_brightness}'
+  - id: saved_clockface
+    type: int
+    restore_value: true
+    initial_value: '1'           # MARIO
+  - id: saved_color_order
+    type: int
+    restore_value: true
+    initial_value: '1'           # RBG
+
+# Enable logging
+logger:
+  level: DEBUG
+#  logs:
+#    component: INFO
+#    hub75: DEBUG
+#    clockwise_hub75: INFO
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_encryption_key
+  reboot_timeout: 0s
+
+# Enable OTA updates
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+# WiFi configuration
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  
+  # Enable fallback hotspot
+  ap:
+    ssid: "${device_name} Fallback"
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+# used for RTC and optional I2C devices
+i2c:
+  sda: 41
+  scl: 42
+  scan: true
+
+# Web server (optional - disable for production to save memory)
+web_server:
+  port: 80
+  local: true
+  version: 3
+
+# Time component for clock functionality
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: Europe/Vienna  # Change to your timezone
+    on_time_sync:
+      then:
+        - logger.log: "Time synchronized with Home Assistant"
+
+  - platform: sntp
+    id: ntp_time
+    timezone: Europe/Vienna  # Change to your timezone
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
+    update_interval: 3600s
+    on_time_sync:
+      then:
+        - logger.log: "Time synchronized with NTP"
+
+  - platform: bm8563
+    id: rtc_time
+    address: 0x51
+    update_interval: 3600s  # Only re-read chip hourly so it doesn't override HA/NTP every 60s
+    on_time_sync:
+      then:
+        - logger.log: "Time synchronized with BM8563 RTC"
+
+# External components
+external_components:
+  # Clockwise HUB75 integration component
+  #- source: github://aschoelzhorn/clockwise-esphome@feature/Dune_clockface
+  - source: ./components
+    components: [clockwise_hub75]
+    refresh: 1s
+
+# HUB75 Matrix Display Configuration for HD-WF2 Board
+display:
+  - platform: hub75
+    id: matrix_display
+    # Use board preset for automatic pin mapping
+    board: huidu-hd-wf2
+
+    # Panel dimensions - 64×64 FM6126A panel
+    panel_width: ${panel_width}
+    panel_height: ${panel_height}
+    
+    # Display settings
+    brightness: ${initial_brightness}
+    bit_depth: 8
+    min_refresh_rate: 120  # ESP32-S3 can handle higher refresh rates
+    double_buffer: false
+    rotation: 0 # (0=default, 90, 180, 270)
+    
+    # Hardware configuration - FM6126A driver chip
+    shift_driver: GENERIC
+    scan_wiring: STANDARD_TWO_SCAN  # 1/32 scan for 64px high
+
+    # Timing configuration
+    clock_speed: 20MHZ
+    clock_phase: false
+    
+    # Disable display updates - clockwise component handles rendering
+    # Note: Upstream changed update_interval to integer (ms), never = 4294967295
+    update_interval: 4294967295ms
+
+# Clockwise Integration Component with runtime time source switching
+clockwise_hub75:
+  id: clockwise_main
+  hub75_id: matrix_display
+  clockface_type: MARIO  # Options: PACMAN, MARIO
+  initial_brightness: ${initial_brightness}
+
+
+# Home Assistant Entities
+
+# Brightness Control (0-255)
+number:
+  - platform: template
+    id: display_brightness
+    name: "Display Brightness"
+    icon: mdi:brightness-5
+    entity_category: config
+    min_value: 0
+    max_value: 255
+    step: 1
+    mode: slider
+    lambda: return id(saved_brightness);
+    set_action:
+      - globals.set:
+          id: saved_brightness
+          value: !lambda return (int)x;
+      - lambda: id(clockwise_main).set_brightness((uint8_t)x);
+
+# Power Control
+switch:
+  - platform: clockwise_hub75
+    clockwise_hub75_id: clockwise_main
+    id: display_power
+    name: "Display Power"
+    icon: mdi:power
+    entity_category: config
+    restore_mode: RESTORE_DEFAULT_ON
+
+# Clockface Selection and Time source selection
+select:
+  - platform: template
+    id: clockface_selector
+    name: "Clockface"
+    icon: mdi:clock-outline
+    entity_category: config
+    options:
+      - "Pacman"
+      - "Mario"
+    initial_option: "Pacman"
+    restore_value: true
+    optimistic: true
+    on_value:
+      then:
+        - globals.set:
+            id: saved_clockface
+            value: !lambda |-
+              if (x == "Mario") return 1;
+              return 0;
+        - lambda: |-
+            if (x == "Mario") id(clockwise_main).switch_clockface(esphome::clockwise_hub75::MARIO);
+            else id(clockwise_main).switch_clockface(esphome::clockwise_hub75::PACMAN);
+
+  - platform: template
+    id: time_source_selector
+    name: "Time Source"
+    icon: mdi:clock
+    options:
+      - "Home Assistant"
+      - "NTP"
+      - "RTC"
+    initial_option: "Home Assistant"
+    restore_value: true
+    optimistic: true
+    on_value:
+      then:
+        - lambda: |-
+            // 0 = Home Assistant, 1 = NTP, 2 = RTC
+            int source = (x == "Home Assistant") ? 0 : (x == "NTP") ? 1 : 2;
+            id(clockwise_main).set_time_source(source);
+
+
+  - platform: template
+    id: panel_color_order_selector
+    name: "Panel Color Order"
+    icon: mdi:palette-outline
+    entity_category: config
+    options:
+      - "RGB"
+      - "RBG"
+      - "GRB"
+      - "GBR"
+      - "BRG"
+      - "BGR"
+    initial_option: "RGB"
+    restore_value: true
+    optimistic: true
+    on_value:
+      then:
+        - globals.set:
+            id: saved_color_order
+            value: !lambda |-
+              if (x == "RBG") return 1;
+              if (x == "GRB") return 2;
+              if (x == "GBR") return 3;
+              if (x == "BRG") return 4;
+              if (x == "BGR") return 5;
+              return 0;
+        - lambda: |-
+            esphome::clockwise_hub75::PanelColorOrder order = esphome::clockwise_hub75::RGB;
+            if (x == "RBG") order = esphome::clockwise_hub75::RBG;
+            else if (x == "GRB") order = esphome::clockwise_hub75::GRB;
+            else if (x == "GBR") order = esphome::clockwise_hub75::GBR;
+            else if (x == "BRG") order = esphome::clockwise_hub75::BRG;
+            else if (x == "BGR") order = esphome::clockwise_hub75::BGR;
+            id(clockwise_main).set_panel_color_order(order);
+
+# Status indicators
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+    entity_category: diagnostic
+  
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+    entity_category: diagnostic
+  
+  # ESP32-S3 internal temperature
+  - platform: internal_temperature
+    name: "ESP32-S3 Temperature"
+    update_interval: 60s
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+      entity_category: diagnostic
+    ssid:
+      name: "Connected SSID"
+      entity_category: diagnostic
+    mac_address:
+      name: "Mac Address"
+      entity_category: diagnostic
+    bssid:
+      name: "Connected BSSID"
+      entity_category: diagnostic
+
+  - platform: version
+    name: "ESPHome Version"
+    entity_category: diagnostic
+
+# Editable text input in HA/web for special day messages
+text:
+  - platform: template
+    id: special_dates_input
+    name: "Special Dates (MM-DD:Name,...)"
+    icon: mdi:cake-variant-outline
+    entity_category: config
+    mode: text
+    optimistic: true
+    restore_value: true
+    initial_value: ""
+    min_length: 0
+    max_length: 220
+    set_action:
+      - lambda: |-
+          // Expected format: MM-DD:Name,MM-DD:Name (e.g. 03-23:Eric,12-24:Anna)
+          id(clockwise_main).set_special_dates(x);
+
+# Control buttons
+button:
+  - platform: restart
+    name: "Restart"
+    entity_category: diagnostic
+
+  - platform: safe_mode
+    name: "Safe Mode Boot"
+    entity_category: diagnostic
+    disabled_by_default: true
+
+  # Sync time to RTC button
+  - platform: template
+    name: "Sync Time to RTC"
+    icon: mdi:clock-check
+    entity_category: config
+    on_press:
+      then:
+        - logger.log: "Syncing time to RTC..."
+        - bm8563.write_time:
+            id: rtc_time
+
+# Debug switch (optional)
+# Uncomment to enable verbose logging on demand
+# switch:
+#   - platform: template
+#     name: "Debug Logging"
+#     optimistic: true
+#     entity_category: diagnostic
+#     on_turn_on:
+#       - logger.set_level:
+#           level: DEBUG
+#     on_turn_off:
+#       - logger.set_level:
+#           level: INFO
