@@ -1,5 +1,6 @@
 #include "mario_Clockface.h"
 #include "mario_enemy.h"
+#include "SpecialDates.h"
 #include "esphome/core/log.h"
 
 const char* FORMAT_TWO_DIGITS = "%02d";
@@ -8,7 +9,7 @@ static const char *const TAG = "mario_Clockface";
 
 // Star positions for night mode (x, y coordinates of center of star)
 static const int STAR_POSITIONS[][2] = {
-    {10, 18}, {55, 6}, {60, 10}, {55, 22}, {25, 1}, {45, 2}
+    {10, 18}, {55, 6}, {60, 10}, {25, 1}, {45, 2}, {55, 22}
 };
 static const byte STAR_COUNT = 6;
 
@@ -93,6 +94,12 @@ void Clockface::drawStaticObjects() {
   } else {
     moon->drawTransparent(3, 3, _skyColor);
     drawStars();
+  }
+
+  if (special_date_is_today()) {
+    ImageUtils::drawTransparent(48, 21, BALLOON, BALLOON_SIZE[0], BALLOON_SIZE[1], _skyColor);
+    // show banner at the top
+    // probably use space of ground to show scrolling text 
   }
 }
 
@@ -216,8 +223,11 @@ void Clockface::applyNightMode(bool enable) {
 }
 
 void Clockface::drawStars() {
-  // Draw stars using STAR sprite from mario_assets
+  // Draw stars using STAR sprite from mario_assets.
+  // Skip the star at {55, 22} when the balloon is shown — it overlaps the balloon position.
+  bool skipOverlapStar = special_date_is_today();
   for (int i = 0; i < STAR_COUNT; i++) {
+    if (skipOverlapStar && STAR_POSITIONS[i][0] == 55 && STAR_POSITIONS[i][1] == 22) continue;
     int x = STAR_POSITIONS[i][0] - 1;  // Center the 3x3 sprite
     int y = STAR_POSITIONS[i][1] - 1;
     ImageUtils::drawTransparent(x, y, STAR, STAR_SIZE[0], STAR_SIZE[1], _skyColor);

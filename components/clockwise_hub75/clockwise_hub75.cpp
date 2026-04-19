@@ -6,6 +6,7 @@
 #include "GFXWrapper.h"
 #include "pacman_Clockface.h"
 #include "mario_Clockface.h"
+#include "SpecialDates.h"
 #include <cctype>
 #include <cstring>
 
@@ -46,6 +47,19 @@ bool parse_int_in_range(const std::string &s, int min_value, int max_value, int 
 }
 
 }  // namespace
+
+// Callbacks registered with SpecialDates so clockfaces can query without
+// depending on ClockwiseHUB75 directly.
+static bool s_is_today_cb(void *ctx) {
+  return static_cast<ClockwiseHUB75 *>(ctx)->is_today_special_date();
+}
+static const char *s_name_cb(void *ctx) {
+  static char buf[ClockwiseHUB75::MAX_SPECIAL_NAME_LEN + 1];
+  std::string n = static_cast<ClockwiseHUB75 *>(ctx)->get_today_special_name();
+  std::strncpy(buf, n.c_str(), ClockwiseHUB75::MAX_SPECIAL_NAME_LEN);
+  buf[ClockwiseHUB75::MAX_SPECIAL_NAME_LEN] = '\0';
+  return buf;
+}
 
 static const char *const TAG = "clockwise_hub75";
 
@@ -122,6 +136,9 @@ void ClockwiseHUB75::setup() {
   
   // Provide the wrapper to the Clockface engine via Locator
   Locator::provide(gfx_wrapper_);
+
+  // Register special-dates callbacks so clockfaces can query without coupling to this class
+  special_dates_register(this, s_is_today_cb, s_name_cb);
   
   // Initialize datetime shim and wire initial time source
   g_dt.begin();
