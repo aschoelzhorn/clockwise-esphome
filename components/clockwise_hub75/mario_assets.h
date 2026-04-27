@@ -81,14 +81,14 @@ const unsigned short GROUND[64] ={
 const byte GROUND_SIZE[2] = {8, 8};
 
 const unsigned short PIPE[8] = {
-    0x39C7,
+    0x2104,
     0xA64A,
     0x33A9,
     0x33A9,
     0xA64A,
     0x33A9,
     0xA64A,
-    0x39C7,
+    0x2104,
 };
 const byte PIPE_SIZE[2] = {1, 8};
 

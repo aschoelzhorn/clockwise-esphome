@@ -286,7 +286,7 @@ void Clockface::drawScrollText() {
 
   // Draw scrolling text over the ground
   display->setFont(&Picopixel);
-  display->setTextColor(0x2104);
+  display->setTextColor(0x0008);
   display->setCursor(_scrollX, textBaselineY);
   display->print(text);
   display->setFont(&Super_Mario_Bros__24pt7b); // restore Mario font
