@@ -20,6 +20,7 @@ Clockface::Clockface(Adafruit_GFX* display) {
   // Initialize pointers to nullptr - objects will be created in setup()
   eventBus = nullptr;
   ground = nullptr;
+  pipe = nullptr;
   bush = nullptr;
   cloud1 = nullptr;
   cloud2 = nullptr;
@@ -36,6 +37,7 @@ Clockface::Clockface(Adafruit_GFX* display) {
 Clockface::~Clockface() {
   delete eventBus;
   delete ground;
+  delete pipe;
   delete bush;
   delete cloud1;
   delete cloud2;
@@ -53,6 +55,7 @@ void Clockface::setup(CWDateTime *dateTime) {
   // Create objects here instead of in constructor to avoid initialization order issues
   eventBus = new EventBus();
   ground = new Tile(GROUND, GROUND_SIZE[0], GROUND_SIZE[1]);
+  pipe = new Tile(PIPE, PIPE_SIZE[0], PIPE_SIZE[1]);
   bush = new Object(BUSH, BUSH_SIZE[0], BUSH_SIZE[1]);
   cloud1 = new Object(CLOUD1, CLOUD1_SIZE[0], CLOUD1_SIZE[1]);
   cloud2 = new Object(CLOUD2, CLOUD2_SIZE[0], CLOUD2_SIZE[1]);
@@ -70,6 +73,11 @@ void Clockface::setup(CWDateTime *dateTime) {
   _activeEnemyIdx = -1; // no active enemy at start
   _nextEnemyRunTime = 0; // don't start at all until scheduled
 
+  // Initialize scrolling text state
+  _scrollX = DISPLAY_WIDTH;
+  _scrollTextWidth = 0;
+  _scrollLastUpdate = 0;
+
   // Provide EventBus after creation
   Locator::provide(eventBus);
 
@@ -84,13 +92,12 @@ void Clockface::setup(CWDateTime *dateTime) {
 }
 
 void Clockface::drawStaticObjects() {
-  ground->fillRow(DISPLAY_HEIGHT - ground->_height);
   bush->drawTransparent(43, 47, _skyColor);
   hill->drawTransparent(0, 34, _skyColor);
   
   if (!_isNightMode) {
-    cloud1->draw(0, 21);
-    cloud2->draw(51, 7);
+    cloud1->drawTransparent(0, 21, _skyColor);
+    cloud2->drawTransparent(51, 7, _skyColor);
   } else {
     moon->drawTransparent(3, 3, _skyColor);
     drawStars();
@@ -98,8 +105,11 @@ void Clockface::drawStaticObjects() {
 
   if (special_date_is_today()) {
     ImageUtils::drawTransparent(48, 21, BALLOON, BALLOON_SIZE[0], BALLOON_SIZE[1], _skyColor);
-    // show banner at the top
-    // probably use space of ground to show scrolling text 
+    pipe->fillRow(DISPLAY_HEIGHT - pipe->_height);
+  }
+  else {
+    //ground->fillRow(DISPLAY_HEIGHT - ground->_height);
+    pipe->fillRow(DISPLAY_HEIGHT - pipe->_height);
   }
 }
 
@@ -129,6 +139,10 @@ void Clockface::update() {
     mario->jump(true);  // Time-based jump - should hit blocks
     updateTime();
     lastMillis = millis();
+  }
+
+  if (special_date_is_today()) {
+    drawScrollText();
   }
 }
 
@@ -232,6 +246,50 @@ void Clockface::drawStars() {
     int y = STAR_POSITIONS[i][1] - 1;
     ImageUtils::drawTransparent(x, y, STAR, STAR_SIZE[0], STAR_SIZE[1], _skyColor);
   }
+}
+
+void Clockface::drawScrollText() {
+  const char* name = special_date_today_name();
+  if (!name || name[0] == '\0') return;
+
+  char text[64];
+  snprintf(text, sizeof(text), "Happy birthday %s!", name);
+
+  Adafruit_GFX* display = Locator::getDisplay();
+  const int groundY = DISPLAY_HEIGHT - pipe->_height; // y = 56
+  // Picopixel glyphs have yOffset = -4 and height = 5, so baseline at groundY+6
+  // places characters at rows 58-62, centered within the 8-pixel ground strip.
+  const int textBaselineY = groundY + 5;
+
+  // Compute text pixel width once (requires font to be set first)
+  if (_scrollTextWidth == 0) {
+    display->setFont(&Picopixel);
+    int16_t x1, y1;
+    uint16_t w, h;
+    display->getTextBounds(text, 0, textBaselineY, &x1, &y1, &w, &h);
+    _scrollTextWidth = (int)w;
+    display->setFont(&Super_Mario_Bros__24pt7b);
+  }
+
+  // Advance scroll position at ~25 pixels/second (40 ms per pixel)
+  unsigned long now = millis();
+  if (now - _scrollLastUpdate >= 40) {
+    _scrollLastUpdate = now;
+    _scrollX--;
+    if (_scrollX <= -_scrollTextWidth) {
+      _scrollX = DISPLAY_WIDTH;
+    }
+  }
+
+  // Redraw ground row to erase previous text position
+  pipe->fillRow(groundY);
+
+  // Draw scrolling text over the ground
+  display->setFont(&Picopixel);
+  display->setTextColor(0x2104);
+  display->setCursor(_scrollX, textBaselineY);
+  display->print(text);
+  display->setFont(&Super_Mario_Bros__24pt7b); // restore Mario font
 }
 
 }  // namespace mario
