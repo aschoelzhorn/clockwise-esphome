@@ -21,6 +21,7 @@ Clockface::Clockface(Adafruit_GFX* display) {
   eventBus = nullptr;
   ground = nullptr;
   pipe = nullptr;
+  _floor = nullptr;
   bush = nullptr;
   cloud1 = nullptr;
   cloud2 = nullptr;
@@ -56,6 +57,7 @@ void Clockface::setup(CWDateTime *dateTime) {
   eventBus = new EventBus();
   ground = new Tile(GROUND, GROUND_SIZE[0], GROUND_SIZE[1]);
   pipe = new Tile(PIPE, PIPE_SIZE[0], PIPE_SIZE[1]);
+  _floor = _isNightMode ? pipe : ground;
   bush = new Object(BUSH, BUSH_SIZE[0], BUSH_SIZE[1]);
   cloud1 = new Object(CLOUD1, CLOUD1_SIZE[0], CLOUD1_SIZE[1]);
   cloud2 = new Object(CLOUD2, CLOUD2_SIZE[0], CLOUD2_SIZE[1]);
@@ -105,12 +107,8 @@ void Clockface::drawStaticObjects() {
 
   if (special_date_is_today()) {
     ImageUtils::drawTransparent(48, 21, BALLOON, BALLOON_SIZE[0], BALLOON_SIZE[1], _skyColor);
-    pipe->fillRow(DISPLAY_HEIGHT - pipe->_height);
   }
-  else {
-    //ground->fillRow(DISPLAY_HEIGHT - ground->_height);
-    pipe->fillRow(DISPLAY_HEIGHT - pipe->_height);
-  }
+  _floor->fillRow(DISPLAY_HEIGHT - _floor->_height);
 }
 
 void Clockface::update() {
@@ -200,6 +198,7 @@ void Clockface::chooseRandomEnemy() {
 
 void Clockface::updateTime() {
   ESP_LOGD(TAG, "updateTime() called - Hour: %d, Minute: %02d", _dateTime->getHour(), _dateTime->getMinute());
+  _floor = _isNightMode ? pipe : ground;
   hourBlock->setText(String(_dateTime->getHour()));
   minuteBlock->setText(String(_dateTime->getMinute(FORMAT_TWO_DIGITS)));
 }
@@ -220,6 +219,7 @@ bool Clockface::shouldBeNightMode() {
 
 void Clockface::applyNightMode(bool enable) {
   _isNightMode = enable;
+  _floor = _isNightMode ? pipe : ground;
   _skyColor = _isNightMode ? SKY_COLOR_NIGHT : SKY_COLOR;
   ESP_LOGD(TAG, "_isNightMode changed to: %s. Changed _skyColor to: %u", _isNightMode ? "true" : "false", _skyColor);
   // Broadcast new sky color to all listeners
@@ -256,12 +256,14 @@ void Clockface::drawScrollText() {
   snprintf(text, sizeof(text), "Happy birthday %s!", name);
 
   Adafruit_GFX* display = Locator::getDisplay();
-  const int groundY = DISPLAY_HEIGHT - pipe->_height; // y = 56
-  // Picopixel glyphs have yOffset = -4 and height = 5, so baseline at groundY+6
-  // places characters at rows 58-62, centered within the 8-pixel ground strip.
-  const int textBaselineY = groundY + 5;
 
-  // Compute text pixel width once (requires font to be set first)
+  // Night: scroll over the floor strip at the bottom, dark blue text on black
+  // Day:   scroll over the top 8 rows, white text on sky blue
+  const int stripY        = _isNightMode ? (DISPLAY_HEIGHT - _floor->_height) : 0;
+  const int textBaselineY = stripY + 5;
+  const uint16_t textColor = _isNightMode ? 0x0008 : 0xFFFF;
+
+  // Compute text pixel width once (font/text don't change between modes)
   if (_scrollTextWidth == 0) {
     display->setFont(&Picopixel);
     int16_t x1, y1;
@@ -281,12 +283,16 @@ void Clockface::drawScrollText() {
     }
   }
 
-  // Redraw ground row to erase previous text position
-  pipe->fillRow(groundY);
+  // Erase previous text position
+  if (_isNightMode) {
+    _floor->fillRow(stripY);
+  } else {
+    display->fillRect(0, 0, DISPLAY_WIDTH, 8, _skyColor);
+  }
 
-  // Draw scrolling text over the ground
+  // Draw scrolling text
   display->setFont(&Picopixel);
-  display->setTextColor(0x0008);
+  display->setTextColor(textColor);
   display->setCursor(_scrollX, textBaselineY);
   display->print(text);
   display->setFont(&Super_Mario_Bros__24pt7b); // restore Mario font

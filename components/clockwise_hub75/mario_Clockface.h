@@ -52,6 +52,7 @@ class Clockface : public IClockface {
     EventBus* eventBus;
     Tile* ground;
     Tile* pipe;
+    Tile* _floor; // points to ground or pipe depending on special_date_is_today()
     Object* bush;
     Object* cloud1;
     Object* cloud2;
