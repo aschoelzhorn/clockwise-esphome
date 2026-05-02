@@ -90,6 +90,10 @@ void Clockface::setup(CWDateTime *dateTime) {
   mario->init();
   for (int i = 0; i < ENEMY_COUNT; ++i) enemies[i]->init();
 
+  // Paint the initial background. Without this, a day-mode boot never calls
+  // applyNightMode (since _isNightMode already equals shouldBeNightMode()),
+  // leaving the display black.
+  applyNightMode(shouldBeNightMode());
   updateTime();
 }
 
