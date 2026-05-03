@@ -109,9 +109,6 @@ void Clockface::drawStaticObjects() {
     drawStars();
   }
 
-  if (special_date_is_today()) {
-    ImageUtils::drawTransparent(48, 21, BALLOON, BALLOON_SIZE[0], BALLOON_SIZE[1], _skyColor);
-  }
   _floor->fillRow(DISPLAY_HEIGHT - _floor->_height);
 }
 
@@ -144,6 +141,7 @@ void Clockface::update() {
   }
 
   if (special_date_is_today()) {
+    ImageUtils::drawTransparent(48, 21, BALLOON, BALLOON_SIZE[0], BALLOON_SIZE[1], _skyColor);
     drawScrollText();
   }
 }
@@ -257,7 +255,7 @@ void Clockface::drawScrollText() {
   if (!name || name[0] == '\0') return;
 
   char text[64];
-  snprintf(text, sizeof(text), "Happy birthday %s!", name);
+  snprintf(text, sizeof(text), "Happy Birthday %s!", name);
 
   Adafruit_GFX* display = Locator::getDisplay();
 
@@ -295,10 +293,12 @@ void Clockface::drawScrollText() {
   }
 
   // Draw scrolling text
+  display->setTextWrap(false);
   display->setFont(&Picopixel);
   display->setTextColor(textColor);
   display->setCursor(_scrollX, textBaselineY);
   display->print(text);
+  display->setTextWrap(true);
   display->setFont(&Super_Mario_Bros__24pt7b); // restore Mario font
 }
 
