@@ -47,7 +47,7 @@ esphome:
       then:
         - lambda: |-
             // After everything is initialized, apply time source and special dates
-            auto ts = id(time_source_selector).state;
+            auto ts = id(time_source_selector).current_option();
             int src = (ts == "NTP") ? 1 : (ts == "RTC") ? 2 : 0;
             id(clockwise_main).set_time_source(src);
 
@@ -55,6 +55,7 @@ esphome:
 esp32:
   board: esp32-s3-devkitc-1
   variant: esp32s3
+  toolchain: platformio
   framework:
     type: arduino
     version: recommended
