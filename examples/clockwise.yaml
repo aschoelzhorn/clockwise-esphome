@@ -50,6 +50,7 @@ esphome:
             auto ts = id(time_source_selector).current_option();
             int src = (ts == "NTP") ? 1 : (ts == "RTC") ? 2 : 0;
             id(clockwise_main).set_time_source(src);
+            id(clockwise_main).set_special_dates(id(special_dates_input).state);
 
 
 esp32:
@@ -268,6 +269,19 @@ text:
             return;
           }
           id(night_mode_end_time).make_call().set_time(value.hour, value.minute, 0).perform();
+  - platform: template
+    id: special_dates_input
+    name: "Special Dates (MM-DD:Name,...)"
+    icon: mdi:cake-variant-outline
+    entity_category: config
+    mode: text
+    optimistic: true
+    restore_value: true
+    initial_value: ""
+    min_length: 0
+    max_length: 220
+    set_action:
+      - lambda: id(clockwise_main).set_special_dates(x);
 
 # Brightness Control (0-255)
 number:
@@ -490,24 +504,6 @@ text_sensor:
   - platform: version
     name: "ESPHome Version"
     entity_category: diagnostic
-
-# Editable text input in HA/web for special day messages, for future use
-#text:
-#  - platform: template
-#    id: special_dates_input
-#    name: "Special Dates (MM-DD:Name,...)"
-#    icon: mdi:cake-variant-outline
-#    entity_category: config
-#    mode: text
-#    optimistic: true
-#    restore_value: true
-#    initial_value: ""
-#    min_length: 0
-#    max_length: 220
-#    set_action:
-#      - lambda: |-
-#          // Special dates: MM-DD:Name,MM-DD:Name (feature not yet implemented)
-#          ESP_LOGI("testdevice", "Special dates input: %s", x.c_str());
 
 # Control buttons
 button:

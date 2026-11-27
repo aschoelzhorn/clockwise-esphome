@@ -34,6 +34,16 @@ enum PanelColorOrder {
 
 class ClockwiseHUB75 : public PollingComponent {
  public:
+  static const size_t MAX_SPECIAL_DATES = 10;
+  static const size_t MAX_SPECIAL_NAME_LEN = 24;
+
+  struct SpecialDateEntry {
+    uint8_t month{0};
+    uint8_t day{0};
+    char name[MAX_SPECIAL_NAME_LEN + 1]{0};
+    bool used{false};
+  };
+
   void setup() override;
   void update() override { update_display_(); }
   void dump_config() override;
@@ -50,6 +60,7 @@ class ClockwiseHUB75 : public PollingComponent {
   void set_panel_color_order(PanelColorOrder order);
   void set_night_start(uint32_t seconds);
   void set_night_end(uint32_t seconds);
+  void set_special_dates(const std::string &value);
 
   // Control methods for Home Assistant
   void set_brightness(uint8_t brightness);
@@ -61,6 +72,11 @@ class ClockwiseHUB75 : public PollingComponent {
   bool get_power() const { return power_state_; }
   ClockfaceType get_clockface_type() const { return clockface_type_; }
   PanelColorOrder get_panel_color_order() const { return panel_color_order_; }
+  std::string get_special_dates() const { return special_dates_csv_; }
+  size_t get_special_date_count() const { return special_date_count_; }
+  const SpecialDateEntry *get_special_date_entries() const { return special_dates_; }
+  bool is_today_special_date() const;
+  std::string get_today_special_name() const;
 
  protected:
   esphome::hub75::HUB75Display *hub75_display_{nullptr};
@@ -78,9 +94,14 @@ class ClockwiseHUB75 : public PollingComponent {
   uint8_t current_brightness_{128};
   bool power_state_{true};
   NightModeSchedule night_schedule_{};
+  std::string special_dates_csv_{};
+  size_t special_date_count_{0};
+  SpecialDateEntry special_dates_[MAX_SPECIAL_DATES];
 
   void set_time(time::RealTimeClock *t) { time_ = t; }
   void update_display_();
+  void parse_special_dates_(const std::string &value);
+  bool get_today_special_name_(std::string &name_out) const;
 };
 
 }  // namespace clockwise_hub75
