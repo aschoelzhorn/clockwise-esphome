@@ -6,11 +6,60 @@
 #include "GFXWrapper.h"
 #include "pacman_Clockface.h"
 #include "mario_Clockface.h"
+#include "SpecialDates.h"
+#include <cctype>
+#include <cstring>
 
 ::CWDateTime g_dt;
 
 namespace esphome {
 namespace clockwise_hub75 {
+
+namespace {
+
+std::string trim_copy(const std::string &in) {
+  size_t start = 0;
+  while (start < in.size() && std::isspace(static_cast<unsigned char>(in[start]))) {
+    start++;
+  }
+  size_t end = in.size();
+  while (end > start && std::isspace(static_cast<unsigned char>(in[end - 1]))) {
+    end--;
+  }
+  return in.substr(start, end - start);
+}
+
+bool parse_int_in_range(const std::string &s, int min_value, int max_value, int &out) {
+  if (s.empty()) {
+    return false;
+  }
+  for (char ch : s) {
+    if (!std::isdigit(static_cast<unsigned char>(ch))) {
+      return false;
+    }
+  }
+  int value = std::atoi(s.c_str());
+  if (value < min_value || value > max_value) {
+    return false;
+  }
+  out = value;
+  return true;
+}
+
+}  // namespace
+
+// Callbacks registered with SpecialDates so clockfaces can query without
+// depending on ClockwiseHUB75 directly.
+static bool s_is_today_cb(void *ctx) {
+  return static_cast<ClockwiseHUB75 *>(ctx)->is_today_special_date();
+}
+static const char *s_name_cb(void *ctx) {
+  static char buf[ClockwiseHUB75::MAX_SPECIAL_NAME_LEN + 1];
+  std::string n = static_cast<ClockwiseHUB75 *>(ctx)->get_today_special_name();
+  std::strncpy(buf, n.c_str(), ClockwiseHUB75::MAX_SPECIAL_NAME_LEN);
+  buf[ClockwiseHUB75::MAX_SPECIAL_NAME_LEN] = '\0';
+  return buf;
+}
 
 static const char *const TAG = "clockwise_hub75";
 
@@ -36,15 +85,31 @@ void ClockwiseHUB75::set_time_source(int source) {
   }
 }
 
-static IClockface *create_clockface_(ClockfaceType type, GFXWrapper *gfx) {
+static IClockface *create_clockface_(ClockfaceType type, GFXWrapper *gfx, const NightModeSchedule &night_schedule) {
   switch (type) {
     case PACMAN:
       return new pacman::Clockface(gfx);
     case MARIO:
-      return new mario::Clockface(gfx);
+      return new mario::Clockface(gfx, night_schedule);
     default:
       return nullptr;
   }
+}
+
+void ClockwiseHUB75::set_night_start(uint32_t seconds) {
+  if (seconds >= 24 * 3600) {
+    ESP_LOGE(TAG, "Invalid night mode start time: %u", static_cast<unsigned int>(seconds));
+    return;
+  }
+  night_schedule_.set_start(seconds);
+}
+
+void ClockwiseHUB75::set_night_end(uint32_t seconds) {
+  if (seconds >= 24 * 3600) {
+    ESP_LOGE(TAG, "Invalid night mode end time: %u", static_cast<unsigned int>(seconds));
+    return;
+  }
+  night_schedule_.set_end(seconds);
 }
 
 void ClockwiseHUB75::set_panel_color_order(PanelColorOrder order) {
@@ -60,6 +125,12 @@ void ClockwiseHUB75::set_panel_color_order(PanelColorOrder order) {
   }
 
   ESP_LOGI(TAG, "Panel color order set to %d", static_cast<int>(order));
+}
+
+void ClockwiseHUB75::set_special_dates(const std::string &value) {
+  special_dates_csv_ = value;
+  parse_special_dates_(value);
+  ESP_LOGI(TAG, "Special dates updated, %u valid entries", static_cast<unsigned int>(special_date_count_));
 }
 
 void ClockwiseHUB75::setup() {
@@ -81,6 +152,9 @@ void ClockwiseHUB75::setup() {
   
   // Provide the wrapper to the Clockface engine via Locator
   Locator::provide(gfx_wrapper_);
+
+  // Register special-dates callbacks so clockfaces can query without coupling to this class
+  special_dates_register(this, s_is_today_cb, s_name_cb);
   
   // Initialize datetime shim and wire initial time source
   g_dt.begin();
@@ -88,7 +162,7 @@ void ClockwiseHUB75::setup() {
   set_time_source(time_source_);
 
   // Create initial clockface
-  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_);
+  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_, night_schedule_);
   if (clockface_ != nullptr) {
     clockface_->setup(&g_dt);
     ESP_LOGCONFIG(TAG, "Clockface %d initialized", static_cast<int>(clockface_type_));
@@ -106,6 +180,8 @@ void ClockwiseHUB75::dump_config() {
   ESP_LOGCONFIG(TAG, "  Initial Brightness: %d", initial_brightness_);
   ESP_LOGCONFIG(TAG, "  Current Brightness: %d", current_brightness_);
   ESP_LOGCONFIG(TAG, "  Power State: %s", YESNO(power_state_));
+  ESP_LOGCONFIG(TAG, "  Special Dates: %s", special_dates_csv_.c_str());
+  ESP_LOGCONFIG(TAG, "  Special Date Entries: %u", static_cast<unsigned int>(special_date_count_));
 }
 
 void ClockwiseHUB75::set_brightness(uint8_t brightness) {
@@ -159,7 +235,7 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type, bool force) {
   // Update the clockface type
   clockface_type_ = type;
 
-  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_);
+  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_, night_schedule_);
   if (clockface_ != nullptr) {
     clockface_->setup(&g_dt);
     ESP_LOGI(TAG, "Switched to clockface %d", static_cast<int>(clockface_type_));
@@ -174,6 +250,96 @@ void ClockwiseHUB75::update_display_() {
   }
   // Call IClockface update
   clockface_->update();
+}
+
+void ClockwiseHUB75::parse_special_dates_(const std::string &value) {
+  special_date_count_ = 0;
+  for (auto &entry : special_dates_) {
+    entry = SpecialDateEntry{};
+  }
+
+  if (value.empty()) {
+    return;
+  }
+
+  size_t token_start = 0;
+  while (token_start < value.size() && special_date_count_ < MAX_SPECIAL_DATES) {
+    size_t token_end = value.find(',', token_start);
+    if (token_end == std::string::npos) {
+      token_end = value.size();
+    }
+
+    std::string token = trim_copy(value.substr(token_start, token_end - token_start));
+    if (!token.empty()) {
+      size_t colon_pos = token.find(':');
+      if (colon_pos == std::string::npos) {
+        ESP_LOGW(TAG, "Skipping invalid special date token (missing ':'): %s", token.c_str());
+      } else {
+        std::string date_part = trim_copy(token.substr(0, colon_pos));
+        std::string name_part = trim_copy(token.substr(colon_pos + 1));
+
+        size_t sep_pos = date_part.find('-');
+        if (sep_pos == std::string::npos) {
+          sep_pos = date_part.find('/');
+        }
+
+        if (sep_pos == std::string::npos || name_part.empty()) {
+          ESP_LOGW(TAG, "Skipping invalid special date token: %s", token.c_str());
+        } else {
+          int month = 0;
+          int day = 0;
+          const std::string month_str = trim_copy(date_part.substr(0, sep_pos));
+          const std::string day_str = trim_copy(date_part.substr(sep_pos + 1));
+
+          if (!parse_int_in_range(month_str, 1, 12, month) || !parse_int_in_range(day_str, 1, 31, day)) {
+            ESP_LOGW(TAG, "Skipping special date with invalid month/day: %s", token.c_str());
+          } else {
+            SpecialDateEntry &entry = special_dates_[special_date_count_++];
+            entry.month = static_cast<uint8_t>(month);
+            entry.day = static_cast<uint8_t>(day);
+            std::strncpy(entry.name, name_part.c_str(), MAX_SPECIAL_NAME_LEN);
+            entry.name[MAX_SPECIAL_NAME_LEN] = '\0';
+            entry.used = true;
+          }
+        }
+      }
+    }
+
+    token_start = token_end + 1;
+  }
+}
+
+bool ClockwiseHUB75::get_today_special_name_(std::string &name_out) const {
+  const int month = g_dt.getMonth();
+  const int day = g_dt.getDay();
+  if (month <= 0 || day <= 0) {
+    return false;
+  }
+
+  for (size_t i = 0; i < special_date_count_; i++) {
+    const SpecialDateEntry &entry = special_dates_[i];
+    if (!entry.used) {
+      continue;
+    }
+    if (entry.month == static_cast<uint8_t>(month) && entry.day == static_cast<uint8_t>(day)) {
+      name_out = entry.name;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool ClockwiseHUB75::is_today_special_date() const {
+  std::string name;
+  return get_today_special_name_(name);
+}
+
+std::string ClockwiseHUB75::get_today_special_name() const {
+  std::string name;
+  if (get_today_special_name_(name)) {
+    return name;
+  }
+  return "";
 }
 
 }  // namespace clockwise_hub75

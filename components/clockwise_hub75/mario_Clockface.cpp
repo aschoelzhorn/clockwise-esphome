@@ -1,5 +1,6 @@
 #include "mario_Clockface.h"
 #include "mario_enemy.h"
+#include "SpecialDates.h"
 #include "esphome/core/log.h"
 
 const char* FORMAT_TWO_DIGITS = "%02d";
@@ -8,17 +9,20 @@ static const char *const TAG = "mario_Clockface";
 
 // Star positions for night mode (x, y coordinates of center of star)
 static const int STAR_POSITIONS[][2] = {
-    {10, 18}, {55, 6}, {60, 10}, {55, 22}, {25, 1}, {45, 2}
+    {10, 18}, {55, 6}, {60, 10}, {25, 1}, {45, 2}, {55, 22}
 };
 static const byte STAR_COUNT = 6;
 
 namespace mario {
-Clockface::Clockface(Adafruit_GFX* display) {
+Clockface::Clockface(Adafruit_GFX* display, const NightModeSchedule& nightSchedule)
+    : _nightSchedule(nightSchedule) {
   _display = display;
   
   // Initialize pointers to nullptr - objects will be created in setup()
   eventBus = nullptr;
   ground = nullptr;
+  nightGround = nullptr;
+  _floor = nullptr;
   bush = nullptr;
   cloud1 = nullptr;
   cloud2 = nullptr;
@@ -35,6 +39,7 @@ Clockface::Clockface(Adafruit_GFX* display) {
 Clockface::~Clockface() {
   delete eventBus;
   delete ground;
+  delete nightGround;
   delete bush;
   delete cloud1;
   delete cloud2;
@@ -52,6 +57,8 @@ void Clockface::setup(CWDateTime *dateTime) {
   // Create objects here instead of in constructor to avoid initialization order issues
   eventBus = new EventBus();
   ground = new Tile(GROUND, GROUND_SIZE[0], GROUND_SIZE[1]);
+  nightGround = new Tile(GROUND_NIGHT, GROUND_SIZE[0], GROUND_SIZE[1]);
+  _floor = _isNightMode ? nightGround : ground;
   bush = new Object(BUSH, BUSH_SIZE[0], BUSH_SIZE[1]);
   cloud1 = new Object(CLOUD1, CLOUD1_SIZE[0], CLOUD1_SIZE[1]);
   cloud2 = new Object(CLOUD2, CLOUD2_SIZE[0], CLOUD2_SIZE[1]);
@@ -69,6 +76,11 @@ void Clockface::setup(CWDateTime *dateTime) {
   _activeEnemyIdx = -1; // no active enemy at start
   _nextEnemyRunTime = 0; // don't start at all until scheduled
 
+  // Initialize scrolling text state
+  _scrollX = DISPLAY_WIDTH;
+  _scrollTextWidth = 0;
+  _scrollLastUpdate = 0;
+
   // Provide EventBus after creation
   Locator::provide(eventBus);
 
@@ -79,21 +91,26 @@ void Clockface::setup(CWDateTime *dateTime) {
   mario->init();
   for (int i = 0; i < ENEMY_COUNT; ++i) enemies[i]->init();
 
+  // Paint the initial background. Without this, a day-mode boot never calls
+  // applyNightMode (since _isNightMode already equals shouldBeNightMode()),
+  // leaving the display black.
+  applyNightMode(shouldBeNightMode());
   updateTime();
 }
 
 void Clockface::drawStaticObjects() {
-  ground->fillRow(DISPLAY_HEIGHT - ground->_height);
   bush->drawTransparent(43, 47, _skyColor);
   hill->drawTransparent(0, 34, _skyColor);
   
   if (!_isNightMode) {
-    cloud1->draw(0, 21);
-    cloud2->draw(51, 7);
+    cloud1->drawTransparent(0, 21, _skyColor);
+    cloud2->drawTransparent(51, 7, _skyColor);
   } else {
     moon->drawTransparent(3, 3, _skyColor);
     drawStars();
   }
+
+  _floor->fillRow(DISPLAY_HEIGHT - _floor->_height);
 }
 
 void Clockface::update() {
@@ -122,6 +139,11 @@ void Clockface::update() {
     mario->jump(true);  // Time-based jump - should hit blocks
     updateTime();
     lastMillis = millis();
+  }
+
+  if (special_date_is_today()) {
+    ImageUtils::drawTransparent(48, 21, BALLOON, BALLOON_SIZE[0], BALLOON_SIZE[1], _skyColor);
+    drawScrollText();
   }
 }
 
@@ -179,6 +201,7 @@ void Clockface::chooseRandomEnemy() {
 
 void Clockface::updateTime() {
   ESP_LOGD(TAG, "updateTime() called - Hour: %d, Minute: %02d", _dateTime->getHour(), _dateTime->getMinute());
+  _floor = _isNightMode ? nightGround : ground;
   hourBlock->setText(String(_dateTime->getHour(FORMAT_TWO_DIGITS)));
   minuteBlock->setText(String(_dateTime->getMinute(FORMAT_TWO_DIGITS)));
 }
@@ -192,13 +215,12 @@ void Clockface::externalEvent(int type) {
 }
 
 bool Clockface::shouldBeNightMode() {
-  // Night mode from 20:00 (8 PM) to 06:00 (6 AM)
-  int hour = _dateTime->getHour();
-  return (hour >= 20 || hour < 6);
+  return _nightSchedule.is_active(_dateTime->getSecondsSinceMidnight());
 }
 
 void Clockface::applyNightMode(bool enable) {
   _isNightMode = enable;
+  _floor = _isNightMode ? nightGround : ground;
   _skyColor = _isNightMode ? SKY_COLOR_NIGHT : SKY_COLOR;
   ESP_LOGD(TAG, "_isNightMode changed to: %s. Changed _skyColor to: %u", _isNightMode ? "true" : "false", _skyColor);
   // Broadcast new sky color to all listeners
@@ -216,12 +238,67 @@ void Clockface::applyNightMode(bool enable) {
 }
 
 void Clockface::drawStars() {
-  // Draw stars using STAR sprite from mario_assets
+  // Draw stars using STAR sprite from mario_assets.
+  // Skip the star at {55, 22} when the balloon is shown — it overlaps the balloon position.
+  bool skipOverlapStar = special_date_is_today();
   for (int i = 0; i < STAR_COUNT; i++) {
+    if (skipOverlapStar && STAR_POSITIONS[i][0] == 55 && STAR_POSITIONS[i][1] == 22) continue;
     int x = STAR_POSITIONS[i][0] - 1;  // Center the 3x3 sprite
     int y = STAR_POSITIONS[i][1] - 1;
     ImageUtils::drawTransparent(x, y, STAR, STAR_SIZE[0], STAR_SIZE[1], _skyColor);
   }
+}
+
+void Clockface::drawScrollText() {
+  const char* name = special_date_today_name();
+  if (!name || name[0] == '\0') return;
+
+  char text[64];
+  snprintf(text, sizeof(text), "Happy Birthday %s!", name);
+
+  Adafruit_GFX* display = Locator::getDisplay();
+
+  // Night: scroll over the dark brick floor at the bottom, warm cream text
+  // Day:   scroll over the top 8 rows, white text on sky blue
+  const int stripY        = _isNightMode ? (DISPLAY_HEIGHT - _floor->_height) : 0;
+  const int textBaselineY = stripY + 5;
+  const uint16_t textColor = _isNightMode ? 0xFFE8 : 0xFFFF;
+
+  // Compute text pixel width once (font/text don't change between modes)
+  if (_scrollTextWidth == 0) {
+    display->setFont(&Picopixel);
+    int16_t x1, y1;
+    uint16_t w, h;
+    display->getTextBounds(text, 0, textBaselineY, &x1, &y1, &w, &h);
+    _scrollTextWidth = (int)w;
+    display->setFont(&Super_Mario_Bros__24pt7b);
+  }
+
+  // Advance scroll position at ~25 pixels/second (40 ms per pixel)
+  unsigned long now = millis();
+  if (now - _scrollLastUpdate >= 40) {
+    _scrollLastUpdate = now;
+    _scrollX--;
+    if (_scrollX <= -_scrollTextWidth) {
+      _scrollX = DISPLAY_WIDTH;
+    }
+  }
+
+  // Erase previous text position
+  if (_isNightMode) {
+    _floor->fillRow(stripY);
+  } else {
+    display->fillRect(0, 0, DISPLAY_WIDTH, 8, _skyColor);
+  }
+
+  // Draw scrolling text
+  display->setTextWrap(false);
+  display->setFont(&Picopixel);
+  display->setTextColor(textColor);
+  display->setCursor(_scrollX, textBaselineY);
+  display->print(text);
+  display->setTextWrap(true);
+  display->setFont(&Super_Mario_Bros__24pt7b); // restore Mario font
 }
 
 }  // namespace mario

@@ -59,6 +59,12 @@ int CWDateTime::getSecond() {
   return t.is_valid() ? t.second : 0;
 }
 
+uint32_t CWDateTime::getSecondsSinceMidnight() {
+  if (!rtc_) return 0;
+  esphome::ESPTime t = rtc_->now();
+  return t.is_valid() ? t.hour * 3600U + t.minute * 60U + t.second : 0;
+}
+
 int CWDateTime::getDay() {
   if (!rtc_) return 1;
   esphome::ESPTime t = rtc_->now();

@@ -12,23 +12,27 @@
 // Commons
 #include "IClockface.h"
 #include "CWDateTime.h"
+#include "NightModeSchedule.h"
 
 #include "mario_assets.h"
 #include "mario.h"
 #include "mario_enemy.h"
 #include "mario_block.h"
+#include "picopixel.h"
 
 namespace mario {
 class Clockface : public IClockface {
   private:
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
+    const NightModeSchedule& _nightSchedule;
 
     void updateTime();
     bool shouldBeNightMode();
     void applyNightMode(bool enable);
     void drawStars();
     void drawStaticObjects();
+    void drawScrollText();
     void chooseRandomEnemy();
     bool isNearTimeChange();
     void scheduleNextEnemyRun();
@@ -41,9 +45,16 @@ class Clockface : public IClockface {
     unsigned long _nextEnemyRunTime = 0; // When to start next enemy run
     unsigned short _skyColor = SKY_COLOR;
 
+    // Scrolling text state (special dates)
+    int _scrollX = 0;
+    int _scrollTextWidth = 0;
+    unsigned long _scrollLastUpdate = 0;
+
     // Member objects instead of globals
     EventBus* eventBus;
     Tile* ground;
+    Tile* nightGround;
+    Tile* _floor;
     Object* bush;
     Object* cloud1;
     Object* cloud2;
@@ -56,7 +67,7 @@ class Clockface : public IClockface {
     Enemy* enemies[ENEMY_COUNT];
 
 public:
-    Clockface(Adafruit_GFX* display);
+    Clockface(Adafruit_GFX* display, const NightModeSchedule& nightSchedule);
     ~Clockface();
     void setup(CWDateTime *dateTime);
     void update();

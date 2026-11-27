@@ -35,10 +35,57 @@ Once installed, you'll get these entities in Home Assistant:
 - **Switch**: `auto_brightness` - Enable/disable automatic brightness (when LDR is configured)
 - **Number**: `display_brightness` - Adjust brightness (0-255)
 - **Select**: `clockface` - Choose between Mario, Pac-Man, and other styles
+- **Text**: `night_mode_start` and `night_mode_end` - Set Mario's night mode schedule as `HH:MM` in Home Assistant or the device web interface
+- **Text**: `special_dates_input` - Configure recurring special-day messages for Mario
 - **Select**: `time_source` - Choose between Home Assistant, NTP, or RTC time
 - **Select**: `panel_color_order` - Fix swapped colors by selecting RGB, RBG, GRB, GBR, BRG, or BGR
 - **Button**: `sync_time_to_rtc` - Sync current Home Assistant time to RTC hardware
 - **Sensor**: `ambient_light` - Current light level percentage (when LDR is configured)
+
+Mario's night mode defaults to 20:00–06:00. Start is inclusive, end is exclusive, and equal times disable night mode. The settings persist across restarts and also support intervals that do not cross midnight.
+
+Special-day messages scroll across the top during the day. At night they scroll in warm cream over a darker version of the original brick ground at the bottom.
+
+### Special Days
+
+In Home Assistant or the device web interface, edit **Special Dates (MM-DD:Name,...)**. Enter comma-separated dates and names, for example:
+
+```text
+03-23:Eric,12-24:Anna
+```
+
+On the matching date, the Mario clockface shows a balloon and scrolls `Happy Birthday Eric!` from right to left. Dates recur annually and use the currently selected time source and its timezone. This feature currently displays birthday greetings, not arbitrary message text.
+
+- Up to 10 valid entries are used; names are truncated to 24 bytes.
+- If multiple entries match today, the first one is used.
+- The example text control accepts up to 220 characters. Commas separate entries and cannot be part of a name.
+- Malformed entries are skipped with a warning in the logs. Month/day ranges are checked, but impossible calendar dates such as February 31 are not rejected.
+- Clear the field to remove all special dates.
+
+Both [the example configuration](examples/clockwise.yaml) and [the test configuration](testdevice.yaml) include the editable control and restore its saved value after reboot. To add it to an existing YAML, merge this entry into its existing `text:` list:
+
+```yaml
+text:
+  - platform: template
+    id: special_dates_input
+    name: "Special Dates (MM-DD:Name,...)"
+    icon: mdi:cake-variant-outline
+    entity_category: config
+    mode: text
+    optimistic: true
+    restore_value: true
+    initial_value: ""
+    min_length: 0
+    max_length: 220
+    set_action:
+      - lambda: id(clockwise_main).set_special_dates(x);
+```
+
+Also add this action to the existing `esphome.on_boot` automation at priority `-100`, so the restored text is applied after initialization:
+
+```yaml
+- lambda: id(clockwise_main).set_special_dates(id(special_dates_input).state);
+```
 
 ## 🏗️ Project Background
 
