@@ -29,7 +29,7 @@ This ESPHome component brings the fantastic [Clockwise](https://clockwise.page/)
 
 ## 🎯 Home Assistant Controls
 
-Once installed, you'll get these entities in Home Assistant:
+The complete example configuration exposes these entities in Home Assistant (and in the device web UI when `web_server` is enabled):
 
 - **Switch**: `display_power` - Turn display on/off
 - **Switch**: `auto_brightness` - Enable/disable automatic brightness (when LDR is configured)
@@ -45,6 +45,50 @@ Once installed, you'll get these entities in Home Assistant:
 Mario's night mode defaults to 20:00–06:00. Start is inclusive, end is exclusive, and equal times disable night mode. The settings persist across restarts and also support intervals that do not cross midnight.
 
 Mario's special-day messages scroll across the top during the day. At night they scroll in warm cream over a darker version of the original brick ground at the bottom. Pac-Man replaces the date line with a pink scrolling greeting and adds a small red balloon roaming the maze corridors without consuming food.
+
+### Night Mode Defaults and Persistence
+
+The component accepts optional `night_mode_start` and `night_mode_end` settings in 24-hour `HH:MM` format, defaulting to `"20:00"` and `"06:00"`. These set the startup schedule, just like `initial_brightness` sets startup brightness; the Python schema itself does not persist UI edits.
+
+The example and test configurations share each default between the component and its hidden persistent time entity using substitutions:
+
+```yaml
+substitutions:
+  night_mode_start: "20:00"
+  night_mode_end: "06:00"
+
+clockwise_hub75:
+  id: clockwise_main
+  hub75_id: matrix_display
+  night_mode_start: ${night_mode_start}
+  night_mode_end: ${night_mode_end}
+
+datetime:
+  - platform: template
+    type: time
+    id: night_mode_start_time
+    internal: true
+    name: "Night Mode Start"
+    optimistic: true
+    restore_value: true
+    initial_value: ${night_mode_start}
+    on_value:
+      - lambda: id(clockwise_main).set_night_start(x.hour * 3600 + x.minute * 60);
+  - platform: template
+    type: time
+    id: night_mode_end_time
+    internal: true
+    name: "Night Mode End"
+    optimistic: true
+    restore_value: true
+    initial_value: ${night_mode_end}
+    on_value:
+      - lambda: id(clockwise_main).set_night_end(x.hour * 3600 + x.minute * 60);
+```
+
+Merge these sections into existing YAML; use the visible `HH:MM` text controls from [the complete example](examples/clockwise.yaml) to edit them without seconds. Change the substitutions to customize defaults, rather than maintaining separate component/entity values. Saved UI values take precedence after reboot, so changing a YAML default does not overwrite an already saved schedule. Existing entity IDs are unchanged, preserving saved times.
+
+ESPHome normally flushes preferences to flash every 60 seconds. Allow that interval after editing a saved setting before cutting power, or the latest edit may be lost.
 
 ### Special Days
 
@@ -136,15 +180,46 @@ Create a `secrets.yaml` file:
 wifi_ssid: "YourWiFiSSID"
 wifi_password: "YourWiFiPassword"
 api_encryption_key: "your-encryption-key"
-ota_password: "your-ota-password"
 wifi_ap_password: "fallback-hotspot-password"
 ```
+
+The API encryption key must be a valid base64-encoded 32-byte key. OTA reuses this same key; no separate OTA password or key is needed.
 
 4. **Flash to your ESP32**:
 
 ```bash
 esphome run examples/clockwise.yaml
 ```
+
+### Encrypted OTA Updates
+
+The configurations use ESPHome OTA encryption instead of the legacy password, avoiding its additional flash/RAM cost:
+
+```yaml
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    encryption:  # Inherit the API key
+```
+
+This syntax is validated with ESPHome 2026.11.1. Keep the existing API key when migrating an installed device. Install from Device Builder/Desktop using ESPHome OTA, or use USB; do not use the device browser's firmware-upload endpoint.
+
+Where the web UI is enabled, the configurations set `web_server.ota: false` so the normal web listener does not provide an unencrypted alternative to encrypted OTA. Settings remain available in the web UI; the captive portal retains its recovery upload path.
+
+If older installed firmware still requires its legacy OTA password, use this **only for the migration upload**, keeping the old password in secrets:
+
+```yaml
+ota:
+  - platform: esphome
+    password: !secret ota_password
+    encryption:
+      allow_plaintext_upload: true
+```
+
+That explicitly permits the old upload protocol for this one install; the new firmware is still built for encrypted OTA. Once installed, remove `password` and `allow_plaintext_upload` and return to the encrypted-only block above. Do not leave plaintext fallback enabled. See [ESPHome's OTA documentation](https://esphome.io/components/ota/esphome/) for migration and key rotation.
 
 ## 🔧 Configuration
 
@@ -191,6 +266,8 @@ clockwise_hub75:
   clockface_type: MARIO          # Options: MARIO, PACMAN
   panel_color_order: RGB         # Fix wrong colors: RGB, RBG, GRB, GBR, BRG, BGR
   initial_brightness: 128
+  night_mode_start: "20:00"       # Startup defaults; see persistent controls above
+  night_mode_end: "06:00"
 
 esphome:
   on_boot:
@@ -203,10 +280,16 @@ esphome:
 
 # Home Assistant Controls
 number:
-  - platform: clockwise_hub75
-    clockwise_hub75_id: clockwise_main
+  - platform: template
     id: display_brightness
     name: "Display Brightness"
+    min_value: 0
+    max_value: 255
+    step: 1
+    mode: slider
+    lambda: return id(clockwise_main).get_brightness();
+    set_action:
+      - lambda: id(clockwise_main).set_brightness((uint8_t)x);
 
 switch:
   - platform: clockwise_hub75
@@ -284,6 +367,8 @@ button:
       - bm8563.write_time:
           id: rtc_time
 ```
+
+This basic snippet shows runtime control wiring. Use [the complete example](examples/clockwise.yaml) for persisted brightness, selectors, night times and special dates.
 
 ### Supported Hardware
 

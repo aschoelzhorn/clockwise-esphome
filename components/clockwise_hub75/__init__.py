@@ -3,7 +3,7 @@
 
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.const import CONF_ID
+from esphome.const import CONF_HOUR, CONF_ID, CONF_MINUTE
 
 # No explicit DEPENDENCIES needed - the hub75_id schema reference ensures ordering.
 # We pass HUB75Display pointer directly via codegen (no dynamic_cast/RTTI required).
@@ -25,6 +25,14 @@ CONF_CLOCKFACE_TYPE = "clockface_type"
 CONF_INITIAL_BRIGHTNESS = "initial_brightness"
 CONF_PANEL_COLOR_ORDER = "panel_color_order"
 CONF_SPECIAL_DATES = "special_dates"
+CONF_NIGHT_MODE_START = "night_mode_start"
+CONF_NIGHT_MODE_END = "night_mode_end"
+
+NIGHT_MODE_TIME = cv.All(
+    cv.string_strict,
+    cv.Length(min=5, max=5),
+    cv.time_of_day,
+)
 
 CLOCKFACE_TYPES = {
     "PACMAN": ClockfaceType.PACMAN,
@@ -50,6 +58,8 @@ CONFIG_SCHEMA = cv.Schema({
     cv.Optional(CONF_PANEL_COLOR_ORDER, default="RGB"): cv.enum(PANEL_COLOR_ORDERS, upper=True),
     cv.Optional(CONF_SPECIAL_DATES, default=""): cv.string,
     cv.Optional(CONF_INITIAL_BRIGHTNESS, default=128): cv.int_range(min=0, max=255),
+    cv.Optional(CONF_NIGHT_MODE_START, default="20:00"): NIGHT_MODE_TIME,
+    cv.Optional(CONF_NIGHT_MODE_END, default="06:00"): NIGHT_MODE_TIME,
 }).extend(cv.polling_component_schema("16ms"))
 
 
@@ -64,3 +74,7 @@ async def to_code(config):
     cg.add(var.set_panel_color_order(config[CONF_PANEL_COLOR_ORDER]))
     cg.add(var.set_special_dates(config[CONF_SPECIAL_DATES]))
     cg.add(var.set_initial_brightness(config[CONF_INITIAL_BRIGHTNESS]))
+    start = config[CONF_NIGHT_MODE_START]
+    end = config[CONF_NIGHT_MODE_END]
+    cg.add(var.set_night_start(start[CONF_HOUR] * 3600 + start[CONF_MINUTE] * 60))
+    cg.add(var.set_night_end(end[CONF_HOUR] * 3600 + end[CONF_MINUTE] * 60))

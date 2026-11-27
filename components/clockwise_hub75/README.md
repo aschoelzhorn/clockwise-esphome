@@ -8,13 +8,13 @@ The hybrid approach leverages the best of both worlds:
 
 - **HUB75 Component**: Handles all low-level display functionality, hardware drivers, multi-panel support, and DMA-based rendering
 - **Clockwise Component**: Manages clockface logic and provides native Home Assistant entities
-- **Native Entities**: Number, Switch, and Select entities for seamless HA integration
+- **Entities**: Native power switch and ESPHome template controls for other settings
 
 ## Features
 
 - ✅ **Mature Display Foundation**: Built on tested HUB75 component with comprehensive hardware support
 - ✅ **Native HA Entities**: Brightness control, power switch, clockface selection
-- ✅ **Multiple Clockfaces**: Pacman, Mario, and basic clock modes
+- ✅ **Multiple Clockfaces**: Pacman and Mario (`CLOCK` is reserved, not implemented)
 - ✅ **Hardware Compatibility**: Supports all ESP32 variants, multiple panel layouts, various driver chips
 - ✅ **Advanced Features**: Multi-panel support, brightness control, power management
 
@@ -50,7 +50,7 @@ display:
     panel_width: 64
     panel_height: 32
     brightness: 128
-    update_interval: never  # Clockwise handles updates
+    update_interval: 4294967295ms  # Clockwise handles updates
 ```
 
 ### 3. Add Clockwise Component
@@ -58,29 +58,24 @@ display:
 ```yaml
 clockwise_hub75:
   id: clockwise_main
-  display_id: matrix_display
+  hub75_id: matrix_display
   clockface_type: PACMAN
   initial_brightness: 128
+  night_mode_start: "20:00"
+  night_mode_end: "06:00"
 ```
 
 ### 4. Add Home Assistant Entities
 
 ```yaml
-number:
-  - platform: clockwise_hub75
-    clockwise_hub75_id: clockwise_main
-    name: "Display Brightness"
-
 switch:
   - platform: clockwise_hub75
     clockwise_hub75_id: clockwise_main
     name: "Display Power"
 
-select:
-  - platform: clockwise_hub75
-    clockwise_hub75_id: clockwise_main
-    name: "Clockface"
 ```
+
+Use the template brightness, selectors and text/time entities in [the complete example](../../examples/clockwise.yaml) for the remaining controls and persistence. Enable `web_server` for the device web UI, with `ota: false` to keep normal firmware uploads on encrypted ESPHome OTA.
 
 ## Configuration Reference
 
@@ -88,20 +83,31 @@ select:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `display_id` | ID | **Required** | Reference to HUB75 display component |
-| `clockface_type` | enum | `PACMAN` | Initial clockface: `PACMAN`, `MARIO`, `CLOCK` |
+| `hub75_id` | ID | **Required** | Reference to HUB75 display component |
+| `clockface_type` | enum | `PACMAN` | Initial clockface: `PACMAN`, `MARIO`; `CLOCK` is reserved |
+| `panel_color_order` | enum | `RGB` | Channel order: `RGB`, `RBG`, `GRB`, `GBR`, `BRG`, `BGR` |
+| `special_dates` | string | `""` | Initial recurring dates as `MM-DD:Name,MM-DD:Name` |
 | `initial_brightness` | int | `128` | Initial brightness (0-255) |
+| `night_mode_start` | time string | `"20:00"` | Initial Mario night-mode start, strictly `HH:MM` |
+| `night_mode_end` | time string | `"06:00"` | Initial Mario night-mode end, strictly `HH:MM` |
+| `update_interval` | duration | `16ms` | Clockface update interval |
+
+Component options configure startup values, not persistence. Night start/end defaults are shared with the restored template-time entities using substitutions in the example, avoiding separate defaults. Saved UI times override the defaults after reboot. The visible text controls show hours and minutes only; the hidden time entities retain their existing IDs and persistence.
+
+Night start is inclusive and end is exclusive. Overnight and same-day intervals are supported; equal endpoints disable night mode. See the [night-mode persistence guide](../../README.md#night-mode-defaults-and-persistence) and [encrypted OTA setup](../../README.md#encrypted-ota-updates).
 
 ### Home Assistant Entities
 
 #### Number Entity (Brightness)
 
+- **Platform**: `template` (with restored globals in the complete example)
 - **Range**: 0-255
 - **Purpose**: Control display brightness
 - **Icon**: `mdi:brightness-5`
 
 #### Switch Entity (Power)
 
+- **Platform**: `clockwise_hub75`
 - **Purpose**: Turn display on/off
 - **Icon**: `mdi:power`
 
@@ -147,6 +153,8 @@ select:
       - "NTP"
       - "RTC"
     initial_option: "Home Assistant"
+    restore_value: true
+    optimistic: true
     on_value:
       - lambda: |-
           // 0 = Home Assistant, 1 = NTP, 2 = RTC
@@ -170,7 +178,8 @@ button:
 
 #### Select Entity (Clockface)
 
-- **Options**: "Pacman", "Mario", "Clock"
+- **Platform**: `template`
+- **Options**: "Pacman", "Mario"
 - **Purpose**: Switch between clockface modes
 - **Icon**: `mdi:clock-outline`
 

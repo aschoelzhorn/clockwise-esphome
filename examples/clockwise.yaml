@@ -9,6 +9,8 @@ substitutions:
   panel_width: "64"
   panel_height: "64"
   initial_brightness: "128"
+  night_mode_start: "20:00"
+  night_mode_end: "06:00"
 
   
   # LDR Configuration (optional - set enable_ldr: "true" to enable)
@@ -97,7 +99,7 @@ api:
 # Enable OTA updates
 ota:
   - platform: esphome
-    password: !secret ota_password
+    encryption:  # Inherit the existing API encryption key
 
 # WiFi configuration
 wifi:
@@ -122,6 +124,7 @@ i2c:
 #  port: 80
 #  local: true
 #  version: 3
+#  ota: false  # Use encrypted ESPHome OTA instead of browser uploads
 
 # Time component for clock functionality
 time:
@@ -194,6 +197,8 @@ clockwise_hub75:
   hub75_id: matrix_display
   clockface_type: MARIO  # Options: PACMAN, MARIO
   initial_brightness: ${initial_brightness}
+  night_mode_start: ${night_mode_start}
+  night_mode_end: ${night_mode_end}
 
 
 # Home Assistant Entities
@@ -207,7 +212,7 @@ datetime:
     entity_category: config
     optimistic: true
     restore_value: true
-    initial_value: "20:00:00"
+    initial_value: ${night_mode_start}
     on_value:
       - lambda: id(clockwise_main).set_night_start(x.hour * 3600 + x.minute * 60);
   - platform: template
@@ -218,7 +223,7 @@ datetime:
     entity_category: config
     optimistic: true
     restore_value: true
-    initial_value: "06:00:00"
+    initial_value: ${night_mode_end}
     on_value:
       - lambda: id(clockwise_main).set_night_end(x.hour * 3600 + x.minute * 60);
 
