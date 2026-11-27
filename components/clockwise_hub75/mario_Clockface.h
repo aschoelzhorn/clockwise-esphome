@@ -12,6 +12,7 @@
 // Commons
 #include "IClockface.h"
 #include "CWDateTime.h"
+#include "NightModeSchedule.h"
 
 #include "mario_assets.h"
 #include "mario.h"
@@ -23,6 +24,7 @@ class Clockface : public IClockface {
   private:
     Adafruit_GFX* _display;
     CWDateTime* _dateTime;
+    const NightModeSchedule& _nightSchedule;
 
     void updateTime();
     bool shouldBeNightMode();
@@ -56,7 +58,7 @@ class Clockface : public IClockface {
     Enemy* enemies[ENEMY_COUNT];
 
 public:
-    Clockface(Adafruit_GFX* display);
+    Clockface(Adafruit_GFX* display, const NightModeSchedule& nightSchedule);
     ~Clockface();
     void setup(CWDateTime *dateTime);
     void update();

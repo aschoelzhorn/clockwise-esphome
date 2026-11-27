@@ -13,7 +13,8 @@ static const int STAR_POSITIONS[][2] = {
 static const byte STAR_COUNT = 6;
 
 namespace mario {
-Clockface::Clockface(Adafruit_GFX* display) {
+Clockface::Clockface(Adafruit_GFX* display, const NightModeSchedule& nightSchedule)
+    : _nightSchedule(nightSchedule) {
   _display = display;
   
   // Initialize pointers to nullptr - objects will be created in setup()
@@ -192,9 +193,7 @@ void Clockface::externalEvent(int type) {
 }
 
 bool Clockface::shouldBeNightMode() {
-  // Night mode from 20:00 (8 PM) to 06:00 (6 AM)
-  int hour = _dateTime->getHour();
-  return (hour >= 20 || hour < 6);
+  return _nightSchedule.is_active(_dateTime->getSecondsSinceMidnight());
 }
 
 void Clockface::applyNightMode(bool enable) {

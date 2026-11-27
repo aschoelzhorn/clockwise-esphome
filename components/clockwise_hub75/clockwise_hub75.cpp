@@ -36,15 +36,31 @@ void ClockwiseHUB75::set_time_source(int source) {
   }
 }
 
-static IClockface *create_clockface_(ClockfaceType type, GFXWrapper *gfx) {
+static IClockface *create_clockface_(ClockfaceType type, GFXWrapper *gfx, const NightModeSchedule &night_schedule) {
   switch (type) {
     case PACMAN:
       return new pacman::Clockface(gfx);
     case MARIO:
-      return new mario::Clockface(gfx);
+      return new mario::Clockface(gfx, night_schedule);
     default:
       return nullptr;
   }
+}
+
+void ClockwiseHUB75::set_night_start(uint32_t seconds) {
+  if (seconds >= 24 * 3600) {
+    ESP_LOGE(TAG, "Invalid night mode start time: %u", static_cast<unsigned int>(seconds));
+    return;
+  }
+  night_schedule_.set_start(seconds);
+}
+
+void ClockwiseHUB75::set_night_end(uint32_t seconds) {
+  if (seconds >= 24 * 3600) {
+    ESP_LOGE(TAG, "Invalid night mode end time: %u", static_cast<unsigned int>(seconds));
+    return;
+  }
+  night_schedule_.set_end(seconds);
 }
 
 void ClockwiseHUB75::set_panel_color_order(PanelColorOrder order) {
@@ -87,7 +103,7 @@ void ClockwiseHUB75::setup() {
   set_time_source(time_source_);
 
   // Create initial clockface
-  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_);
+  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_, night_schedule_);
   if (clockface_ != nullptr) {
     clockface_->setup(&g_dt);
     ESP_LOGCONFIG(TAG, "Clockface %d initialized", static_cast<int>(clockface_type_));
@@ -158,7 +174,7 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type, bool force) {
   // Update the clockface type
   clockface_type_ = type;
 
-  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_);
+  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_, night_schedule_);
   if (clockface_ != nullptr) {
     clockface_->setup(&g_dt);
     ESP_LOGI(TAG, "Switched to clockface %d", static_cast<int>(clockface_type_));

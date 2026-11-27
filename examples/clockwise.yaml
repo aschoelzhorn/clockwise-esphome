@@ -197,6 +197,78 @@ clockwise_hub75:
 
 # Home Assistant Entities
 
+datetime:
+  - platform: template
+    type: time
+    id: night_mode_start_time
+    internal: true
+    name: "Night Mode Start"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: "20:00:00"
+    on_value:
+      - lambda: id(clockwise_main).set_night_start(x.hour * 3600 + x.minute * 60);
+  - platform: template
+    type: time
+    id: night_mode_end_time
+    internal: true
+    name: "Night Mode End"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: "06:00:00"
+    on_value:
+      - lambda: id(clockwise_main).set_night_end(x.hour * 3600 + x.minute * 60);
+
+text:
+  - platform: template
+    id: night_mode_start_input
+    name: "Night Mode Start"
+    icon: mdi:weather-night
+    entity_category: config
+    mode: text
+    min_length: 5
+    max_length: 5
+    pattern: '([01][0-9]|2[0-3]):[0-5][0-9]'
+    update_interval: 1s
+    lambda: |-
+      char value[6];
+      snprintf(value, sizeof(value), "%02u:%02u", id(night_mode_start_time).hour, id(night_mode_start_time).minute);
+      if (id(night_mode_start_input).state == value) return {};
+      return std::string(value);
+    set_action:
+      - lambda: |-
+          esphome::ESPTime value{};
+          if (!esphome::ESPTime::strptime(x, value) || value.hour > 23 || value.minute > 59) {
+            ESP_LOGE("night_mode", "Expected a time in HH:MM format");
+            return;
+          }
+          id(night_mode_start_time).make_call().set_time(value.hour, value.minute, 0).perform();
+  - platform: template
+    name: "Night Mode End"
+    id: night_mode_end_input
+    icon: mdi:weather-sunset-up
+    entity_category: config
+    mode: text
+    min_length: 5
+    max_length: 5
+    pattern: '([01][0-9]|2[0-3]):[0-5][0-9]'
+    update_interval: 1s
+    lambda: |-
+      char value[6];
+      snprintf(value, sizeof(value), "%02u:%02u", id(night_mode_end_time).hour, id(night_mode_end_time).minute);
+      if (id(night_mode_end_input).state == value) return {};
+      return std::string(value);
+    set_action:
+      - lambda: |-
+          esphome::ESPTime value{};
+          if (!esphome::ESPTime::strptime(x, value) || value.hour > 23 || value.minute > 59) {
+            ESP_LOGE("night_mode", "Expected a time in HH:MM format");
+            return;
+          }
+          id(night_mode_end_time).make_call().set_time(value.hour, value.minute, 0).perform();
+
 # Brightness Control (0-255)
 number:
   - platform: template

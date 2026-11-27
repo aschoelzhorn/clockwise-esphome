@@ -35,10 +35,13 @@ Once installed, you'll get these entities in Home Assistant:
 - **Switch**: `auto_brightness` - Enable/disable automatic brightness (when LDR is configured)
 - **Number**: `display_brightness` - Adjust brightness (0-255)
 - **Select**: `clockface` - Choose between Mario, Pac-Man, and other styles
+- **Text**: `night_mode_start` and `night_mode_end` - Set Mario's night mode schedule as `HH:MM` in Home Assistant or the device web interface
 - **Select**: `time_source` - Choose between Home Assistant, NTP, or RTC time
 - **Select**: `panel_color_order` - Fix swapped colors by selecting RGB, RBG, GRB, GBR, BRG, or BGR
 - **Button**: `sync_time_to_rtc` - Sync current Home Assistant time to RTC hardware
 - **Sensor**: `ambient_light` - Current light level percentage (when LDR is configured)
+
+Mario's night mode defaults to 20:00–06:00. Start is inclusive, end is exclusive, and equal times disable night mode. The settings persist across restarts and also support intervals that do not cross midnight.
 
 ## 🏗️ Project Background
 
