@@ -179,7 +179,7 @@ void Clockface::chooseRandomEnemy() {
 
 void Clockface::updateTime() {
   ESP_LOGD(TAG, "updateTime() called - Hour: %d, Minute: %02d", _dateTime->getHour(), _dateTime->getMinute());
-  hourBlock->setText(String(_dateTime->getHour()));
+  hourBlock->setText(String(_dateTime->getHour(FORMAT_TWO_DIGITS)));
   minuteBlock->setText(String(_dateTime->getMinute(FORMAT_TWO_DIGITS)));
 }
 

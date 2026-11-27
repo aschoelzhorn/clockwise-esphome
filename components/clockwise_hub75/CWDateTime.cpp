@@ -17,6 +17,10 @@ void CWDateTime::set_rtc(esphome::time::RealTimeClock *rtc) {
   }
 }
 
+void CWDateTime::set_use_24h_format(bool use24hFormat) {
+  use24hFormat_ = use24hFormat;
+}
+
 void CWDateTime::begin() {
   ESP_LOGI(TAG, "CWDateTime initialized. Waiting for RTC to be assigned via YAML.");
 }
@@ -128,7 +132,6 @@ bool CWDateTime::isAM() {
 bool CWDateTime::is24hFormat() {
   return use24hFormat_;
 }
-
 
 
 

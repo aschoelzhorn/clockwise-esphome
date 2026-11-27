@@ -142,6 +142,7 @@ clockwise_hub75:
   id: clockwise_main
   hub75_id: matrix_display
   clockface_type: MARIO          # Options: MARIO, PACMAN
+  use_24h_format: false          # Use a 12-hour clock without AM/PM
   panel_color_order: RGB         # Fix wrong colors: RGB, RBG, GRB, GBR, BRG, BGR
   initial_brightness: 128
 
