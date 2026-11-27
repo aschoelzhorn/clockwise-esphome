@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <Adafruit_GFX.h>
+#include <string>
 
 #include "pacman_hour_font.h"
 #include "picopixel.h"
@@ -36,8 +37,15 @@ class Clockface: public IClockface {
     unsigned long lastMillisTime = 0;
     unsigned long lastMillisSec = 0;
     Pacman* pacman = nullptr;
-
-
+    GFXcanvas1 dateCanvas{36, 8};
+    std::string specialName;
+    int scrollX = 36;
+    int scrollTextWidth = 0;
+    unsigned long lastMillisScroll = 0;
+    int balloonX = 2;
+    int balloonY = 57;
+    Direction balloonDirection = Direction::RIGHT;
+    unsigned long lastMillisBalloon = 0;
 
     enum MapBlock {
       EMPTY = 0,
@@ -91,9 +99,16 @@ class Clockface: public IClockface {
     // first elem is the size
     const int PACMAN_MOVING_BLOCKS[4] = {3, MapBlock::EMPTY, MapBlock::FOOD, MapBlock::GATE};
     const int PACMAN_BLOCKING_BLOCKS[4] = {3, MapBlock::OUT_OF_MAP, MapBlock::WALL, MapBlock::CLOCK};
+    const int BALLOON_MOVING_BLOCKS[6] = {5, MapBlock::EMPTY, MapBlock::FOOD, MapBlock::GATE,
+                                       MapBlock::SUPER_FOOD, MapBlock::PACMAN};
 
     void drawMap();
+    void drawMapBlock(int column, int row);
+    void drawBalloon();
+    void restoreBalloon();
+    void moveBalloon();
     Clockface::MapBlock nextBlock(Direction dir);
+    Clockface::MapBlock nextBlock(Direction dir, int x, int y);
     Clockface::MapBlock nextBlock();
     void turnRandom();
     int countBlocks(Clockface::MapBlock elem);
@@ -101,6 +116,7 @@ class Clockface: public IClockface {
     void resetMap();
     void directionDecision(MapBlock nextBlk, bool moving_axis_x);
     void updateClock();
+    void drawDate();
     const char* weekDayName(int weekday);
     const char* monthName(int month);
     

@@ -36,7 +36,7 @@ Once installed, you'll get these entities in Home Assistant:
 - **Number**: `display_brightness` - Adjust brightness (0-255)
 - **Select**: `clockface` - Choose between Mario, Pac-Man, and other styles
 - **Text**: `night_mode_start` and `night_mode_end` - Set Mario's night mode schedule as `HH:MM` in Home Assistant or the device web interface
-- **Text**: `special_dates_input` - Configure recurring special-day messages for Mario
+- **Text**: `special_dates_input` - Configure recurring special-day messages for Mario and Pac-Man
 - **Select**: `time_source` - Choose between Home Assistant, NTP, or RTC time
 - **Select**: `panel_color_order` - Fix swapped colors by selecting RGB, RBG, GRB, GBR, BRG, or BGR
 - **Button**: `sync_time_to_rtc` - Sync current Home Assistant time to RTC hardware
@@ -44,7 +44,7 @@ Once installed, you'll get these entities in Home Assistant:
 
 Mario's night mode defaults to 20:00–06:00. Start is inclusive, end is exclusive, and equal times disable night mode. The settings persist across restarts and also support intervals that do not cross midnight.
 
-Special-day messages scroll across the top during the day. At night they scroll in warm cream over a darker version of the original brick ground at the bottom.
+Mario's special-day messages scroll across the top during the day. At night they scroll in warm cream over a darker version of the original brick ground at the bottom. Pac-Man replaces the date line with a pink scrolling greeting and adds a small red balloon roaming the maze corridors without consuming food.
 
 ### Special Days
 
@@ -54,7 +54,7 @@ In Home Assistant or the device web interface, edit **Special Dates (MM-DD:Name,
 03-23:Eric,12-24:Anna
 ```
 
-On the matching date, the Mario clockface shows a balloon and scrolls `Happy Birthday Eric!` from right to left. Dates recur annually and use the currently selected time source and its timezone. This feature currently displays birthday greetings, not arbitrary message text.
+On the matching date, both clockfaces scroll `Happy Birthday Eric!` from right to left. Mario also shows a balloon; Pac-Man uses the date area for the greeting and restores the date on ordinary days. Dates recur annually and use the currently selected time source and its timezone. This feature currently displays birthday greetings, not arbitrary message text.
 
 - Up to 10 valid entries are used; names are truncated to 24 bytes.
 - If multiple entries match today, the first one is used.

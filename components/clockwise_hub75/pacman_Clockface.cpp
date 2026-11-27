@@ -1,4 +1,6 @@
 #include "pacman_Clockface.h"
+#include "SpecialDates.h"
+#include "esphome/core/log.h"
 
 namespace pacman {
 Clockface::Clockface(Adafruit_GFX* display) {
@@ -15,6 +17,14 @@ Clockface::~Clockface() {
 
 void Clockface::setup(CWDateTime *dateTime) {
   this->_dateTime = dateTime;
+  if (dateCanvas.getBuffer() == nullptr) {
+    ESP_LOGE("pacman_Clockface", "Unable to allocate special-day text canvas");
+  }
+  dateCanvas.setFont(&Picopixel);
+  dateCanvas.setTextWrap(false);
+  dateCanvas.setTextColor(1);
+  specialName = special_date_today_name();
+  lastMillisScroll = millis();
   Locator::getDisplay()->setFont(&hourFont);
   randomSeed(dateTime->getMilliseconds() + millis());
   drawMap();
@@ -23,6 +33,31 @@ void Clockface::setup(CWDateTime *dateTime) {
 
 void Clockface::update()
 {
+  const char* name = special_date_today_name();
+  if (specialName != name) {
+    if (!specialName.empty() && name[0] == '\0') {
+      restoreBalloon();
+      pacman->init();
+    } else if (specialName.empty()) {
+      balloonX = 2;
+      balloonY = 57;
+      balloonDirection = Direction::RIGHT;
+      lastMillisBalloon = millis();
+    }
+    specialName = name;
+    scrollX = dateCanvas.width();
+    scrollTextWidth = 0;
+    lastMillisScroll = millis();
+    drawDate();
+  }
+  if (!specialName.empty() && millis() - lastMillisScroll >= 40) {
+    lastMillisScroll = millis();
+    scrollX--;
+    if (scrollX <= -scrollTextWidth) {
+      scrollX = dateCanvas.width();
+    }
+    drawDate();
+  }
 
   // Seconds blink  
   if ((millis() - lastMillisSec) >= 1000) {
@@ -81,8 +116,16 @@ void Clockface::update()
     lastMillis = millis();
   }
 
-  
-  
+  if (!specialName.empty()) {
+    if (millis() - lastMillisBalloon >= 100) {
+      restoreBalloon();
+      moveBalloon();
+      lastMillisBalloon = millis();
+    }
+    drawBalloon();
+    // Keep Pac-Man visible when the two sprites cross paths.
+    pacman->init();
+  }
 }
 
 
@@ -101,15 +144,7 @@ const char* Clockface::monthName(int month) {
 void Clockface::updateClock() {
 
     Locator::getDisplay()->fillRect(14, 19, 36, 26, 0x0000);
-
-    Locator::getDisplay()->setFont(&Picopixel);
-    Locator::getDisplay()->setTextColor(0xAD55);
-    Locator::getDisplay()->setCursor(15, 41);
-    Locator::getDisplay()->print(monthName(this->_dateTime->getMonth()));
-    Locator::getDisplay()->print(" ");
-    Locator::getDisplay()->print(this->_dateTime->getDay());
-    Locator::getDisplay()->print(" ");
-    Locator::getDisplay()->print(weekDayName(this->_dateTime->getWeekday()));
+    drawDate();
     
     Locator::getDisplay()->setFont(&hourFont);
     
@@ -119,6 +154,81 @@ void Clockface::updateClock() {
     Locator::getDisplay()->print(this->_dateTime->getHour("00"));
     Locator::getDisplay()->print(" ");
     Locator::getDisplay()->print(this->_dateTime->getMinute("00"));
+}
+
+void Clockface::drawDate() {
+  Adafruit_GFX* display = Locator::getDisplay();
+  display->fillRect(14, 36, dateCanvas.width(), dateCanvas.height(), 0x0000);
+  if (specialName.empty()) {
+    display->setFont(&Picopixel);
+    display->setTextColor(0xAD55);
+    display->setCursor(15, 41);
+    display->print(monthName(this->_dateTime->getMonth()));
+    display->print(" ");
+    display->print(this->_dateTime->getDay());
+    display->print(" ");
+    display->print(weekDayName(this->_dateTime->getWeekday()));
+    display->setFont(&hourFont);
+    return;
+  }
+
+  if (dateCanvas.getBuffer() == nullptr) return;
+  char text[64];
+  snprintf(text, sizeof(text), "Happy Birthday %s!", specialName.c_str());
+  if (scrollTextWidth == 0) {
+    int16_t x1, y1;
+    uint16_t width, height;
+    dateCanvas.getTextBounds(text, 0, 5, &x1, &y1, &width, &height);
+    scrollTextWidth = width;
+  }
+
+  // Render offscreen so text cannot spill into the surrounding maze.
+  dateCanvas.fillScreen(0);
+  dateCanvas.setCursor(scrollX, 5);
+  dateCanvas.print(text);
+  display->drawBitmap(14, 36, dateCanvas.getBuffer(), dateCanvas.width(), dateCanvas.height(), 0xF81F, 0x0000);
+}
+
+void Clockface::drawBalloon() {
+  ImageUtils::drawTransparent(balloonX, balloonY, _PACMAN_BALLOON, 5, 5, 0);
+}
+
+void Clockface::restoreBalloon() {
+  for (int row = (balloonY - 2) / 5; row <= (balloonY + 2) / 5; row++) {
+    for (int column = (balloonX - 2) / 5; column <= (balloonX + 2) / 5; column++) {
+      drawMapBlock(column, row);
+    }
+  }
+}
+
+void Clockface::moveBalloon() {
+  if ((balloonX - 2) % 5 == 0 && (balloonY - 2) % 5 == 0) {
+    const Direction reverse[] = {Direction::LEFT, Direction::RIGHT, Direction::DOWN, Direction::UP};
+    Direction candidates[4];
+    int count = 0;
+    for (int i = 0; i < 4; i++) {
+      Direction direction = static_cast<Direction>(i);
+      if (direction != reverse[balloonDirection] &&
+          contains(nextBlock(direction, balloonX, balloonY), BALLOON_MOVING_BLOCKS)) {
+        candidates[count++] = direction;
+      }
+    }
+    if (count > 0) {
+      balloonDirection = candidates[random(count)];
+    } else if (contains(nextBlock(reverse[balloonDirection], balloonX, balloonY), BALLOON_MOVING_BLOCKS)) {
+      balloonDirection = reverse[balloonDirection];
+    } else {
+      ESP_LOGW("pacman_Clockface", "Balloon has no traversable neighboring maze block");
+      return;
+    }
+  }
+
+  switch (balloonDirection) {
+    case Direction::RIGHT: balloonX++; break;
+    case Direction::LEFT: balloonX--; break;
+    case Direction::UP: balloonY--; break;
+    case Direction::DOWN: balloonY++; break;
+  }
 }
 
 void Clockface::directionDecision(MapBlock nextBlk, bool moving_axis_x) {
@@ -182,27 +292,30 @@ Clockface::MapBlock Clockface::nextBlock() {
 }
 
 Clockface::MapBlock Clockface::nextBlock(Direction dir) {
+  return nextBlock(dir, pacman->getX(), pacman->getY());
+}
 
+Clockface::MapBlock Clockface::nextBlock(Direction dir, int x, int y) {
   Clockface::MapBlock map_block = Clockface::MapBlock::OUT_OF_MAP;
 
   if (dir == Direction::RIGHT) {
-    if (pacman->getX()+pacman->SPRITE_SIZE < MAP_MAX_POS) {
-      map_block = static_cast<MapBlock>(_MAP[(pacman->getY()-2)/5][((pacman->getX()-2)/5)+1]);
+    if (x + 5 < MAP_MAX_POS) {
+      map_block = static_cast<MapBlock>(_MAP[(y-2)/5][((x-2)/5)+1]);
     }
     
   } else if (dir == Direction::DOWN) {
-    if (pacman->getY()+pacman->SPRITE_SIZE < MAP_MAX_POS) {
-      map_block = static_cast<MapBlock>(_MAP[((pacman->getY()-2)/5)+1][(pacman->getX()-2)/5]);
+    if (y + 5 < MAP_MAX_POS) {
+      map_block = static_cast<MapBlock>(_MAP[((y-2)/5)+1][(x-2)/5]);
     }
   } else if (dir == Direction::LEFT) {
 
-    if ((pacman->getX()-2) > 0) {
-      map_block = static_cast<MapBlock>(_MAP[(pacman->getY()-2)/5][((pacman->getX()-2)/5)-1]);
+    if ((x-2) > 0) {
+      map_block = static_cast<MapBlock>(_MAP[(y-2)/5][((x-2)/5)-1]);
     }
 
   } else if (dir == Direction::UP) {
-    if ((pacman->getY()-2) > 0) {
-      map_block = static_cast<MapBlock>(_MAP[((pacman->getY()-2)/5)-1][((pacman->getX()-2)/5)]);
+    if ((y-2) > 0) {
+      map_block = static_cast<MapBlock>(_MAP[((y-2)/5)-1][((x-2)/5)]);
     }
   }
 
@@ -229,9 +342,7 @@ void Clockface::drawMap()
 
 
 
-  uint16_t food_color = 0xB58C;
   uint16_t wall_color = 0x0016;
-  uint16_t spcfood_color = 0xFBE0;
 
 
 
@@ -241,18 +352,8 @@ void Clockface::drawMap()
 
   for (int i=0; i<MAP_SIZE; i++) {
     for (int j=0; j<MAP_SIZE; j++) {
-      if (_MAP[j][i] == MapBlock::FOOD) {
-        Locator::getDisplay()->fillRect((i*5)+3,(j*5)+4,3,1,food_color);
-      } else if (_MAP[j][i] == MapBlock::WALL) {
-        Locator::getDisplay()->fillRect((i*5)+2,(j*5)+2,5,5,wall_color);
-      } else if (_MAP[j][i] == MapBlock::CLOCK) {
-        Locator::getDisplay()->fillRect((i*5)+2,(j*5)+2,5,5,wall_color);
-      } else if (_MAP[j][i] == MapBlock::GATE) {
-        //Locator::getDisplay()->fillRect((i*5)+((bool)i*2),(j*5)+2,7,5,0x0000);
-        Locator::getDisplay()->fillRect((i*5)+3,(j*5)+4,3,1,food_color);
-      } else if (_MAP[j][i] == MapBlock::SUPER_FOOD) {
-        Locator::getDisplay()->fillRect((i*5)+3,(j*5)+3,3,3,spcfood_color);
-      } else if (_MAP[j][i] == MapBlock::PACMAN) {
+      drawMapBlock(i, j);
+      if (_MAP[j][i] == MapBlock::PACMAN) {
         pacman = new Pacman((i*5)+2,(j*5)+2);
 
         // Locator::getDisplay()->drawRGBBitmap((i*5)+2,(j*5)+2, _PACMAN_2, 5, 5);
@@ -261,7 +362,26 @@ void Clockface::drawMap()
     }
   }
 
-  
+}
+
+void Clockface::drawMapBlock(int column, int row) {
+  Adafruit_GFX* display = Locator::getDisplay();
+  int x = column * 5 + 2;
+  int y = row * 5 + 2;
+  display->fillRect(x, y, 5, 5, 0);
+  switch (_MAP[row][column]) {
+    case MapBlock::FOOD:
+    case MapBlock::GATE:
+      display->fillRect(x + 1, y + 2, 3, 1, 0xB58C);
+      break;
+    case MapBlock::WALL:
+    case MapBlock::CLOCK:
+      display->fillRect(x, y, 5, 5, 0x0016);
+      break;
+    case MapBlock::SUPER_FOOD:
+      display->fillRect(x + 1, y + 1, 3, 3, 0xFBE0);
+      break;
+  }
 }
 
 } // namespace pacman

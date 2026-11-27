@@ -20,7 +20,7 @@ The hybrid approach leverages the best of both worlds:
 
 ## Special Days
 
-Mario supports recurring special dates entered as `MM-DD:Name,MM-DD:Name` in the **Special Dates (MM-DD:Name,...)** text control. On a matching date it shows a balloon and scrolls `Happy Birthday Name!` from right to left: at the top during the day, or in warm cream over dark brick ground at night.
+Mario and Pac-Man support recurring special dates entered as `MM-DD:Name,MM-DD:Name` in the **Special Dates (MM-DD:Name,...)** text control. Both scroll `Happy Birthday Name!` from right to left. Mario shows a balloon and uses the top during the day, or warm cream over dark brick ground at night. Pac-Man replaces the date line with a pink greeting clipped to that area and a small red balloon roaming the corridors without consuming food. The date returns and the balloon disappears on ordinary days.
 
 The first matching entry is used, with a maximum of 10 valid entries and 24 bytes per name. The example control persists its text and reapplies it after reboot. See the [Special Days guide](../../README.md#special-days) for setup, limits and examples.
 
