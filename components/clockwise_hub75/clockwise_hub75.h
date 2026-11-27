@@ -56,6 +56,7 @@ class ClockwiseHUB75 : public PollingComponent {
   void set_rtc_time(time::RealTimeClock *t) { rtc_time_ = t; }
   void set_time_source(int source);
   void set_clockface_type(ClockfaceType type) { clockface_type_ = type; }
+  void set_use_24h_format(bool use24hFormat) { use24hFormat_ = use24hFormat; }
   void set_initial_brightness(uint8_t brightness) { initial_brightness_ = brightness; }
   void set_panel_color_order(PanelColorOrder order);
   void set_night_start(uint32_t seconds);
@@ -90,6 +91,7 @@ class ClockwiseHUB75 : public PollingComponent {
   
   ClockfaceType clockface_type_{PACMAN};
   PanelColorOrder panel_color_order_{RGB};
+  bool use24hFormat_{true};
   uint8_t initial_brightness_{128};
   uint8_t current_brightness_{128};
   bool power_state_{true};

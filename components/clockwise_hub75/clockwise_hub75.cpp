@@ -158,6 +158,7 @@ void ClockwiseHUB75::setup() {
   
   // Initialize datetime shim and wire initial time source
   g_dt.begin();
+  g_dt.set_use_24h_format(use24hFormat_);
   set_time_source(time_source_);
 
   // Create initial clockface

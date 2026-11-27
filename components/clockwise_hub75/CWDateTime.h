@@ -11,6 +11,7 @@ private:
 public:
   void begin();
   void set_rtc(esphome::time::RealTimeClock *rtc);
+  void set_use_24h_format(bool use24hFormat);
   
   String getFormattedTime();
   String getFormattedTime(const char* format);
