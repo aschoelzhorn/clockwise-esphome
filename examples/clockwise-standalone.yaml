@@ -1,0 +1,331 @@
+# Public HD-WF2 / 64x64 FM6126A image. No personal credentials or shared keys.
+substitutions:
+  timezone: Europe/Vienna
+  initial_brightness: "128"
+  night_mode_start: "20:00"
+  night_mode_end: "06:00"
+
+esphome:
+  name: clockwise-standalone
+  name_add_mac_suffix: true
+  friendly_name: Clockwise Standalone
+  comment: "HD-WF2 64x64 FM6126A standalone clock"
+  platformio_options:
+    lib_deps:
+      - adafruit/Adafruit BusIO
+      - adafruit/Adafruit GFX Library
+    lib_ldf_mode: chain+
+    build_flags:
+      - -Os
+  on_boot:
+    - priority: 590
+      then:
+        - lambda: |-
+            id(clockwise_main).set_clockface_type(
+              static_cast<esphome::clockwise_hub75::ClockfaceType>(id(saved_clockface)));
+            id(clockwise_main).set_panel_color_order(
+              static_cast<esphome::clockwise_hub75::PanelColorOrder>(id(saved_color_order)));
+            id(clockwise_main).set_initial_brightness(id(saved_brightness));
+            id(clockwise_main).set_ntp_time(id(ntp_time));
+            id(clockwise_main).set_rtc_time(id(rtc_time));
+            id(clockwise_main).set_time_source(1);
+    - priority: -100
+      then:
+        - lambda: |-
+            id(clockwise_main).set_time_source(
+              id(time_source_selector).current_option() == "RTC" ? 2 : 1);
+            id(clockwise_main).set_special_dates(id(special_dates_input).state);
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 4MB
+  toolchain: platformio
+  framework:
+    type: arduino
+    version: recommended
+
+logger:
+  level: INFO
+
+# Wi-Fi credentials are entered on the device, never baked into the image.
+wifi:
+  reboot_timeout: 0s
+  ap:
+    ap_timeout: 1min
+
+captive_portal:
+
+web_server:
+  port: 80
+  local: true
+  version: 3
+  ota: false
+
+# Recovery hotspot uploads only; no unauthenticated native OTA listener.
+ota:
+  - platform: web_server
+
+i2c:
+  sda: 41
+  scl: 42
+  scan: true
+
+time:
+  - platform: sntp
+    id: ntp_time
+    timezone: ${timezone}
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
+    on_time_sync:
+      then:
+        - bm8563.write_time:
+            id: rtc_time
+  - platform: bm8563
+    id: rtc_time
+    address: 0x51
+    timezone: ${timezone}
+    update_interval: 3600s
+
+external_components:
+  - source:
+      type: local
+      path: '..\components'
+    components: [clockwise_hub75]
+
+display:
+  - platform: hub75
+    id: matrix_display
+    board: huidu-hd-wf2
+    panel_width: 64
+    panel_height: 64
+    brightness: ${initial_brightness}
+    bit_depth: 8
+    min_refresh_rate: 120
+    double_buffer: false
+    rotation: 0
+    shift_driver: FM6126A
+    scan_wiring: STANDARD_TWO_SCAN
+    clock_speed: 20MHZ
+    clock_phase: false
+    update_interval: 4294967295ms
+
+clockwise_hub75:
+  id: clockwise_main
+  hub75_id: matrix_display
+  clockface_type: MARIO
+  panel_color_order: RGB
+  initial_brightness: ${initial_brightness}
+  night_mode_start: ${night_mode_start}
+  night_mode_end: ${night_mode_end}
+
+globals:
+  - id: saved_brightness
+    type: uint8_t
+    restore_value: true
+    initial_value: '${initial_brightness}'
+  - id: saved_clockface
+    type: int
+    restore_value: true
+    initial_value: '1'
+  - id: saved_color_order
+    type: int
+    restore_value: true
+    initial_value: '0'
+
+datetime:
+  - platform: template
+    type: time
+    id: night_mode_start_time
+    name: "Night Mode Start"
+    internal: true
+    optimistic: true
+    restore_value: true
+    initial_value: ${night_mode_start}
+    on_value:
+      - lambda: id(clockwise_main).set_night_start(x.hour * 3600 + x.minute * 60);
+  - platform: template
+    type: time
+    id: night_mode_end_time
+    name: "Night Mode End"
+    internal: true
+    optimistic: true
+    restore_value: true
+    initial_value: ${night_mode_end}
+    on_value:
+      - lambda: id(clockwise_main).set_night_end(x.hour * 3600 + x.minute * 60);
+
+text:
+  - platform: template
+    id: night_mode_start_input
+    name: "Night Mode Start"
+    icon: mdi:weather-night
+    entity_category: config
+    mode: text
+    min_length: 5
+    max_length: 5
+    pattern: '([01][0-9]|2[0-3]):[0-5][0-9]'
+    update_interval: 1s
+    lambda: |-
+      char value[6];
+      snprintf(value, sizeof(value), "%02u:%02u", id(night_mode_start_time).hour, id(night_mode_start_time).minute);
+      if (id(night_mode_start_input).state == value) return {};
+      return std::string(value);
+    set_action:
+      - lambda: |-
+          esphome::ESPTime value{};
+          if (!esphome::ESPTime::strptime(x, value) || value.hour > 23 || value.minute > 59) {
+            ESP_LOGE("night_mode", "Expected a time in HH:MM format");
+            return;
+          }
+          id(night_mode_start_time).make_call().set_time(value.hour, value.minute, 0).perform();
+  - platform: template
+    id: night_mode_end_input
+    name: "Night Mode End"
+    icon: mdi:weather-sunset-up
+    entity_category: config
+    mode: text
+    min_length: 5
+    max_length: 5
+    pattern: '([01][0-9]|2[0-3]):[0-5][0-9]'
+    update_interval: 1s
+    lambda: |-
+      char value[6];
+      snprintf(value, sizeof(value), "%02u:%02u", id(night_mode_end_time).hour, id(night_mode_end_time).minute);
+      if (id(night_mode_end_input).state == value) return {};
+      return std::string(value);
+    set_action:
+      - lambda: |-
+          esphome::ESPTime value{};
+          if (!esphome::ESPTime::strptime(x, value) || value.hour > 23 || value.minute > 59) {
+            ESP_LOGE("night_mode", "Expected a time in HH:MM format");
+            return;
+          }
+          id(night_mode_end_time).make_call().set_time(value.hour, value.minute, 0).perform();
+  - platform: template
+    id: special_dates_input
+    name: "Special Dates (MM-DD:Name,...)"
+    icon: mdi:cake-variant-outline
+    entity_category: config
+    mode: text
+    optimistic: true
+    restore_value: true
+    initial_value: ""
+    min_length: 0
+    max_length: 220
+    set_action:
+      - lambda: id(clockwise_main).set_special_dates(x);
+
+number:
+  - platform: template
+    name: "Display Brightness"
+    icon: mdi:brightness-5
+    entity_category: config
+    min_value: 0
+    max_value: 255
+    step: 1
+    mode: slider
+    lambda: return id(saved_brightness);
+    set_action:
+      - globals.set:
+          id: saved_brightness
+          value: !lambda return (uint8_t)x;
+      - lambda: id(clockwise_main).set_brightness((uint8_t)x);
+
+switch:
+  - platform: clockwise_hub75
+    clockwise_hub75_id: clockwise_main
+    name: "Display Power"
+    icon: mdi:power
+    entity_category: config
+
+select:
+  - platform: template
+    name: "Clockface"
+    icon: mdi:clock-outline
+    entity_category: config
+    options:
+      - "Pacman"
+      - "Mario"
+    initial_option: "Mario"
+    optimistic: true
+    restore_value: true
+    on_value:
+      - globals.set:
+          id: saved_clockface
+          value: !lambda |-
+            return x == "Mario" ? 1 : 0;
+      - lambda: |-
+          id(clockwise_main).switch_clockface(x == "Mario"
+            ? esphome::clockwise_hub75::MARIO : esphome::clockwise_hub75::PACMAN);
+  - platform: template
+    id: time_source_selector
+    name: "Time Source"
+    icon: mdi:clock
+    entity_category: config
+    options:
+      - "NTP"
+      - "RTC"
+    initial_option: "NTP"
+    optimistic: true
+    restore_value: true
+    on_value:
+      - lambda: |-
+          id(clockwise_main).set_time_source(x == "RTC" ? 2 : 1);
+  - platform: template
+    name: "Panel Color Order"
+    icon: mdi:palette-outline
+    entity_category: config
+    options:
+      - "RGB"
+      - "RBG"
+      - "GRB"
+      - "GBR"
+      - "BRG"
+      - "BGR"
+    initial_option: "RGB"
+    optimistic: true
+    restore_value: true
+    on_value:
+      - lambda: |-
+          int order = 0;
+          if (x == "RBG") order = 1;
+          else if (x == "GRB") order = 2;
+          else if (x == "GBR") order = 3;
+          else if (x == "BRG") order = 4;
+          else if (x == "BGR") order = 5;
+          id(saved_color_order) = order;
+          id(clockwise_main).set_panel_color_order(
+            static_cast<esphome::clockwise_hub75::PanelColorOrder>(order));
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    entity_category: diagnostic
+    update_interval: 60s
+  - platform: uptime
+    name: "Uptime"
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+      entity_category: diagnostic
+  - platform: version
+    name: "ESPHome Version"
+    entity_category: diagnostic
+
+button:
+  - platform: restart
+    name: "Restart"
+    entity_category: diagnostic
+  - platform: template
+    name: "Sync Time to RTC"
+    icon: mdi:clock-check
+    entity_category: config
+    on_press:
+      - bm8563.write_time:
+          id: rtc_time

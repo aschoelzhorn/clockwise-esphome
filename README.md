@@ -160,6 +160,11 @@ This project integrates the amazing [Clockwise](https://clockwise.page/) retro c
 
 ### Installation
 
+For a clock without Home Assistant, use the [standalone firmware and USB/Wi-Fi
+setup guide](docs/standalone.md). Its [public configuration](examples/clockwise-standalone.yaml)
+contains no personal credentials or shared API/OTA keys. It targets HD-WF2 with
+a 64x64 FM6126A panel and Central European time.
+
 1. **Clone this repository** or add as external component:
 
 ```yaml
