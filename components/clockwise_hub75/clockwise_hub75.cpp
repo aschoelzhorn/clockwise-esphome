@@ -89,12 +89,19 @@ void ClockwiseHUB75::set_time_source(int source) {
   }
 }
 
-static IClockface *create_clockface_(ClockfaceType type, GFXWrapper *gfx, const NightModeSchedule &night_schedule) {
+static IClockface *create_clockface_(ClockfaceType type, GFXWrapper *gfx,
+                                   const NightModeSchedule &night_schedule, story::IStoryTheme *&theme) {
   switch (type) {
     case PACMAN:
       return new pacman::Clockface(gfx);
     case MARIO:
       return new mario::Clockface(gfx, night_schedule);
+    case DUNE:
+      theme = new story::DuneTheme();
+      return new story::StoryClockface(theme, gfx);
+    case STARTREK:
+      theme = new story::StarTrekTheme();
+      return new story::StoryClockface(theme, gfx);
     default:
       return nullptr;
   }
@@ -165,30 +172,12 @@ void ClockwiseHUB75::setup() {
   set_time_source(time_source_);
   
   // Create initial clockface
-  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_, night_schedule_);
+  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_, night_schedule_, theme_);
   if (clockface_ != nullptr) {
-      clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Pacman clockface initialized");
-      break;
-    case MARIO:
-      clockface_ = new mario::Clockface(gfx_wrapper_);  // Mario Clockface implements IClockface
-      clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Mario clockface initialized");
-      break;
-    case DUNE:
-      // Use new theme-based architecture
-      theme_ = new story::DuneTheme();
-      clockface_ = new story::StoryClockface(theme_, gfx_wrapper_);
-      clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Dune clockface initialized (theme-based)");
-      break;
-    case STARTREK:
-      // Use new theme-based architecture
-      theme_ = new story::StarTrekTheme();
-      clockface_ = new story::StoryClockface(theme_, gfx_wrapper_);
-      clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Star Trek clockface initialized (theme-based)");
-      break;      
+    clockface_->setup(&g_dt);
+    ESP_LOGCONFIG(TAG, "Clockface %d initialized", static_cast<int>(clockface_type_));
+  } else {
+    ESP_LOGW(TAG, "Clockface %d not yet implemented", static_cast<int>(clockface_type_));
   }
   
   ESP_LOGCONFIG(TAG, "Clockwise HUB75 setup complete");
@@ -262,30 +251,12 @@ void ClockwiseHUB75::switch_clockface(ClockfaceType type, bool force) {
   // Update the clockface type
   clockface_type_ = type;
   
-  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_, night_schedule_);
+  clockface_ = create_clockface_(clockface_type_, gfx_wrapper_, night_schedule_, theme_);
   if (clockface_ != nullptr) {
-      clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Switched to Pacman clockface");
-      break;
-    case MARIO:
-      clockface_ = new mario::Clockface(gfx_wrapper_);
-      clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Switched to Mario clockface");
-      break;
-    case DUNE:
-      // Use new theme-based architecture
-      theme_ = new story::DuneTheme();
-      clockface_ = new story::StoryClockface(theme_, gfx_wrapper_);
-      clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Switched to Dune clockface (theme-based)");
-      break;
-    case STARTREK:
-      // Use new theme-based architecture
-      theme_ = new story::StarTrekTheme();
-      clockface_ = new story::StoryClockface(theme_, gfx_wrapper_);
-      clockface_->setup(&g_dt);
-      ESP_LOGCONFIG(TAG, "Switched to Star Trek clockface (theme-based)");
-      break;
+    clockface_->setup(&g_dt);
+    ESP_LOGI(TAG, "Switched to clockface %d", static_cast<int>(clockface_type_));
+  } else {
+    ESP_LOGW(TAG, "Clockface %d not yet implemented", static_cast<int>(clockface_type_));
   }
 }
 

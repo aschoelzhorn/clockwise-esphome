@@ -140,6 +140,43 @@ int textWidth(const char* s) {
 
  private:
   esphome::hub75::HUB75Display *display_;
+  ColorChannelOrder color_order_{ColorChannelOrder::RGB};
+
+  void apply_color_order_(uint8_t in_r, uint8_t in_g, uint8_t in_b,
+                          uint8_t &out_r, uint8_t &out_g, uint8_t &out_b) const {
+    switch (color_order_) {
+      case ColorChannelOrder::RGB:
+        out_r = in_r;
+        out_g = in_g;
+        out_b = in_b;
+        break;
+      case ColorChannelOrder::RBG:
+        out_r = in_r;
+        out_g = in_b;
+        out_b = in_g;
+        break;
+      case ColorChannelOrder::GRB:
+        out_r = in_g;
+        out_g = in_r;
+        out_b = in_b;
+        break;
+      case ColorChannelOrder::GBR:
+        out_r = in_g;
+        out_g = in_b;
+        out_b = in_r;
+        break;
+      case ColorChannelOrder::BRG:
+        out_r = in_b;
+        out_g = in_r;
+        out_b = in_g;
+        break;
+      case ColorChannelOrder::BGR:
+        out_r = in_b;
+        out_g = in_g;
+        out_b = in_r;
+        break;
+    }
+  }
 
   inline uint8_t r5(uint16_t c) { return (c >> 11) & 0x1F; }
   inline uint8_t g6(uint16_t c) { return (c >> 5) & 0x3F; }

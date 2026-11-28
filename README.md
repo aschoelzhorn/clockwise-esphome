@@ -268,7 +268,7 @@ display:
 clockwise_hub75:
   id: clockwise_main
   hub75_id: matrix_display
-  clockface_type: MARIO          # Options: MARIO, PACMAN
+  clockface_type: MARIO          # Options: MARIO, PACMAN, DUNE, STARTREK
   panel_color_order: RGB         # Fix wrong colors: RGB, RBG, GRB, GBR, BRG, BGR
   initial_brightness: 128
   night_mode_start: "20:00"       # Startup defaults; see persistent controls above
@@ -309,6 +309,8 @@ select:
     options:
       - "Pacman"
       - "Mario"
+      - "Dune"
+      - "Star Trek"
     initial_option: "Pacman"
     restore_value: true
     optimistic: true
@@ -316,6 +318,8 @@ select:
       then:
         - lambda: |-
             if (x == "Mario") id(clockwise_main).switch_clockface(esphome::clockwise_hub75::MARIO);
+            else if (x == "Dune") id(clockwise_main).switch_clockface(esphome::clockwise_hub75::DUNE);
+            else if (x == "Star Trek") id(clockwise_main).switch_clockface(esphome::clockwise_hub75::STARTREK);
             else id(clockwise_main).switch_clockface(esphome::clockwise_hub75::PACMAN);
 
   # Time source selector
@@ -402,6 +406,13 @@ This basic snippet shows runtime control wiring. Use [the complete example](exam
 - Yellow color scheme
 - Classic arcade font styling
 - Based on: [Original Pac-Man Clockface (cw-cf-0x05)](https://github.com/jnthas/cw-cf-0x05)
+
+### Story Themes: Dune and Star Trek
+
+- Select `DUNE` or `STARTREK`, or use the corresponding option in the complete example's Clockface selector.
+- Both use a generic story orchestrator with themed acts, backgrounds, scrolling phrases and sprite events.
+- Acts advance by elapsed time from activation using the theme's configured durations; switching away and back restarts the story.
+- Build [the complete example](examples/clockwise.yaml) from the local checkout to use this branch's implementation. See [story build notes](components/clockwise_hub75/README.md#story-clockfaces) if a branch switch requires cleaning cached build files.
 
 ### Automatic Brightness Control (Optional)
 

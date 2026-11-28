@@ -2,6 +2,8 @@
 
 ## Overview
 
+**Current implementation:** The generic `StoryClockface` advances acts by elapsed time from activation, using durations from `story_dune_theme.cpp`. Dune currently uses 7-second acts for testing. The wall-clock schedule below describes the original design, not the active orchestrator. Switching away and back restarts the story.
+
 The Dune clockface is a 24-hour narrative experience displayed on a 64×64 LED matrix. The clock divides the day into **6 Acts**, each lasting 4 real hours, with a unique visual theme, color palette, phrase set, and ambient effects.
 
 ```

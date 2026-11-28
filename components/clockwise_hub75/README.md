@@ -14,7 +14,7 @@ The hybrid approach leverages the best of both worlds:
 
 - ✅ **Mature Display Foundation**: Built on tested HUB75 component with comprehensive hardware support
 - ✅ **Native HA Entities**: Brightness control, power switch, clockface selection
-- ✅ **Multiple Clockfaces**: Pacman and Mario (`CLOCK` is reserved, not implemented)
+- ✅ **Multiple Clockfaces**: Pacman, Mario, Dune and Star Trek
 - ✅ **Hardware Compatibility**: Supports all ESP32 variants, multiple panel layouts, various driver chips
 - ✅ **Advanced Features**: Multi-panel support, brightness control, power management
 
@@ -84,7 +84,7 @@ Use the template brightness, selectors and text/time entities in [the complete e
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `hub75_id` | ID | **Required** | Reference to HUB75 display component |
-| `clockface_type` | enum | `PACMAN` | Initial clockface: `PACMAN`, `MARIO`; `DUNE` is reserved |
+| `clockface_type` | enum | `PACMAN` | Initial clockface: `PACMAN`, `MARIO`, `DUNE`, `STARTREK` |
 | `panel_color_order` | enum | `RGB` | Channel order: `RGB`, `RBG`, `GRB`, `GBR`, `BRG`, `BGR` |
 | `special_dates` | string | `""` | Initial recurring dates as `MM-DD:Name,MM-DD:Name` |
 | `initial_brightness` | int | `128` | Initial brightness (0-255) |
@@ -179,9 +179,20 @@ button:
 #### Select Entity (Clockface)
 
 - **Platform**: `template`
-- **Options**: "Pacman", "Mario"
+- **Options**: "Pacman", "Mario", "Dune", "Star Trek"
 - **Purpose**: Switch between clockface modes
 - **Icon**: `mdi:clock-outline`
+
+## Story Clockfaces
+
+`DUNE` and `STARTREK` use the same generic `StoryClockface` orchestrator with separate themes. Each theme supplies acts, backgrounds, phrases and events. The story cycle starts when the clockface is activated and advances using each act's configured duration, rather than the wall-clock hour. Switching away and back restarts the cycle.
+
+The complete example uses local components from this checkout so it builds the current branch. If switching branches adds C++ source files and the build reports undefined story symbols, clean the build files before rebuilding:
+
+```powershell
+esphome clean examples\clockwise.yaml
+esphome compile examples\clockwise.yaml
+```
 
 ## Hardware Support
 

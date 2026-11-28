@@ -192,7 +192,7 @@ display:
 clockwise_hub75:
   id: clockwise_main
   hub75_id: matrix_display
-  clockface_type: MARIO  # Options: PACMAN, MARIO
+  clockface_type: MARIO  # Options: PACMAN, MARIO, DUNE, STARTREK
   initial_brightness: ${initial_brightness}
   night_mode_start: ${night_mode_start}
   night_mode_end: ${night_mode_end}
@@ -262,6 +262,8 @@ select:
     options:
       - "Pacman"
       - "Mario"
+      - "Dune"
+      - "Star Trek"
     initial_option: "Pacman"
     restore_value: true
     optimistic: true
@@ -271,9 +273,13 @@ select:
             id: saved_clockface
             value: !lambda |-
               if (x == "Mario") return 1;
+              if (x == "Dune") return 2;
+              if (x == "Star Trek") return 3;
               return 0;
         - lambda: |-
             if (x == "Mario") id(clockwise_main).switch_clockface(esphome::clockwise_hub75::MARIO);
+            else if (x == "Dune") id(clockwise_main).switch_clockface(esphome::clockwise_hub75::DUNE);
+            else if (x == "Star Trek") id(clockwise_main).switch_clockface(esphome::clockwise_hub75::STARTREK);
             else id(clockwise_main).switch_clockface(esphome::clockwise_hub75::PACMAN);
 
   - platform: template
